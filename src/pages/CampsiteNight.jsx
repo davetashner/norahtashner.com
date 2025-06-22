@@ -38,6 +38,27 @@ export default function CampsiteNight() {
           overflow: 'hidden',
         }}
       >
+
+        <div
+          className="shooting-star"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100px',
+            height: '100px',
+            animation: 'shootAcrossSky 8s linear infinite',
+            zIndex: 100,
+            pointerEvents: 'none',
+          }}
+        >
+          <img
+            src="/assets/img/shooting-star.png"
+            alt="Shooting Star"
+            style={{ width: '100%' }}
+          />
+        </div>
+
         {/* Camper */}
         <img
           src="/assets/img/camper-night.png"
