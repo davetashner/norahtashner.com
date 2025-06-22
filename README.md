@@ -3,7 +3,7 @@
 Welcome to the magical world of **Piper the Unicorn** and her forest friends!  
 This is a React-powered storybook site with rich background scenes, character assets, and page-by-page storytelling.
 
-Live site: [https://piperstory.com](https://piperstory.com) *(replace with actual domain)*
+Live site: [https://norahtashner.com](https://norahtashner.com)
 
 ---
 
@@ -63,12 +63,12 @@ This site is deployed to Amazon S3 with automatic CloudFront cache invalidation.
 
 Go to your GitHub repository → Settings → Secrets → Actions and add:
 
-|Secret Name.                | Description.                        |
-|----------------------------|-------------------------------------|
-| AWS_ACCESS_KEY_ID          | IAM user with deploy permissions    |
-| A------------------------Y | I---------------------------------y |
-| AWS_S3_BUCKET              | S3 bucket name (e.g. piperstory.com |
-| CLOUDFRONT_DISTRIBUTION_ID | CloudFront Distribution ID          |
+|Secret Name.                | Description.                                |
+|----------------------------|---------------------------------------------|
+| AWS_ACCESS_KEY_ID          | IAM user with limited deploy permissions    |
+| AWS_SECRET_ACCESS_KEY      | Secret key for limited IAM user             |
+| AWS_S3_BUCKET              | S3 bucket name (e.g. norahtashenr.com       |
+| CLOUDFRONT_DISTRIBUTION_ID | CloudFront Distribution ID                  |
 
 ### 📁 Workflow: .github/workflows/deploy.yml
 
@@ -102,9 +102,9 @@ jobs:
       - name: 🚀 Sync to S3
         uses: jakejarvis/s3-sync-action@master
         with:
-          args: --delete
+          args: --follow-symlinks --delete
         env:
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_S3_BUCKET: norahtashner.com
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "us-east-1"
