@@ -3,6 +3,8 @@ import NavigationButton from '../components/NavigationButton'
 import './Campsite.css'
 
 export default function CampsiteNight() {
+  const randomDelay = `${Math.floor(Math.random() * 10)}s`
+
   return (
     <div
       style={{
@@ -47,7 +49,9 @@ export default function CampsiteNight() {
             left: 0,
             width: '100px',
             height: '100px',
+            opacity: 0,
             animation: 'shootAcrossSky 8s linear infinite',
+            animationDelay: randomDelay,
             zIndex: 100,
             pointerEvents: 'none',
           }}
