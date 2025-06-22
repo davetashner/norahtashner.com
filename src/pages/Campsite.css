@@ -40,6 +40,40 @@
   padding-right: 8px;        /* Avoid text touching edge */
 }
 
+@keyframes shootAcrossSky {
+  0% {
+    transform: translate(100vw, 8vh);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-20vw, 8vh);
+    opacity: 0;
+  }
+}
+
+.shooting-star {
+  position: absolute;
+  bottom: 80%;
+  left: 100%;
+  width: 20%;
+  pointer-events: none;
+  animation: shootAcrossSky 3.5s ease-out 2s forwards;
+}
+
+.shooting-star.tail {
+  z-index: 1;
+}
+
+.shooting-star.head {
+  z-index: 6;
+}
+
 @keyframes typing {
   from {
     width: 0;
