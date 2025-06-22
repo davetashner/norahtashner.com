@@ -117,6 +117,19 @@ export default function Campsite() {
           }}
         />
 
+        {/* Thumper emerges */}
+        <img
+          src="/assets/img/bunny-thumper.png"
+          alt="Thumper the Bunny"
+          style={{
+            position: 'absolute',
+            bottom: '10%',
+            left: '69%',
+            width: '12%',
+            minWidth: '72px',
+          }}
+        />
+
       {/* Footer Navigation */}
       <div
         style={{
@@ -140,10 +153,13 @@ export default function Campsite() {
 
 function TypewriterStory() {
   const paragraphs = [
-    "The sun was rising gently over the misty purple mountains. A soft glow sparkled on the lake’s surface, where a big white camper rested at the edge of the woods. On the camper's side was a beautiful painting of a unicorn with golden stars twinkling around it.",
-    "Inside, a cozy shooting star lamp glowed softly in yellow, casting warm light over sleeping unicorns.",
-    "“Piper, time to wake up, sweetheart,” Isla called gently, her voice warm like morning sunshine. Piper yawned and stretched. Her pink fur shimmered in the light of the star lamp.",
-    "“Is it hiking day already?!” she asked, bouncing to her hooves. Today was the big day."
+    "The whole unicorn family gathered outside the camper, stretching in the fresh morning air.",
+    "Isla brushed Piper’s mane gently. “Are you ready for your first big hike?”",
+    "“I think so,” Piper said, still blinking the sleep from her eyes.",
+    "Just then, a little white bunny hopped out from behind a bush.",
+    "“Hi there!” he said with a wiggle of his nose. “I’m Thumper! Can I come with you?”",
+    "The unicorns smiled. “Of course,” said Isla. “The more the merrier.”",
+    "And with that, their adventure began."
   ];
 
   const [currentParagraph, setCurrentParagraph] = useState(0);
@@ -175,11 +191,11 @@ function TypewriterStory() {
       className="story-box"
       style={{
         position: 'absolute',
-        bottom: '6%',
+        top: '2%',
         right: '3%',
         width: '33%',
         minWidth: '280px',
-        maxHeight: '65vh',
+        maxHeight: '50vh',
         overflowY: 'auto',
         textAlign: 'left',
         padding: '16px',

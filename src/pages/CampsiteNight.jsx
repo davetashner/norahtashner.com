@@ -115,7 +115,7 @@ function TypewriterStory() {
     "Isla smiled and nuzzled Piper. “You were brave and kind today, little one,” she said.",
     "Spotty, Thumper, and Tortuga sat happily around the fire as Oreo handed out marshmallow treats.",
     "Laughter filled the air, and above them, a real shooting star streaked across the night sky.",
-    "Piper’s heart was full. Tomorrow, they’d explore even more—but tonight, they had the stars and each other."
+    "Piper’s heart was full. Tomorrow, they’d explore even more, but tonight, they had the stars and each other."
   ]
 
   const [currentParagraph, setCurrentParagraph] = useState(0)

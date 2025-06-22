@@ -90,9 +90,11 @@ export default function LakeEdge() {
 function TypewriterStory() {
   const paragraphs = [
     "As the sun dipped toward the horizon, Piper and her forest friends followed the lakeside trail home. The sky turned pink and orange, reflecting softly on the water.",
-    "\"This is the prettiest sunset I’ve ever seen,\" said Piper, pausing to look across the water where their tiny camper sparkled in the distance.",
+    "\"This is the prettiest sunset I’ve ever seen\" said Piper, pausing to look across the water where their tiny camper sparkled in the distance.  \"What a view\" whispered Isla",
+    "On one of the rocks near the edge of the lake sat a young turtle with a flowery shell. \"Hello\", she said shyly. \"I'm Tortuga. I’ve been watching the sky all day.\"",
+    "\"We’re having a campfire celebration tonight,\” Piper said. \"Want to join us?\" Tortuga’s eyes lit up. \"I’d love to!\"",
     "The clouds puffed up like marshmallows, glowing red and gold. Thumper did a happy bounce, Spotty gently nuzzled Piper, and Tortuga slowly spun in delight.",
-    "Tortuga climbed out onto a flat rock by the lake’s edge, soaking in the sunset with a peaceful smile."
+    "The group continued on the path towards the camper having gained another forest friend."
   ];
 
   const [currentParagraph, setCurrentParagraph] = useState(0);

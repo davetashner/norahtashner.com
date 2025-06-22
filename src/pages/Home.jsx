@@ -46,11 +46,25 @@ export default function Home() {
           alt="Piper laying down"
           style={{
             position: 'absolute',
-            top: '5%',
+            top: '1%',
             left: '1%',
             width: '20%',
             transform: 'scaleX(-1)', // head facing stove
             zIndex: 1,
+          }}
+        />
+
+        {/* Shooting Star Lamp on counter behind Oreo */}
+        <img
+          src="/assets/img/shooting-star-lamp.png"
+          alt="Shooting Star Lamp"
+          style={{
+            position: 'absolute',
+            bottom: '44%',       // adjust as needed
+            right: '35%',        // adjust as needed
+            height: '28%',        // proportionate to the scene
+            zIndex: 1,           // behind Oreo
+            pointerEvents: 'none'
           }}
         />
 
@@ -60,7 +74,7 @@ export default function Home() {
           alt="Oreo the unicorn"
           style={{
             position: 'absolute',
-            top: '30%',
+            top: '25%',
             left: '29%',
             width: '36%',
             minWidth: '120px',
@@ -91,9 +105,11 @@ export default function Home() {
 
 function TypewriterStory() {
   const paragraphs = [
-    "Inside the cozy camper, morning sunlight filtered softly through the curtains. Piper was still snuggled into the top bunk, surrounded by fluffy pillows and her favorite plush moon. The gentle hum of birds chirping outside blended with the smell of waffles from the tiny galley kitchen.",
-    "Isla stirred at the stove, flipping breakfast with a smile. Today was a special day—the first of many magical adventures waiting just outside the camper door.",
-    "\"Time to rise and shine, Piper!\" Isla called gently."
+    "Inside the cozy camper, morning sunlight filtered softly through the curtains. Piper was still snuggled into the top bunk, dreaming sweet unicorn dreams.",
+    "Down below, Oreo was already up, quietly making waffles and checking on their supplies. “Sleepy head,” Oreo chuckled softly, watching Piper stir under the covers.",
+    "The shooting star lamp glowed faintly on the counter, casting gentle light across the kitchen. The sound of birds and insects chirping made its way to Piper's ear.",
+    "“Piper, time to wake up,” Oreo called gently, his voice warm and deep like morning sunshine. Piper yawned and stretched. Her pink fur shimmered in the light of the star lamp.",
+    "“Is it hiking day already?!” she asked, bouncing to her hooves. Today was the big day."
   ];
 
   const [currentParagraph, setCurrentParagraph] = useState(0);
