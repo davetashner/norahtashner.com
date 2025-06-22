@@ -157,10 +157,11 @@ export default function MountainForest() {
 
 function TypewriterStory() {
   const paragraphs = [
-    "The unicorn family trotted along a path that curved beside a steep drop on the left and tall, golden-leaved trees on the right. Piper led the way, her little hooves crunching through colorful leaves.",
+    "The unicorn family trotted along a mountain path that curved beside a steep drop on the left and tall, golden-leaved trees on the right. Piper was in the middle of the group, her little hooves crunching through colorful leaves.",
+    "“This forest smells like pine and magic,” said Peanut Butter, skipping ahead.",
     "“Look at that fallen log!” Piper shouted excitedly, jumping over it with a giggle.",
-    "As they moved deeper into the forest, a fluffy white bunny hopped into view. “Thumper!” Piper cried. Thumper wiggled his nose and joined the unicorns on the trail.",
-    "Further along, they spotted a curious deer with pink polka dots—Spotty!—and a gentle turtle with a flowery shell—Tortuga!",
+    "As they moved deeper into the forest, a soft rustle came from the woods, and out stepped a little brown deer with pink polka dots. “I’m Spotty,” she said. “I know a way across if we all work together!”",
+    "With Spotty’s help and a brave leap, the group made it safely past the log.",
     "The hike was filled with laughter, leaf piles, and the sound of hooves and paws dancing over the path."
   ]
 
