@@ -1,0 +1,114 @@
+.theme-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1) rotate(15deg);
+  box-shadow: 0 4px 20px rgba(255, 154, 158, 0.4);
+}
+
+.theme-toggle:focus {
+  outline: 3px solid #ffd700;
+  outline-offset: 2px;
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease, transform 0.5s ease;
+}
+
+.theme-toggle-icon.visible {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.theme-toggle-icon.hidden {
+  opacity: 0;
+  transform: rotate(180deg) scale(0);
+}
+
+.theme-toggle svg {
+  color: #1a1a2e;
+  transition: color 0.3s ease;
+}
+
+/* Sun icon styling */
+.theme-toggle .sun-rays line {
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* Star twinkling animation for moon */
+.theme-toggle .star {
+  animation: twinkle 1.5s ease-in-out infinite;
+}
+
+.theme-toggle .star-1 {
+  animation-delay: 0s;
+}
+
+.theme-toggle .star-2 {
+  animation-delay: 0.5s;
+}
+
+.theme-toggle .star-3 {
+  animation-delay: 1s;
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.5);
+  }
+}
+
+/* Dark mode styles */
+[data-theme="dark"] .theme-toggle {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #6b5b95 100%);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+[data-theme="dark"] .theme-toggle svg {
+  color: #ffd700;
+}
+
+/* Bounce animation on theme change */
+@keyframes bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.theme-toggle:active .theme-toggle-icon.visible {
+  animation: bounce 0.3s ease;
+}

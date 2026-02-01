@@ -1,0 +1,69 @@
+.subscribe-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(29, 185, 84, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subscribe-button:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(29, 185, 84, 0.5);
+  background: linear-gradient(135deg, #1ed760 0%, #1DB954 100%);
+  color: white;
+}
+
+.subscribe-button:focus {
+  outline: 3px solid #1DB954;
+  outline-offset: 3px;
+}
+
+.subscribe-button:active {
+  transform: translateY(-1px);
+}
+
+.spotify-icon {
+  width: 28px;
+  height: 28px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+/* Fun bounce animation on hover */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.subscribe-button:hover .spotify-icon {
+  animation: bounce 0.6s ease infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .subscribe-button {
+    padding: 14px 24px;
+    font-size: 1rem;
+    gap: 10px;
+  }
+
+  .spotify-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
