@@ -1,27 +1,27 @@
 /* CSS Variables for Light/Dark Themes */
 :root {
   /* Light theme (default) */
-  --color-primary: #9333ea;
-  --color-primary-light: #a855f7;
-  --color-secondary: #ec4899;
-  --color-accent: #fbbf24;
-  --color-accent-light: #fcd34d;
+  --color-primary: #7c22ce;
+  --color-primary-light: #9333ea;
+  --color-secondary: #db2777;
+  --color-accent: #f59e0b;
+  --color-accent-light: #fbbf24;
 
-  --color-bg: #fef7ff;
-  --color-bg-secondary: #fdf2f8;
+  --color-bg: #faf5ff;
+  --color-bg-secondary: #fce7f3;
   --color-surface: #ffffff;
   --color-surface-elevated: #ffffff;
 
-  --color-text: #1f2937;
-  --color-text-secondary: #4b5563;
-  --color-text-muted: #6b7280;
+  --color-text: #1a1a2e;
+  --color-text-secondary: #374151;
+  --color-text-muted: #4b5563;
 
-  --color-border: #e5e7eb;
+  --color-border: #d8b4fe;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 3px rgba(124, 34, 206, 0.08);
+  --shadow-md: 0 4px 12px rgba(124, 34, 206, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 25px rgba(124, 34, 206, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
 
   /* Transitions */
   --transition-fast: 150ms ease;
@@ -144,63 +144,6 @@ main {
   transform: scale(0.95);
 }
 
-/* Hero Section */
-.hero {
-  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg) 100%);
-  padding: 4rem var(--container-padding);
-  text-align: center;
-  transition: background var(--transition-base);
-}
-
-.hero-content {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.hero-title {
-  font-size: clamp(2.5rem, 6vw, 4rem);
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 1rem;
-  line-height: 1.2;
-}
-
-.hero-tagline {
-  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
-  color: var(--color-text-secondary);
-  margin-bottom: 2rem;
-}
-
-.hero-decorations {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  font-size: 2rem;
-}
-
-.decoration {
-  animation: float 3s ease-in-out infinite;
-}
-
-.decoration:nth-child(2) {
-  animation-delay: 0.5s;
-}
-
-.decoration:nth-child(3) {
-  animation-delay: 1s;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
 
 /* Episodes Section */
 .episodes {
@@ -362,15 +305,6 @@ main {
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
-  .hero {
-    padding: 3rem var(--container-padding);
-  }
-
-  .hero-decorations {
-    gap: 1rem;
-    font-size: 1.5rem;
-  }
-
   .episodes,
   .about {
     padding: 3rem var(--container-padding);

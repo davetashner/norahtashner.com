@@ -1,6 +1,6 @@
 .about-section {
   padding: 4rem var(--container-padding);
-  background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 50%, #f5d0fe 100%);
+  background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 50%, #fdf4ff 100%);
   position: relative;
   overflow: hidden;
   transition: background var(--transition-base);
@@ -52,10 +52,14 @@
   border-radius: 20px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8px 30px rgba(124, 34, 206, 0.12);
   border: 3px dashed var(--color-secondary);
   position: relative;
   transition: background-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+[data-theme="dark"] .about-host {
+  box-shadow: var(--shadow-lg);
 }
 
 .about-host::before {
@@ -95,13 +99,19 @@
   border-radius: 16px;
   padding: 1.5rem;
   text-align: center;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 15px rgba(124, 34, 206, 0.1);
+  border: 1px solid rgba(147, 51, 234, 0.08);
   transition: transform var(--transition-base), box-shadow var(--transition-base), background-color var(--transition-base);
 }
 
 .expect-card:hover {
   transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8px 25px rgba(124, 34, 206, 0.18);
+}
+
+[data-theme="dark"] .expect-card {
+  box-shadow: var(--shadow-md);
+  border: none;
 }
 
 [data-theme="dark"] .expect-card:hover {

@@ -219,28 +219,55 @@
 }
 
 /* Light mode adjustments */
-@media (prefers-color-scheme: light) {
-  .episode-card {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.01) 100%);
-    border: 2px solid rgba(0, 0, 0, 0.08);
-  }
+:root .episode-card {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.06) 0%, rgba(236, 72, 153, 0.04) 100%);
+  border: 2px solid rgba(147, 51, 234, 0.15);
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.08);
+}
 
-  .episode-card:hover {
-    border-color: rgba(155, 89, 182, 0.3);
-    background: linear-gradient(135deg, rgba(255, 107, 107, 0.05) 0%, rgba(155, 89, 182, 0.05) 100%);
-  }
+:root .episode-card:hover {
+  border-color: rgba(147, 51, 234, 0.35);
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(236, 72, 153, 0.08) 100%);
+  box-shadow: 0 8px 30px rgba(147, 51, 234, 0.15);
+}
 
-  .episode-desc {
-    opacity: 0.75;
-  }
+:root .episode-desc {
+  opacity: 0.9;
+  color: var(--color-text-secondary);
+}
 
-  .episode-meta {
-    opacity: 0.6;
-  }
+:root .episode-meta {
+  opacity: 0.85;
+  color: var(--color-text-muted);
+}
 
-  .spotify-section {
-    border-top-color: rgba(155, 89, 182, 0.2);
-  }
+:root .spotify-section {
+  border-top-color: rgba(147, 51, 234, 0.25);
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .episode-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 2px solid transparent;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .episode-card:hover {
+  border-color: rgba(155, 89, 182, 0.4);
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(155, 89, 182, 0.1) 100%);
+  box-shadow: 0 8px 30px rgba(155, 89, 182, 0.2);
+}
+
+[data-theme="dark"] .episode-desc {
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .episode-meta {
+  opacity: 0.7;
+}
+
+[data-theme="dark"] .spotify-section {
+  border-top-color: rgba(155, 89, 182, 0.3);
 }
 
 /* Responsive design */
