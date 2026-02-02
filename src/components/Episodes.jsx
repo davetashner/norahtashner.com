@@ -1,54 +1,78 @@
+import { useState } from 'react'
 import './Episodes.css'
-import SpotifyEmbed from './SpotifyEmbed'
+import AudioPlayer from './AudioPlayer'
+import episodesData from '../../episodes/episodes.json'
 
 const SPOTIFY_SHOW_URL = 'https://open.spotify.com/show/4VY57mUtnr7fqRtmN2j9Ra'
 
-const episodes = [
-  { num: 5, title: 'Sea Turtles', desc: 'A fun episode about Sea Turtles!', duration: '13 min', date: 'Jan 31' },
-  { num: 4, title: 'Snow Day!', desc: 'Snow days, a trip to Italy, and true/false questions', duration: '14 min', date: 'Jan 26' },
-  { num: 3, title: 'SCIENCE', desc: 'Jokes, quizzes, and discussions about DNA, volcanoes, and gravity', duration: '19 min', date: 'Jan 17' },
-  { num: 2, title: 'All About Norah', desc: "Deep dive into Norah's favorite things with jokes and puzzles", duration: '9 min', date: 'Jan 11' },
-  { num: 1, title: 'How We Got Penny', desc: 'Stories about getting dogs, jokes, and a true/false quiz', duration: '9 min', date: 'Jan 11' }
-]
+const episodeEmojis = ['🐕', '🌟', '🔬', '❄️', '🐢']
 
-const episodeEmojis = ['🐢', '❄️', '🔬', '🌟', '🐕']
+function EpisodeCard({ episode, emoji, isExpanded, onToggle }) {
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
 
-function EpisodeCard({ episode, emoji }) {
   return (
-    <div className="episode-card">
-      <div className="episode-number">
-        <span className="episode-emoji" role="img" aria-hidden="true">{emoji}</span>
-        <span className="episode-num">#{episode.num}</span>
-      </div>
-      <div className="episode-info">
-        <h3 className="episode-title">{episode.title}</h3>
-        <p className="episode-desc">{episode.desc}</p>
-        <div className="episode-meta">
-          <span className="episode-duration">
-            <span role="img" aria-hidden="true">🎧</span> {episode.duration}
-          </span>
-          <span className="episode-date">
-            <span role="img" aria-hidden="true">📅</span> {episode.date}
-          </span>
+    <div className={`episode-card ${isExpanded ? 'expanded' : ''}`}>
+      <div className="episode-header" onClick={onToggle}>
+        <div className="episode-number">
+          <span className="episode-emoji" role="img" aria-hidden="true">{emoji}</span>
+          <span className="episode-num">#{episode.episodeNumber}</span>
         </div>
+        <div className="episode-info">
+          <h3 className="episode-title">{episode.title}</h3>
+          <p className="episode-desc">{episode.description}</p>
+          <div className="episode-meta">
+            <span className="episode-duration">
+              <span role="img" aria-hidden="true">🎧</span> {episode.duration}
+            </span>
+            <span className="episode-date">
+              <span role="img" aria-hidden="true">📅</span> {formatDate(episode.publishDate)}
+            </span>
+          </div>
+        </div>
+        <button
+          className="episode-play-toggle"
+          aria-label={isExpanded ? 'Close player' : `Play episode ${episode.episodeNumber}`}
+          aria-expanded={isExpanded}
+        >
+          {isExpanded ? (
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          )}
+        </button>
       </div>
-      <a
-        href={SPOTIFY_SHOW_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="episode-play-btn"
-        aria-label={`Play episode ${episode.num}: ${episode.title} on Spotify`}
-      >
-        <svg viewBox="0 0 24 24" className="play-icon" aria-hidden="true">
-          <path d="M8 5v14l11-7z" fill="currentColor" />
-        </svg>
-        Play
-      </a>
+
+      {isExpanded && (
+        <div className="episode-player">
+          <AudioPlayer
+            src={episode.audioUrl}
+            title={episode.title}
+          />
+        </div>
+      )}
     </div>
   )
 }
 
 function Episodes() {
+  const [expandedEpisode, setExpandedEpisode] = useState(null)
+
+  // Sort episodes newest first
+  const episodes = [...episodesData.episodes].sort((a, b) =>
+    new Date(b.publishDate) - new Date(a.publishDate)
+  )
+
+  const toggleEpisode = (episodeNum) => {
+    setExpandedEpisode(expandedEpisode === episodeNum ? null : episodeNum)
+  }
+
   return (
     <section className="episodes" id="episodes">
       <h2 className="section-title">
@@ -56,20 +80,24 @@ function Episodes() {
       </h2>
 
       <div className="episodes-list">
-        {episodes.map((episode, index) => (
+        {episodes.map((episode) => (
           <EpisodeCard
-            key={episode.num}
+            key={episode.episodeNumber}
             episode={episode}
-            emoji={episodeEmojis[index]}
+            emoji={episodeEmojis[episode.episodeNumber - 1] || '🎵'}
+            isExpanded={expandedEpisode === episode.episodeNumber}
+            onToggle={() => toggleEpisode(episode.episodeNumber)}
           />
         ))}
       </div>
 
       <div className="spotify-section">
         <h3 className="spotify-section-title">
-          <span role="img" aria-hidden="true">🎵</span> Listen on Spotify
+          <span role="img" aria-hidden="true">🎵</span> Also on Spotify
         </h3>
-        <SpotifyEmbed />
+        <p className="spotify-note">
+          Prefer Spotify? You can also listen there!
+        </p>
         <div className="listen-links">
           <a
             href={SPOTIFY_SHOW_URL}
