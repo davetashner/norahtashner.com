@@ -26,6 +26,25 @@
     <!-- RSS Feed -->
     <link rel="alternate" type="application/rss+xml" title="Norah's Notes Podcast" href="https://norahtashner.com/feed.xml" />
 
+    <!-- JSON-LD Structured Data for Podcast -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "PodcastSeries",
+      "name": "Norah's Notes",
+      "description": "Giggles, jokes, and imaginative stories told by a seven-year-old. A family-friendly podcast perfect for car rides, bedtime, or quiet time.",
+      "url": "https://norahtashner.com",
+      "author": {
+        "@type": "Person",
+        "name": "Norah Tashner"
+      },
+      "image": "https://norahtashner.com/cover.jpg",
+      "genre": ["Kids & Family", "Stories for Kids"],
+      "inLanguage": "en-US",
+      "webFeed": "https://norahtashner.com/feed.xml"
+    }
+    </script>
+
     <!-- Favicons -->
     <link rel="icon" href="https://i.scdn.co/image/ab6765630000ba8a4d1be8b00a22d9c52192d5ee" type="image/jpeg" />
     <link rel="apple-touch-icon" href="https://i.scdn.co/image/ab6765630000ba8a4d1be8b00a22d9c52192d5ee" />
