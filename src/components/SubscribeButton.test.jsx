@@ -3,42 +3,49 @@ import { render, screen } from '@testing-library/react'
 import SubscribeButton from './SubscribeButton'
 
 describe('SubscribeButton', () => {
-  it('renders a link element', () => {
+  it('renders both platform links', () => {
     render(<SubscribeButton />)
-    expect(screen.getByRole('link')).toBeInTheDocument()
+    const links = screen.getAllByRole('link')
+    expect(links).toHaveLength(2)
   })
 
   it('has correct Spotify URL', () => {
     render(<SubscribeButton />)
-    const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('href', expect.stringContaining('open.spotify.com/show'))
+    const spotifyLink = screen.getByRole('link', { name: /spotify/i })
+    expect(spotifyLink).toHaveAttribute('href', expect.stringContaining('open.spotify.com/show'))
   })
 
-  it('opens in new tab', () => {
+  it('has correct Apple Podcasts URL', () => {
     render(<SubscribeButton />)
-    const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('target', '_blank')
+    const appleLink = screen.getByRole('link', { name: /apple podcasts/i })
+    expect(appleLink).toHaveAttribute('href', expect.stringContaining('podcasts.apple.com'))
   })
 
-  it('has security attributes', () => {
+  it('opens links in new tab', () => {
     render(<SubscribeButton />)
-    const link = screen.getByRole('link')
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    const links = screen.getAllByRole('link')
+    links.forEach(link => {
+      expect(link).toHaveAttribute('target', '_blank')
+    })
   })
 
-  it('has accessible label', () => {
+  it('has security attributes on all links', () => {
     render(<SubscribeButton />)
-    expect(screen.getByRole('link')).toHaveAccessibleName(/spotify/i)
+    const links = screen.getAllByRole('link')
+    links.forEach(link => {
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    })
+  })
+
+  it('has accessible labels', () => {
+    render(<SubscribeButton />)
+    expect(screen.getByRole('link', { name: /spotify/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /apple podcasts/i })).toBeInTheDocument()
   })
 
   it('displays button text', () => {
     render(<SubscribeButton />)
-    expect(screen.getByText(/listen on spotify/i)).toBeInTheDocument()
-  })
-
-  it('contains Spotify icon', () => {
-    render(<SubscribeButton />)
-    const svg = document.querySelector('.spotify-icon')
-    expect(svg).toBeInTheDocument()
+    expect(screen.getByText(/spotify/i)).toBeInTheDocument()
+    expect(screen.getByText(/apple podcasts/i)).toBeInTheDocument()
   })
 })

@@ -27,7 +27,7 @@ function Footer() {
             <span>Spotify</span>
           </a>
           <a
-            href="https://podcasts.apple.com"
+            href="https://podcasts.apple.com/us/podcast/norahs-notes/id1873846864"
             target="_blank"
             rel="noopener noreferrer"
             className="footer-link"

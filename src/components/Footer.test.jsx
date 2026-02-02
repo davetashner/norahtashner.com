@@ -30,7 +30,7 @@ describe('Footer', () => {
   it('has Apple Podcasts link with correct attributes', () => {
     render(<Footer />)
     const appleLink = screen.getByRole('link', { name: /apple podcasts/i })
-    expect(appleLink).toHaveAttribute('href', 'https://podcasts.apple.com')
+    expect(appleLink).toHaveAttribute('href', 'https://podcasts.apple.com/us/podcast/norahs-notes/id1873846864')
     expect(appleLink).toHaveAttribute('target', '_blank')
     expect(appleLink).toHaveAttribute('rel', 'noopener noreferrer')
   })

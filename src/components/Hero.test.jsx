@@ -31,9 +31,10 @@ describe('Hero', () => {
     expect(image).toHaveAttribute('src', expect.stringContaining('scdn.co'))
   })
 
-  it('contains the subscribe button', () => {
+  it('contains the subscribe buttons', () => {
     render(<Hero />)
     expect(screen.getByRole('link', { name: /spotify/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /apple podcasts/i })).toBeInTheDocument()
   })
 
   it('has decorative sparkle elements', () => {
