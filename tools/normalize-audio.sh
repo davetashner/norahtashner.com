@@ -15,6 +15,7 @@
 # Options:
 #   -t, --target    Target loudness in LUFS (default: -16, podcast standard)
 #   -p, --true-peak Maximum true peak in dBTP (default: -1.5)
+#   -c, --center    Center audio (mono mix to both channels) - good for voice
 #   -a, --analyze   Analyze only, don't normalize
 #   -v, --verbose   Show detailed ffmpeg output
 #   -h, --help      Show this help message
@@ -22,6 +23,7 @@
 # Examples:
 #   ./tools/normalize-audio.sh ./raw-episodes ./normalized-episodes
 #   ./tools/normalize-audio.sh -t -14 ./episodes ./output
+#   ./tools/normalize-audio.sh --center ./episodes ./centered  # center the audio
 #   ./tools/normalize-audio.sh --analyze ./episodes
 
 set -e
@@ -29,6 +31,7 @@ set -e
 # Default values (podcast standard levels)
 TARGET_LUFS=-16
 TRUE_PEAK=-1.5
+CENTER_AUDIO=false
 ANALYZE_ONLY=false
 VERBOSE=false
 
@@ -134,11 +137,24 @@ normalize_file() {
         ffmpeg_opts="$ffmpeg_opts -loglevel warning"
     fi
 
-    ffmpeg $ffmpeg_opts -i "$input" -af "loudnorm=I=${TARGET_LUFS}:TP=${TRUE_PEAK}:LRA=11:measured_I=${measured_i}:measured_TP=${measured_tp}:measured_LRA=${measured_lra}:measured_thresh=${measured_thresh}:offset=${offset}:linear=true" -ar 44100 -ab 192k "$output"
+    # Build filter chain
+    local loudnorm_filter="loudnorm=I=${TARGET_LUFS}:TP=${TRUE_PEAK}:LRA=11:measured_I=${measured_i}:measured_TP=${measured_tp}:measured_LRA=${measured_lra}:measured_thresh=${measured_thresh}:offset=${offset}:linear=true"
+
+    local audio_filter="$loudnorm_filter"
+    if [ "$CENTER_AUDIO" = true ]; then
+        # Mix stereo to mono (centered) then output as stereo
+        # pan filter: both output channels get 50% of each input channel
+        audio_filter="pan=stereo|c0=0.5*c0+0.5*c1|c1=0.5*c0+0.5*c1,${loudnorm_filter}"
+    fi
+
+    ffmpeg $ffmpeg_opts -i "$input" -af "$audio_filter" -ar 44100 -ab 192k "$output"
 
     success "Created: $(basename "$output")"
     echo "  Original loudness: ${measured_i} LUFS"
     echo "  Target loudness:   ${TARGET_LUFS} LUFS"
+    if [ "$CENTER_AUDIO" = true ]; then
+        echo "  Audio: Centered (mono mix)"
+    fi
     echo ""
 }
 
@@ -201,6 +217,10 @@ while [[ $# -gt 0 ]]; do
             TRUE_PEAK="$2"
             shift 2
             ;;
+        -c|--center)
+            CENTER_AUDIO=true
+            shift
+            ;;
         -a|--analyze)
             ANALYZE_ONLY=true
             shift
@@ -238,6 +258,9 @@ echo "  Podcast Audio Normalizer (EBU R128)"
 echo "========================================"
 echo "  Target: ${TARGET_LUFS} LUFS"
 echo "  True Peak: ${TRUE_PEAK} dBTP"
+if [ "$CENTER_AUDIO" = true ]; then
+echo "  Center: Yes (mono mix to stereo)"
+fi
 echo "========================================"
 echo ""
 
