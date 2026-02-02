@@ -138,3 +138,12 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Podcast audio files (uploaded to S3, not stored in git)
+*.mp3
+*.m4a
+*.wav
+*.flac
+*.aac
+*.ogg
+episodes/inbox/
+episodes/processed/
