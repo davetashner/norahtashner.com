@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run build:rss",
+    "build:rss": "node tools/generate-rss.js dist/feed.xml",
     "lint": "eslint .",
     "preview": "vite preview",
     "prepare": "./tools/setup-hooks.sh"

@@ -1,0 +1,71 @@
+{
+  "podcast": {
+    "title": "Norah's Notes",
+    "description": "Giggles, jokes, and imaginative stories told by a seven-year-old",
+    "author": "Norah Tashner",
+    "email": "podcast@norahtashner.com",
+    "website": "https://norahtashner.com",
+    "language": "en-us",
+    "category": "Kids & Family",
+    "subcategory": "Stories for Kids",
+    "explicit": false,
+    "coverImage": "https://norahtashner.com/cover.jpg"
+  },
+  "episodes": [
+    {
+      "episodeNumber": 1,
+      "season": 1,
+      "title": "Welcome to Norah's Notes!",
+      "description": "In our very first episode, Norah introduces herself and shares some of her favorite jokes and a silly story.",
+      "publishDate": "2026-01-02",
+      "duration": "09:50",
+      "durationSeconds": 590,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E01.mp3",
+      "explicit": false
+    },
+    {
+      "episodeNumber": 2,
+      "season": 1,
+      "title": "The Magic Treehouse Adventure",
+      "description": "Norah takes us on an imaginative journey to a magical treehouse where anything can happen!",
+      "publishDate": "2026-01-11",
+      "duration": "09:10",
+      "durationSeconds": 550,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E02.mp3",
+      "explicit": false
+    },
+    {
+      "episodeNumber": 3,
+      "season": 1,
+      "title": "Silly Animal Friends",
+      "description": "Join Norah as she tells funny stories about her favorite silly animals and what adventures they get into.",
+      "publishDate": "2026-01-17",
+      "duration": "19:34",
+      "durationSeconds": 1174,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E03.mp3",
+      "explicit": false
+    },
+    {
+      "episodeNumber": 4,
+      "season": 1,
+      "title": "The Best Jokes Ever",
+      "description": "Norah shares her collection of the funniest jokes she knows. Get ready to laugh!",
+      "publishDate": "2026-01-25",
+      "duration": "14:26",
+      "durationSeconds": 866,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E04.mp3",
+      "explicit": false
+    },
+    {
+      "episodeNumber": 5,
+      "season": 1,
+      "title": "Bedtime Stories",
+      "description": "Cozy up for some gentle bedtime stories perfect for winding down at the end of the day.",
+      "publishDate": "2026-01-31",
+      "duration": "13:05",
+      "durationSeconds": 785,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E05.mp3",
+      "explicit": false
+    }
+  ]
+}
