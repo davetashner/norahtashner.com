@@ -35,7 +35,7 @@ jobs:
       - name: 🚀 Sync to S3
         uses: jakejarvis/s3-sync-action@master
         with:
-          args: --follow-symlinks --delete
+          args: --follow-symlinks --delete --exclude "podcast/*"
         env:
           AWS_S3_BUCKET: norahtashner.com
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
