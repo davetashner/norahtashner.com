@@ -189,21 +189,26 @@
 .listen-links {
   display: flex;
   justify-content: center;
+  gap: 16px;
   margin-top: 24px;
+  flex-wrap: wrap;
 }
 
-.listen-button.spotify {
+.listen-button {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   padding: 14px 28px;
-  background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
   color: white;
   font-size: 1rem;
   font-weight: 700;
   text-decoration: none;
   border-radius: 50px;
   transition: all 0.3s ease;
+}
+
+.listen-button.spotify {
+  background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
   box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
 }
 
@@ -213,7 +218,18 @@
   color: white;
 }
 
-.listen-button .spotify-icon {
+.listen-button.apple {
+  background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+  box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+}
+
+.listen-button.apple:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(156, 39, 176, 0.4);
+  color: white;
+}
+
+.listen-button .listen-icon {
   width: 24px;
   height: 24px;
 }
@@ -352,7 +368,7 @@
     font-size: 1.3rem;
   }
 
-  .listen-button.spotify {
+  .listen-button {
     padding: 12px 22px;
     font-size: 0.95rem;
   }
