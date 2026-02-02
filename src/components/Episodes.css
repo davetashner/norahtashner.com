@@ -122,7 +122,7 @@
 
 .episode-desc {
   font-size: 0.95rem;
-  opacity: 0.85;
+  color: var(--color-text-secondary);
   margin: 0 0 10px 0;
   line-height: 1.4;
 }
@@ -131,7 +131,7 @@
   display: flex;
   gap: 16px;
   font-size: 0.85rem;
-  opacity: 0.7;
+  color: var(--color-text-muted);
 }
 
 .episode-duration,
@@ -232,12 +232,10 @@
 }
 
 :root .episode-desc {
-  opacity: 0.9;
   color: var(--color-text-secondary);
 }
 
 :root .episode-meta {
-  opacity: 0.85;
   color: var(--color-text-muted);
 }
 
@@ -259,11 +257,11 @@
 }
 
 [data-theme="dark"] .episode-desc {
-  opacity: 0.85;
+  color: var(--color-text-secondary);
 }
 
 [data-theme="dark"] .episode-meta {
-  opacity: 0.7;
+  color: var(--color-text-muted);
 }
 
 [data-theme="dark"] .spotify-section {

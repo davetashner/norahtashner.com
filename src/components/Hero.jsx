@@ -18,6 +18,8 @@ function Hero() {
             src="https://i.scdn.co/image/ab6765630000ba8a4d1be8b00a22d9c52192d5ee"
             alt="Norah's Notes Podcast cover art"
             className="podcast-cover"
+            loading="eager"
+            fetchPriority="high"
           />
           <div className="cover-glow"></div>
         </div>
