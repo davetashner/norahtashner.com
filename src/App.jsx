@@ -9,8 +9,11 @@ function App() {
   return (
     <ThemeProvider>
       <div className="app">
+        <a href="#main-content" className="skip-to-content">
+          Skip to content
+        </a>
         <Header />
-        <main>
+        <main id="main-content">
           <Hero />
           <Episodes />
           <About />

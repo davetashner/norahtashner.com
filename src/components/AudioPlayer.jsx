@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './AudioPlayer.css';
 
-const AudioPlayer = ({ src, title, onEnded }) => {
+const AudioPlayer = ({ src, title, onEnded, showDownload = true }) => {
   const audioRef = useRef(null);
   const progressRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -152,7 +152,22 @@ const AudioPlayer = ({ src, title, onEnded }) => {
         <span className="time-display">{formatTime(duration)}</span>
       </div>
 
-      {title && <div className="player-title">{title}</div>}
+      <div className="player-bottom">
+        {title && <div className="player-title">{title}</div>}
+        {showDownload && (
+          <a
+            href={src}
+            download
+            className="download-btn"
+            aria-label={`Download ${title || 'episode'}`}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+            Download
+          </a>
+        )}
+      </div>
     </div>
   );
 };
@@ -161,6 +176,7 @@ AudioPlayer.propTypes = {
   src: PropTypes.string.isRequired,
   title: PropTypes.string,
   onEnded: PropTypes.func,
+  showDownload: PropTypes.bool,
 };
 
 export default AudioPlayer;
