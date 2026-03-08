@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import './Header.css';
 
@@ -5,7 +6,7 @@ function Header() {
   return (
     <header className="header">
       <div className="header-content">
-        <a href="/" className="header-logo">
+        <Link to="/" className="header-logo">
           <span className="logo-icon" aria-hidden="true">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -32,8 +33,9 @@ function Header() {
             <span className="logo-title">Norah&apos;s Notes</span>
             <span className="logo-subtitle">Podcast</span>
           </span>
-        </a>
+        </Link>
         <nav className="header-nav">
+          <Link to="/game" className="nav-link">Game</Link>
           <ThemeToggle />
         </nav>
       </div>
