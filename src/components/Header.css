@@ -102,6 +102,28 @@
   gap: 1rem;
 }
 
+.nav-link {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #7c22ce;
+  text-decoration: none;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-link:hover {
+  background: rgba(124, 34, 206, 0.1);
+}
+
+[data-theme="dark"] .nav-link {
+  color: #c084fc;
+}
+
+[data-theme="dark"] .nav-link:hover {
+  background: rgba(192, 132, 252, 0.15);
+}
+
 /* Dark mode styles */
 [data-theme="dark"] .header {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
