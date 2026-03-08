@@ -24,6 +24,7 @@ function GamePage() {
           <span><kbd>S</kbd> Swim/Surf</span>
           <span><kbd>G</kbd> Gelato</span>
           <span><kbd>T</kbd> Tiki Torch</span>
+          <span><kbd>Q</kbd> Talk to NPCs</span>
         </div>
       </div>
     </section>
