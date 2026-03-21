@@ -304,6 +304,14 @@ window.addEventListener('orientationchange', () => { setTimeout(resize, 100); })
 window.addEventListener('keydown', e => {
   if (!e.repeat) keys[e.code] = true;
   if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') e.preventDefault();
+  // Baby name typing in hospital name_pick stage
+  if (hospitalStage === 'name_pick' && !e.repeat) {
+    if (e.key === 'Backspace') {
+      kitNameInput = kitNameInput.slice(0, -1);
+    } else if (e.key.length === 1 && kitNameInput.length < 12 && /[a-zA-Z ]/.test(e.key)) {
+      kitNameInput += e.key;
+    }
+  }
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -608,9 +616,19 @@ function updatePrompt(near) {
     return;
   }
   if (currentScene === Scene.PARK) {
-    el.textContent = 'Relaxing in Central Park... Press Enter to leave';
-    el.style.display = 'block';
-    setAction('Enter', 'Exit');
+    if (hasStroller && picnic.active) {
+      el.textContent = picnic.feeding ? 'Kit is eating...' : 'Press F to feed Kit!';
+      el.style.display = 'block';
+      setAction('KeyF', 'Feed', 'Enter', 'Exit');
+    } else if (hasStroller && !kitParkBonus) {
+      el.textContent = 'Central Park with Kit! Press P for a picnic';
+      el.style.display = 'block';
+      setAction('KeyP', 'Picnic', 'Enter', 'Exit');
+    } else {
+      el.textContent = 'Relaxing in Central Park... Press Enter to leave';
+      el.style.display = 'block';
+      setAction('Enter', 'Exit');
+    }
     return;
   }
   if (currentScene === Scene.HOSPITAL) {
@@ -632,8 +650,60 @@ function updatePrompt(near) {
     } else if (hospitalStage === 'color_pick') {
       el.textContent = 'Press 1-8 to choose Kit\'s color, Enter to confirm';
       setAction('Enter', 'Confirm');
+    } else if (hospitalStage === 'name_pick') {
+      el.textContent = 'Type a name for your baby, then press Enter';
+      setAction('Enter', 'Confirm');
     }
     el.style.display = 'block';
+    return;
+  }
+  if (currentScene === Scene.FAO_SCHWARZ) {
+    el.textContent = 'Walk the piano keys! Left/Right to play notes | Enter to leave';
+    el.style.display = 'block';
+    setAction('Enter', 'Exit');
+    return;
+  }
+  if (currentScene === Scene.EMPIRE_STATE) {
+    if (!empireAtTop) {
+      el.textContent = 'Riding the elevator... ' + Math.round(empireElevator) + ' floors';
+      setAction(null, '');
+    } else {
+      el.textContent = 'Top of the Empire State Building! What a view! Enter to leave';
+      setAction('Enter', 'Exit');
+    }
+    el.style.display = 'block';
+    return;
+  }
+  if (currentScene === Scene.THIRTY_ROCK) {
+    if (thirtyRockDance.active && thirtyRockDance.showing) {
+      el.textContent = 'Watch the dance moves...';
+      setAction(null, '');
+    } else if (thirtyRockDance.active) {
+      el.textContent = 'Repeat the moves! Left/Right/Up/Space (' + thirtyRockDance.input.length + '/' + thirtyRockDance.sequence.length + ')';
+      setAction(null, '');
+    } else {
+      el.textContent = 'Show complete! Score: ' + thirtyRockDance.score + '/' + thirtyRockDance.sequence.length + ' | Enter to leave';
+      setAction('Enter', 'Exit');
+    }
+    el.style.display = 'block';
+    return;
+  }
+  if (currentScene === Scene.GRAND_CENTRAL) {
+    if (!grandCentralWhisper) {
+      el.textContent = 'Grand Central Terminal! Press W to whisper in the gallery | Enter to leave';
+      setAction('KeyW', 'Whisper', 'Enter', 'Exit');
+    } else {
+      el.textContent = 'You whispered: "' + grandCentralWhisper + '" — it echoed! Enter to leave';
+      setAction('Enter', 'Exit');
+    }
+    el.style.display = 'block';
+    return;
+  }
+  if (currentScene === Scene.THE_MET) {
+    const p = MET_PAINTINGS[metPaintingIndex];
+    el.textContent = '"' + p.title + '" — ' + p.level + ' (' + (metPaintingIndex + 1) + '/' + MET_PAINTINGS.length + ') Left/Right | Enter to leave';
+    el.style.display = 'block';
+    setAction('Enter', 'Exit');
     return;
   }
   if (currentScene === Scene.PIZZA) {
@@ -693,6 +763,26 @@ function updatePrompt(near) {
     el.textContent = 'Press Enter to help at the hospital!';
     el.style.display = 'block';
     setAction('Enter', 'Hospital');
+  } else if (near.nearFao) {
+    el.textContent = 'Press Enter to visit FAO Schwarz!';
+    el.style.display = 'block';
+    setAction('Enter', 'FAO');
+  } else if (near.nearEmpire) {
+    el.textContent = 'Press Enter to ride the Empire State elevator!';
+    el.style.display = 'block';
+    setAction('Enter', 'Enter');
+  } else if (near.nearThirtyRock) {
+    el.textContent = 'Press Enter to visit 30 Rock studios!';
+    el.style.display = 'block';
+    setAction('Enter', 'Enter');
+  } else if (near.nearGrandCentral) {
+    el.textContent = 'Press Enter to explore Grand Central Terminal!';
+    el.style.display = 'block';
+    setAction('Enter', 'Enter');
+  } else if (near.nearMet) {
+    el.textContent = 'Press Enter to visit The Met Museum!';
+    el.style.display = 'block';
+    setAction('Enter', 'Enter');
   } else if (near.nearHotdog) {
     el.textContent = score >= 10 ? 'Press C to buy a hot dog (-10 pts)' : 'Not enough points for a hot dog!';
     el.style.display = 'block';
