@@ -72,6 +72,7 @@ const Scene = {
   THIRTY_ROCK: 'thirtyRock',
   GRAND_CENTRAL: 'grandCentral',
   THE_MET: 'theMet',
+  NASA_MUSEUM: 'nasaMuseum',
 };
 let currentScene = null;
 
@@ -1299,6 +1300,17 @@ function update(dt) {
     return;
   }
 
+  // NASA Museum — aircraft and spacecraft exhibit
+  if (currentScene === Scene.NASA_MUSEUM) {
+    if (keys['Enter']) {
+      keys['Enter'] = false;
+      score += 30;
+      addPopup(player.x, player.y - 40, '+30 Space history!', '#60a5fa');
+      currentScene = null;
+    }
+    return;
+  }
+
   if (currentScene === Scene.CAMPER) {
     // Nap in bed
     if (camperNapping) {
@@ -1578,6 +1590,12 @@ function update(dt) {
   player.vy = applyGravity(player.vy, effectiveGravity);
   player.x += player.vx;
   player.y += player.vy;
+
+  // Moon: prevent jumping off the top of the screen
+  if (currentLevel === 13 && player.y < 40) {
+    player.y = 40;
+    player.vy = 0;
+  }
 
   // Platform collision (only when falling)
   let onPlatform = false;
@@ -2710,6 +2728,11 @@ function update(dt) {
 
   // ── Cape Canaveral interactions (level 11) ──
   if (currentLevel === 11) {
+    // NASA Museum entry
+    if (Math.abs(player.x - NASA_BUILDING_POS.x - NASA_BUILDING_POS.w / 2) < BUILDING_RANGE && keys['Enter'] && currentScene === null) {
+      keys['Enter'] = false;
+      currentScene = Scene.NASA_MUSEUM;
+    }
     // Space suit
     if (!capeSpaceSuit && Math.abs(player.x - SPACE_SUIT_POS.x) < BUILDING_RANGE && keys['KeyS']) {
       keys['KeyS'] = false;
