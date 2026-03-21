@@ -11,14 +11,32 @@ const POND = { x: 200, w: 400, depth: 80 };
 const GRILL = { x: 1000, w: 60 };
 const HOUSE = { x: 1600, w: 160, h: 160 };
 
+// ── Scene state machine ──
+// Replaces 15 mutually exclusive booleans with a single enum value.
+// null = outdoors/world view; any Scene value = that scene is active.
+const Scene = {
+  HOUSE: 'house',
+  PIZZA: 'pizza',
+  CAMPER: 'camper',
+  WINDMILL: 'windmill',
+  PARK: 'park',
+  PANTHEON: 'pantheon',
+  SWIMMING: 'swimming',
+  SURFING: 'surfing',
+  CHALET: 'chalet',
+  SAILING: 'sailing',
+  SCUBA_DIVING: 'scubaDiving',
+  SWIMMING_IN_POOL: 'swimmingInPool',
+  CAMP_CAMPER: 'campCamper',
+  WATERING_HOLE: 'wateringHole',
+};
+let currentScene = null;
+
 // ── State ──
 let playerName = 'Sparkle';
 let score = 0, fishCount = 0, baconCount = 0, yarnCount = 0;
 let yarnBonusAwarded = {}; // tracks which levels have had the all-yarn bonus awarded
 let gameTime = 0;
-let insideHouse = false;
-let insidePizza = false;
-let insideCamper = false;
 let camperPlayerX = 0; // player x position inside camper (relative to scene center)
 let camperCooking = { active: false, progress: 0, burnt: false };
 let camperNapping = false;
@@ -42,20 +60,16 @@ const CAMPER_PHONE_DIALOGUES = [
   "Hey, can you check if I left my scarf in the camper? It's pink with stars.",
   "Moo! ...I mean, meow! Totally a cat calling. Not a cow. Meow.",
 ];
-let insideWindmill = false;
 let cooking = { active: false, progress: 0, burnt: false };
 let fishing = { active: false, timer: 0, caught: false };
 let honeyCount = 0;
 let pizzaMaking = { active: false, progress: 0, stage: 'idle', pizzaCount: 0 };
 const PIZZA_SHOP = { x: 1000, w: 80 };
-let insidePark = false;
 let hotdogCount = 0;
 const HOTDOG_POSITIONS = [600, 2000, 3400];
 const CENTRAL_PARK_POS = { x: 2200, w: 160 };
 const TAXI_POSITIONS = [300, 1200, 2400, 3600];
 // Rome interactions
-let insidePantheon = false;
-let swimming = false;
 let gelatoCount = 0;
 const FOUNTAIN_POS = { x: 1500 };
 const GELATO_POSITIONS = [1000, 2800];
@@ -64,12 +78,10 @@ const FIAT_POS = { x: 4500 };
 // Hawaii interactions
 let tikiCount = 0;
 let coconutCount = 0;
-let surfing = false;
 const TIKI_POSITIONS = [600, 1400, 2200, 3000, 3800];
 const COCONUT_POSITIONS = [400, 1200, 2000, 2800, 3600, 4400];
 const SURF_POS = { x: 1800 };
 // Chalet mini-game
-let insideChalet = false;
 let marshmallow = { active: false, x: 0, y: 0, vx: 0, vy: 0, landed: false };
 let marshmallowScore = 0;
 let marshmallowAngle = Math.PI / 5; // aiming angle (radians), adjustable with Up/Down
@@ -134,6 +146,14 @@ function playMeow() {
 
 // ── Generic SFX player ──
 const sfxCooldowns = {};
+function ensureLoaded(el) {
+  if (el.readyState >= 2) return Promise.resolve();
+  return new Promise(resolve => {
+    el.load();
+    el.addEventListener('canplay', resolve, { once: true });
+  });
+}
+
 function playSfx(id, cooldownMs = 500) {
   if (muted) return;
   const now = performance.now();
@@ -143,7 +163,7 @@ function playSfx(id, cooldownMs = 500) {
   if (!el) return;
   el.volume = getSfxVolume();
   el.currentTime = 0;
-  el.play().catch(() => {});
+  ensureLoaded(el).then(() => el.play().catch(() => {}));
 }
 
 function startLoopSfx(id) {
@@ -151,7 +171,7 @@ function startLoopSfx(id) {
   const el = document.getElementById(id);
   if (!el || !el.paused) return;
   el.volume = getSfxVolume() * 0.5;
-  el.play().catch(() => {});
+  ensureLoaded(el).then(() => el.play().catch(() => {}));
 }
 
 function stopLoopSfx(id) {
@@ -264,7 +284,8 @@ function applyVolume() {
 
 // ── Music system with crossfade ──
 const FADE_DURATION = 1200; // ms
-const levelMusic = { 1: 'musicMeadow', 2: 'musicSledding', 3: 'musicNYC', 4: 'musicRome', 5: 'musicHawaii', 6: 'musicOriental', 7: 'musicAlps', 8: 'musicCampground', 9: 'musicSafari' };
+// levelMusic is now derived from levelRegistry (defined in drawing.js).
+// These functions use levelRegistry[level].musicId for lookups.
 const CHALET_MUSIC_ID = 'musicChalet';
 const SCUBA_MUSIC_ID = 'musicScuba';
 const FLIGHT_MUSIC_ID = 'musicFlight';
@@ -272,17 +293,17 @@ let currentMusicId = null;
 let musicFade = null; // { out: AudioElement, in: AudioElement, timer: 0 }
 
 function startLevelMusic(level) {
-  const id = levelMusic[level];
+  const id = levelRegistry[level] && levelRegistry[level].musicId;
   if (!id || id === currentMusicId) return;
   const el = document.getElementById(id);
   el.volume = getMusicVolume();
   el.currentTime = 0;
-  el.play().catch(() => {});
+  ensureLoaded(el).then(() => el.play().catch(() => {}));
   currentMusicId = id;
 }
 
 function crossfadeToLevel(level) {
-  const newId = levelMusic[level];
+  const newId = levelRegistry[level] && levelRegistry[level].musicId;
   if (!newId) return;
   crossfadeToMusic(newId);
 }
@@ -293,7 +314,7 @@ function crossfadeToMusic(newId) {
   const inEl = document.getElementById(newId);
   inEl.volume = 0;
   inEl.currentTime = 0;
-  inEl.play().catch(() => {});
+  ensureLoaded(inEl).then(() => inEl.play().catch(() => {}));
   musicFade = { out: outEl, inEl: inEl, inId: newId, timer: 0 };
 }
 
@@ -338,18 +359,9 @@ function completeTransition() {
   popups = [];
   cooking.active = false;
   fishing.active = false;
-  insideHouse = false;
-  insidePizza = false;
-  insidePark = false;
-  insideCamper = false;
-  insideWindmill = false;
-  insidePantheon = false;
-  swimming = false;
-  surfing = false;
+  currentScene = null;
   skiing = false;
   sledding = false;
-  insideChalet = false;
-  swimmingInPool = false;
   hammockNapping = false;
   hammockNapTimer = 0;
   bigfootDrinking = false;
@@ -365,9 +377,6 @@ function completeTransition() {
   camperPhone = { ringing: false, answered: false, ringTimer: 0, callTimer: 0, dialogue: '' };
   drinkingCocoa = false;
   cocoaDrinkTimer = 0;
-  sailing = false;
-  scubaDiving = false;
-  insideCampCamper = false;
   campCamperPlayerX = 0;
   campCamperSleeping = false;
   campCamperSleepTimer = 0;
@@ -375,7 +384,6 @@ function completeTransition() {
   campCamperShowering = false;
   campCamperShowerTimer = 0;
   ridingCheetah = false;
-  swimmingInWateringHole = false;
   safariPhotography = { active: false, timer: 0, targetAnimal: '' };
   cheetahSpeech = { text: '', timer: 0 };
   dustParticles = [];
@@ -389,20 +397,11 @@ function completeTransition() {
   stopLoopSfx('sfxFlightWind');
 }
 
-function getCurrentPlatforms() {
-  return currentLevel === 1 ? platforms : currentLevel === 2 ? level2Sled.platforms : currentLevel === 3 ? level2.platforms : currentLevel === 4 ? level3.platforms : currentLevel === 5 ? level4.platforms : currentLevel === 6 ? levelOriental.platforms : currentLevel === 8 ? level6.platforms : currentLevel === 9 ? level7.platforms : level5.platforms;
-}
-
-function getCurrentYarnBalls() {
-  return currentLevel === 1 ? yarnBalls : currentLevel === 2 ? level2Sled.yarnBalls : currentLevel === 3 ? level2.yarnBalls : currentLevel === 4 ? level3.yarnBalls : currentLevel === 5 ? level4.yarnBalls : currentLevel === 6 ? levelOriental.yarnBalls : currentLevel === 8 ? level6.yarnBalls : currentLevel === 9 ? level7.yarnBalls : level5.yarnBalls;
-}
-
-function getCurrentWorldW() {
-  return currentLevel === 1 ? WORLD_W : currentLevel === 2 ? level2Sled.worldW : currentLevel === 3 ? level2.worldW : currentLevel === 4 ? level3.worldW : currentLevel === 5 ? level4.worldW : currentLevel === 6 ? levelOriental.worldW : currentLevel === 8 ? level6.worldW : currentLevel === 9 ? level7.worldW : level5.worldW;
-}
+function getCurrentPlatforms() { return levelRegistry[currentLevel].platforms; }
+function getCurrentYarnBalls() { return levelRegistry[currentLevel].yarnBalls; }
+function getCurrentWorldW() { return levelRegistry[currentLevel].worldW; }
 
 // ── Level 6: Oriental NC ──
-let sailing = false;
 let sailAngle = 0; // visual sail angle
 const SAIL_SPEED = 3.5;
 const ORIENTAL_WORLD_W = 5200;
@@ -410,19 +409,17 @@ const SAILBOAT_POS = { x: 4200 };
 const DIVE_SPOT_POS = { x: 4800 };
 let shellCount = 0;
 // Scuba diving minigame
-let scubaDiving = false;
 let scubaPlayer = { x: 200, y: 200, vx: 0, vy: 0 };
 const SCUBA_WORLD_W = 1200;
 const SCUBA_WORLD_H = 500;
-const SCUBA_BUOYANCY = -0.15;
-const SCUBA_SWIM_FORCE = 0.4;
-const SCUBA_DRAG = 0.96;
+const SCUBA_BUOYANCY = -0.04;
+const SCUBA_SWIM_FORCE = 0.45;
+const SCUBA_DRAG = 0.92;
 let scubaCollectibles = [];
 let scubaPearlCount = 0;
 // Level select
 let levelSelectUnlocked = true; // permanently unlocked for dev/debug
-const LEVEL_NAMES = ['Meadow', 'Sledding', 'NYC', 'Rome', 'Hawaii', 'Oriental', 'Alps', 'Campground', 'Africa Safari'];
-const TOTAL_LEVELS = 9;
+// LEVEL_NAMES and TOTAL_LEVELS are now derived from levelRegistry (defined in drawing.js)
 
 // ── Level 7: Alps ──
 // The Alps is a downhill skiing level — the kitty starts at the top-left
@@ -445,11 +442,9 @@ let bigfootDrinking = false;
 let bigfootDrinkTimer = 0;
 const BIGFOOT_DRINK_DURATION = 3000;
 let campPool = { dug: false, filled: false, digging: false, digProgress: 0, filling: false, fillProgress: 0 };
-let swimmingInPool = false;
 let leprechaunGold = 0;
 let leprechaunSpeech = { text: '', timer: 0 };
 // Camp camper (end of campground level)
-let insideCampCamper = false;
 let campCamperPlayerX = 0;
 let campCamperSleeping = false;
 let campCamperSleepTimer = 0;
@@ -467,7 +462,6 @@ let cheetahSpeech = { text: '', timer: 0 };
 let safariPhotography = { active: false, timer: 0, targetAnimal: '' };
 const SAFARI_PHOTO_DURATION = 1500; // 1.5s timing window
 let safariPhotosTaken = { elephant: false, rhino: false, antelope: false, giraffe: false };
-let swimmingInWateringHole = false;
 let dustParticles = []; // cheetah ride dust trail
 const CHEETAH_SPEED = 6.5; // faster than normal 4px
 const CHEETAH_YARN_MAGNET = 80; // auto-collect radius while riding
@@ -535,7 +529,7 @@ function update(dt) {
     return;
   }
 
-  if (insideCampCamper) {
+  if (currentScene === Scene.CAMP_CAMPER) {
     // Sleeping in bed
     if (campCamperSleeping) {
       campCamperSleepTimer += dt;
@@ -602,7 +596,7 @@ function update(dt) {
     // Exit
     if (keys['Enter'] && !campCamperPasta.cooking) {
       keys['Enter'] = false;
-      insideCampCamper = false;
+      currentScene = null;
       campCamperPlayerX = 0;
       player.y = GROUND_Y;
       player.vy = 0;
@@ -612,7 +606,7 @@ function update(dt) {
   }
 
   // Scuba diving minigame
-  if (scubaDiving) {
+  if (currentScene === Scene.SCUBA_DIVING) {
     // Swimming physics — buoyancy + 4-directional movement
     if (keys['ArrowLeft']) scubaPlayer.vx -= SCUBA_SWIM_FORCE;
     if (keys['ArrowRight']) scubaPlayer.vx += SCUBA_SWIM_FORCE;
@@ -670,8 +664,14 @@ function update(dt) {
     // Exit scuba — press Enter
     if (keys['Enter']) {
       keys['Enter'] = false;
-      scubaDiving = false;
+      currentScene = null;
       stopLoopSfx('sfxBubblesSwim');
+      // Force crossfade back to level music even if scuba fade is still in progress
+      if (musicFade) {
+        if (musicFade.out) { musicFade.out.pause(); musicFade.out.currentTime = 0; }
+        currentMusicId = musicFade.inId;
+        musicFade = null;
+      }
       crossfadeToLevel(currentLevel);
       score += 50;
       addPopup(player.x, player.y - 40, '+50 Great dive!', '#38bdf8');
@@ -683,7 +683,7 @@ function update(dt) {
   }
 
   // Sailing experience
-  if (sailing) {
+  if (currentScene === Scene.SAILING) {
     // Player-controlled sailing on the Neuse River
     if (keys['ArrowLeft']) sailAngle -= 0.03;
     if (keys['ArrowRight']) sailAngle += 0.03;
@@ -691,7 +691,7 @@ function update(dt) {
     // Exit sailing
     if (keys['Enter']) {
       keys['Enter'] = false;
-      sailing = false;
+      currentScene = null;
       stopLoopSfx('sfxSailWind');
       stopLoopSfx('sfxWaterLapping');
       player.x = SAILBOAT_POS.x;
@@ -702,24 +702,24 @@ function update(dt) {
     return;
   }
 
-  if (insideHouse) {
+  if (currentScene === Scene.HOUSE) {
     if (keys['Enter']) {
       keys['Enter'] = false;
-      insideHouse = false;
+      currentScene = null;
     }
     return;
   }
 
-  if (insidePizza) {
+  if (currentScene === Scene.PIZZA) {
     updatePizzaMinigame(dt);
     if (keys['Enter'] && pizzaMaking.stage === 'idle') {
       keys['Enter'] = false;
-      insidePizza = false;
+      currentScene = null;
     }
     return;
   }
 
-  if (insideCamper) {
+  if (currentScene === Scene.CAMPER) {
     // Nap in bed
     if (camperNapping) {
       camperNapTimer += dt;
@@ -803,24 +803,24 @@ function update(dt) {
     // Exit
     if (keys['Enter'] && !camperCooking.active && !camperPhone.answered) {
       keys['Enter'] = false;
-      insideCamper = false;
+      currentScene = null;
       camperPlayerX = 0;
       camperCooking = { active: false, progress: 0, burnt: false };
       camperPhone = { ringing: false, answered: false, ringTimer: 0, callTimer: 0, dialogue: '' };
     }
     return;
   }
-  if (insideWindmill) {
+  if (currentScene === Scene.WINDMILL) {
     if (keys['Enter']) {
       keys['Enter'] = false;
-      insideWindmill = false;
+      currentScene = null;
     }
     return;
   }
-  if (insidePark) {
+  if (currentScene === Scene.PARK) {
     if (keys['Enter']) {
       keys['Enter'] = false;
-      insidePark = false;
+      currentScene = null;
       player.y = GROUND_Y;
       player.vy = 0;
       player.onGround = true;
@@ -828,10 +828,10 @@ function update(dt) {
     return;
   }
 
-  if (insidePantheon) {
+  if (currentScene === Scene.PANTHEON) {
     if (keys['Enter']) {
       keys['Enter'] = false;
-      insidePantheon = false;
+      currentScene = null;
       player.y = GROUND_Y;
       player.vy = 0;
       player.onGround = true;
@@ -839,17 +839,17 @@ function update(dt) {
     return;
   }
 
-  if (swimming) {
-    if (keys['KeyS']) { keys['KeyS'] = false; swimming = false; }
+  if (currentScene === Scene.SWIMMING) {
+    if (keys['KeyS']) { keys['KeyS'] = false; currentScene = null; }
     return;
   }
 
-  if (surfing) {
-    if (keys['KeyS']) { keys['KeyS'] = false; surfing = false; }
+  if (currentScene === Scene.SURFING) {
+    if (keys['KeyS']) { keys['KeyS'] = false; currentScene = null; }
     return;
   }
 
-  if (insideChalet) {
+  if (currentScene === Scene.CHALET) {
     // Compute scene center (same as drawChaletInterior)
     const W = canvas.width;
     const chaletCam = Math.max(0, Math.min(getCurrentWorldW() - W, player.x - W / 2));
@@ -921,7 +921,7 @@ function update(dt) {
     }
     if (keys['Enter']) {
       keys['Enter'] = false;
-      insideChalet = false;
+      currentScene = null;
       drinkingCocoa = false;
       switchToLevel(8); // onward to the campground!
     }
@@ -1082,9 +1082,9 @@ function update(dt) {
 
   // House entry (level 1 only)
   const nearHouse = currentLevel === 1 && player.x > HOUSE.x - 20 && player.x < HOUSE.x + HOUSE.w + 20;
-  if (keys['Enter'] && nearHouse && !insideHouse) {
+  if (keys['Enter'] && nearHouse && currentScene !== Scene.HOUSE) {
     keys['Enter'] = false;
-    insideHouse = true;
+    currentScene = Scene.HOUSE;
   }
 
   // Camper entry (level 1 only)
@@ -1093,9 +1093,9 @@ function update(dt) {
     for (const s of bgScenes) {
       if (s.type === 'rv' && Math.abs(player.x - s.x) < 45) {
         nearCamper = true;
-        if (keys['Enter'] && !insideCamper) {
+        if (keys['Enter'] && currentScene !== Scene.CAMPER) {
           keys['Enter'] = false;
-          insideCamper = true;
+          currentScene = Scene.CAMPER;
           camperPlayerX = 0;
           camperCooking = { active: false, progress: 0, burnt: false };
         }
@@ -1110,9 +1110,9 @@ function update(dt) {
     for (const s of bgScenes) {
       if (s.type === 'windmill' && Math.abs(player.x - s.x) < 30) {
         nearWindmill = true;
-        if (keys['Enter'] && !insideWindmill) {
+        if (keys['Enter'] && currentScene !== Scene.WINDMILL) {
           keys['Enter'] = false;
-          insideWindmill = true;
+          currentScene = Scene.WINDMILL;
         }
         break;
       }
@@ -1139,9 +1139,9 @@ function update(dt) {
 
   // Pizza shop entry (level 2 only)
   const nearPizza = currentLevel === 3 && Math.abs(player.x - PIZZA_SHOP.x) < 50;
-  if (keys['Enter'] && nearPizza && !insidePizza) {
+  if (keys['Enter'] && nearPizza && currentScene !== Scene.PIZZA) {
     keys['Enter'] = false;
-    insidePizza = true;
+    currentScene = Scene.PIZZA;
     pizzaMaking.stage = 'idle';
     pizzaMaking.progress = 0;
     pizzaMaking.active = false;
@@ -1167,9 +1167,9 @@ function update(dt) {
   // Central Park entry (level 2)
   const nearPark = currentLevel === 3 &&
     player.x > CENTRAL_PARK_POS.x - 80 && player.x < CENTRAL_PARK_POS.x + 80;
-  if (keys['Enter'] && nearPark && !insidePark && !insidePizza) {
+  if (keys['Enter'] && nearPark && currentScene === null) {
     keys['Enter'] = false;
-    insidePark = true;
+    currentScene = Scene.PARK;
   }
 
   // Taxi → Rome (level 2)
@@ -1178,7 +1178,7 @@ function update(dt) {
     for (const tx of TAXI_POSITIONS) {
       if (Math.abs(player.x - tx) < 40) {
         nearTaxi = true;
-        if (keys['Enter'] && !insidePizza && !insidePark) {
+        if (keys['Enter'] && currentScene === null) {
           keys['Enter'] = false;
           switchToLevel(4);
         }
@@ -1198,7 +1198,7 @@ function update(dt) {
       nearFountain = true;
       if (keys['KeyS']) {
         keys['KeyS'] = false;
-        swimming = true;
+        currentScene = Scene.SWIMMING;
       }
     }
     // Gelato
@@ -1220,13 +1220,13 @@ function update(dt) {
       nearPantheonDoor = true;
       if (keys['Enter']) {
         keys['Enter'] = false;
-        insidePantheon = true;
+        currentScene = Scene.PANTHEON;
       }
     }
     // Fiat → Hawaii
     if (Math.abs(player.x - FIAT_POS.x) < 45) {
       nearFiat = true;
-      if (keys['Enter'] && !insidePantheon) {
+      if (keys['Enter'] && currentScene !== Scene.PANTHEON) {
         keys['Enter'] = false;
         switchToLevel(5);
       }
@@ -1272,7 +1272,7 @@ function update(dt) {
       nearSurf = true;
       if (keys['KeyS']) {
         keys['KeyS'] = false;
-        surfing = true;
+        currentScene = Scene.SURFING;
       }
     }
     // Airport → Oriental
@@ -1327,7 +1327,7 @@ function update(dt) {
       player.vx = 0; // stop at the end
       if (keys['Enter']) {
         keys['Enter'] = false;
-        insideChalet = true;
+        currentScene = Scene.CHALET;
         marshmallowAngle = Math.PI / 5; // reset aim
         crossfadeToMusic(CHALET_MUSIC_ID); // chalet music
       }
@@ -1337,13 +1337,13 @@ function update(dt) {
   // Oriental interactions (level 6)
   let nearSailboat = false;
   let nearDiveSpot = false;
-  if (currentLevel === 6 && !scubaDiving) {
+  if (currentLevel === 6 && currentScene !== Scene.SCUBA_DIVING) {
     // Sailboat boarding
     if (Math.abs(player.x - SAILBOAT_POS.x) < 55) {
       nearSailboat = true;
-      if (keys['Enter'] && !sailing) {
+      if (keys['Enter'] && currentScene !== Scene.SAILING) {
         keys['Enter'] = false;
-        sailing = true;
+        currentScene = Scene.SAILING;
         startLoopSfx('sfxSailWind');
         startLoopSfx('sfxWaterLapping');
       }
@@ -1353,7 +1353,7 @@ function update(dt) {
       nearDiveSpot = true;
       if (keys['Enter']) {
         keys['Enter'] = false;
-        scubaDiving = true;
+        currentScene = Scene.SCUBA_DIVING;
         scubaPlayer = { x: 200, y: 100, vx: 0, vy: 0 };
         scubaPearlCount = 0;
         initScubaCollectibles();
@@ -1532,26 +1532,26 @@ function update(dt) {
     // Swim in pool
     if (campPool.filled && Math.abs(player.x - DIG_SITE_POS.x) < 50) {
       nearPool = true;
-      if (!swimmingInPool && keys['KeyS']) {
+      if (currentScene !== Scene.SWIMMING_IN_POOL && keys['KeyS']) {
         keys['KeyS'] = false;
-        swimmingInPool = true;
+        currentScene = Scene.SWIMMING_IN_POOL;
       }
     }
-    if (swimmingInPool && keys['KeyS']) {
+    if (currentScene === Scene.SWIMMING_IN_POOL && keys['KeyS']) {
       keys['KeyS'] = false;
-      swimmingInPool = false;
+      currentScene = null;
     }
     // Camp camper entry
     if (Math.abs(player.x - CAMP_CAMPER_POS.x) < 55) {
       nearCampCamper = true;
-      if (keys['Enter'] && !insideCampCamper) {
+      if (keys['Enter'] && currentScene !== Scene.CAMP_CAMPER) {
         keys['Enter'] = false;
-        insideCampCamper = true;
+        currentScene = Scene.CAMP_CAMPER;
         campCamperPlayerX = 0;
       }
     }
     // Leprechaun interaction while swimming — press Q to ask for gold
-    if (swimmingInPool && keys['KeyQ']) {
+    if (currentScene === Scene.SWIMMING_IN_POOL && keys['KeyQ']) {
       keys['KeyQ'] = false;
       if (smoreCount > 0) {
         smoreCount--;
@@ -1651,14 +1651,14 @@ function update(dt) {
     // Watering hole swimming
     if (player.x > WATERING_HOLE_POS.x && player.x < WATERING_HOLE_POS.x + WATERING_HOLE_POS.w) {
       nearWateringHole = true;
-      if (!swimmingInWateringHole && keys['KeyS']) {
+      if (currentScene !== Scene.WATERING_HOLE && keys['KeyS']) {
         keys['KeyS'] = false;
-        swimmingInWateringHole = true;
+        currentScene = Scene.WATERING_HOLE;
       }
     }
-    if (swimmingInWateringHole && keys['KeyS']) {
+    if (currentScene === Scene.WATERING_HOLE && keys['KeyS']) {
       keys['KeyS'] = false;
-      swimmingInWateringHole = false;
+      currentScene = null;
     }
 
     // Elephant water launch — press E near elephant to get launched high
@@ -1924,7 +1924,7 @@ function update(dt) {
   }
 
   // NPC AI
-  const activeNpcs = currentLevel === 1 ? npcs : currentLevel === 2 ? sledNpcs : currentLevel === 3 ? nycNpcs : currentLevel === 4 ? romeNpcs : currentLevel === 5 ? hawaiiNpcs : currentLevel === 6 ? orientalNpcs : currentLevel === 8 ? campNpcs : currentLevel === 9 ? safariNpcs : alpsNpcs;
+  const activeNpcs = levelRegistry[currentLevel].npcs;
   const worldW = getCurrentWorldW();
   for (const npc of activeNpcs) {
     npc.idleTimer -= dt / 16;
@@ -1945,7 +1945,7 @@ function update(dt) {
 
   // NPC talk — Q key to chat with nearby NPCs
   let nearNpc = false;
-  if (!insideChalet && !insideHouse && !insideCamper && !insideWindmill && !insidePizza && !insidePark && !insidePantheon && !swimming && !surfing && !swimmingInPool && !insideCampCamper && !scubaDiving && !sailing && !swimmingInWateringHole) {
+  if (currentScene === null) {
     for (const npc of activeNpcs) {
       if (Math.abs(player.x - npc.x) < NPC_TALK_RANGE) {
         nearNpc = true;
@@ -2011,7 +2011,7 @@ function update(dt) {
   document.getElementById('hudFish').textContent = fishCount;
   document.getElementById('hudBacon').textContent = baconCount;
   document.getElementById('hudYarn').textContent = yarnCount;
-  document.getElementById('hudLevel').textContent = LEVEL_NAMES[currentLevel - 1] || 'Unknown';
+  document.getElementById('hudLevel').textContent = levelRegistry[currentLevel].name;
   document.getElementById('hudPizza').textContent = pizzaMaking.pizzaCount;
   document.getElementById('hudHotdog').textContent = hotdogCount;
   document.getElementById('hudGelato').textContent = gelatoCount;
@@ -2031,7 +2031,7 @@ function update(dt) {
   }
 
   // Hide controls during interior/mini-game scenes (always hidden on mobile)
-  const inScene = insideHouse || insideCamper || insideWindmill || insidePizza || insidePark || insidePantheon || swimming || surfing || insideChalet || swimmingInPool || insideCampCamper || scubaDiving || sailing || swimmingInWateringHole;
+  const inScene = currentScene !== null;
   if (!isMobile) {
     document.getElementById('controls').style.display = inScene ? 'none' : 'flex';
   }
