@@ -2075,6 +2075,82 @@ for (let i = 0; i < 4; i++) {
 }
 level11Cape.npcs = capeNpcs;
 
+// ── Level 12: Space Flight ──
+const SPACE_WORLD_W = 7000;
+const SPACE_SPEED = 3.0; // slightly slower than flight for difficulty
+
+const level12Space = {
+  worldW: SPACE_WORLD_W,
+  platforms: [], // flying level — no platforms
+  yarnBalls: [], // will hold alien collectibles for data integrity
+  aliens: [], // the actual alien data
+  asteroids: [], // obstacles
+};
+
+// Aliens — collectible friendly creatures (at least 8)
+const alienColors = ['#a78bfa', '#34d399', '#f472b6', '#60a5fa', '#fbbf24', '#f87171', '#2dd4bf', '#c084fc'];
+const alienEmojis = ['\u{1F60A}', '\u{1F917}', '\u{1F44B}', '\u2728', '\u{1F31F}', '\u{1F4AB}', '\u{1F389}', '\u{1FA90}'];
+for (let i = 0; i < 8; i++) {
+  const ax = 600 + i * 750 + (((i * 137 + 42) % 200));
+  const ay = 100 + (((i * 83 + 17) % 250));
+  level12Space.aliens.push({
+    x: ax, y: ay,
+    color: alienColors[i],
+    collected: false,
+    bobPhase: ((i * 197 + 31) % 628) / 100,
+    size: 10 + ((i * 53 + 7) % 5),
+    emoji: alienEmojis[i]
+  });
+  // Also add to yarnBalls for test compatibility
+  level12Space.yarnBalls.push({
+    x: ax, y: ay,
+    color: alienColors[i],
+    collected: false,
+    bobPhase: ((i * 197 + 31) % 628) / 100
+  });
+}
+
+// Asteroids — various sizes
+const asteroidData = [];
+for (let i = 0; i < 25; i++) {
+  asteroidData.push({
+    x: 400 + i * 260 + ((i * 137 + 42) % 100),
+    y: 60 + ((i * 83 + 17) % 320),
+    radius: 10 + ((i * 53 + 7) % 25), // small to large
+    rotation: ((i * 197 + 31) % 628) / 100,
+    rotSpeed: ((i * 41 + 13) % 80 - 40) / 1000,
+    hit: false,
+    vertices: [] // for rocky appearance
+  });
+}
+// Generate rocky vertices for each asteroid
+for (const ast of asteroidData) {
+  const numVerts = 7 + (Math.floor((ast.x * 3 + ast.y) % 4));
+  for (let v = 0; v < numVerts; v++) {
+    const angle = (v / numVerts) * Math.PI * 2;
+    const r = ast.radius * (0.7 + ((v * 31 + ast.radius) % 30) / 100);
+    ast.vertices.push({ angle, r });
+  }
+}
+level12Space.asteroids = asteroidData;
+
+// NPCs (decorative — for test compatibility)
+const spaceNpcs = [];
+const spaceNpcColors = ['#a78bfa', '#34d399', '#f472b6', '#60a5fa'];
+const spaceNpcAccessories = ['bow', 'glasses', 'scarf', 'flower'];
+for (let i = 0; i < 4; i++) {
+  spaceNpcs.push({
+    x: 300 + i * 1600 + ((i * 137 + 42) % 200),
+    y: GROUND_Y,
+    color: spaceNpcColors[i],
+    accessory: spaceNpcAccessories[i],
+    vx: 0,
+    walkFrame: 0, walkTimer: 0,
+    facing: 1,
+    idleTimer: ((i * 197 + 31) % 200)
+  });
+}
+
 npcDialogs[11] = [
   "Welcome to Cape Canaveral! Home of rockets and dreams!",
   "That rocket over there? She's going to the MOON, baby!",
@@ -2094,4 +2170,120 @@ npcDialogs[11] = [
   "If you see aliens up there, tell them we said meow!",
   "The launchpad was just repainted. Please don't scratch it. ...I know, it's tempting.",
   "Space: the final frontier. Also the best place to chase laser pointers!",
+];
+
+npcDialogs[12] = [
+  "Wow, space is HUGE! And sparkly! Just like me!",
+  "That asteroid almost hit us! This is better than a roller coaster!",
+  "I can see my house from here! ...No I can't, we're in space.",
+  "These friendly aliens are SO cute! We should take them to the Moon!",
+  "Is it just me or is Earth getting smaller? Don't worry, it'll be fine!",
+  "Zero gravity is AMAZING for my fur! So fluffy!",
+  "I wonder if there's a yarn ball floating around in space somewhere...",
+  "Space fact: there are more stars than grains of sand on all Earth's beaches!",
+  "The Moon is getting bigger! Or are we getting smaller? Science is confusing!",
+  "I just saw a shooting star! Oh wait, that was an asteroid. DODGE!",
+  "Houston, we have a PURR-fect mission so far!",
+  "That nebula looks like a giant ball of yarn! *dreamy sigh*",
+  "Alien friends collected! They're coming to the Moon with us!",
+  "My space helmet keeps fogging up from all my excited meowing!",
+  "Earth looks like a blue marble from here. I want to bat it around!",
+  "Space is like the world's biggest cat tree — infinite climbing room!",
+];
+
+// ── Level 13: Moon ──
+const MOON_WORLD_W = 5500;
+
+const level13Moon = {
+  worldW: MOON_WORLD_W,
+  platforms: [
+    { x: 250, y: 360, w: 90 },
+    { x: 550, y: 310, w: 85 },
+    { x: 850, y: 350, w: 80 },
+    { x: 1200, y: 280, w: 90 },
+    { x: 1600, y: 340, w: 85 },
+    { x: 2000, y: 300, w: 80 },
+    { x: 2500, y: 360, w: 95 },
+    { x: 3000, y: 290, w: 85 },
+    { x: 3400, y: 340, w: 80 },
+    { x: 3900, y: 310, w: 90 },
+    { x: 4400, y: 350, w: 85 },
+    { x: 4900, y: 280, w: 80 },
+  ],
+  yarnBalls: [],
+  npcs: [],
+  scenes: [
+    { type: 'crater', x: 400, r: 30 },
+    { type: 'crater', x: 1000, r: 45 },
+    { type: 'crater', x: 1800, r: 25 },
+    { type: 'crater', x: 2800, r: 50 },
+    { type: 'crater', x: 3600, r: 35 },
+    { type: 'crater', x: 4500, r: 40 },
+    { type: 'rock', x: 300 },
+    { type: 'rock', x: 1500 },
+    { type: 'rock', x: 2300 },
+    { type: 'rock', x: 3800 },
+    { type: 'rock', x: 5000 },
+    { type: 'smoothie_shop', x: 1400 },
+    { type: 'topgolf', x: 3200 },
+  ],
+};
+
+// Smoothie Shop position
+const SMOOTHIE_SHOP_POS = { x: 1400, w: 120 };
+// TopGolf position
+const TOPGOLF_POS = { x: 3200, w: 140 };
+
+// Moon yarn balls on elevated platforms
+for (const p of level13Moon.platforms) {
+  if (p.y < 350) {
+    level13Moon.yarnBalls.push({
+      x: p.x + p.w / 2,
+      y: p.y - 14,
+      color: yarnColors[level13Moon.yarnBalls.length % yarnColors.length],
+      collected: false,
+      bobPhase: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+// Moon NPCs — mix of aliens and moon characters
+const moonNpcs = [];
+const moonNpcColors = ['#a78bfa', '#34d399', '#f472b6', '#e2e8f0', '#fbbf24'];
+const moonNpcAccessories = ['bow', 'glasses', 'scarf', 'flower', 'bow'];
+for (let i = 0; i < 5; i++) {
+  moonNpcs.push({
+    x: 300 + i * 1000 + Math.random() * 200,
+    y: GROUND_Y,
+    color: moonNpcColors[i],
+    accessory: moonNpcAccessories[i],
+    vx: (Math.random() - 0.5) * 0.8,
+    walkFrame: 0, walkTimer: 0,
+    facing: 1,
+    idleTimer: Math.random() * 200
+  });
+}
+level13Moon.npcs = moonNpcs;
+
+npcDialogs[13] = [
+  "Welcome to the Moon! The gravity here is out of this world!",
+  "I've been living here for eons. The Earth-watching is spectacular!",
+  "Try the smoothie shop! The dried space fruit is surprisingly delicious!",
+  "TopGolf on the Moon is AMAZING! Balls fly so far in low gravity!",
+  "We aliens have been waiting for you! Your cat friend is famous in space!",
+  "The craters make great hot tubs. Don't tell anyone I said that.",
+  "I came here for the cheese. Turns out the Moon isn't made of cheese. Disappointing!",
+  "Low gravity is purr-fect for high jumps! Try bouncing around!",
+  "The smoothies here are 75 points of pure deliciousness!",
+  "That golf dome over there? Best views in the solar system while you putt!",
+  "I miss Earth sometimes. Then I remember: no gravity, no rules!",
+  "My alien friends and I have a book club. Currently reading 'The Cat in the Spacesuit'.",
+  "Fun fact: you can jump 6 times higher on the Moon! Math is fun!",
+  "The dust here gets EVERYWHERE. My fur will never be the same.",
+  "Have you seen the Earth from here at night? It's like a giant nightlight!",
+  "This is the final frontier! Well, this level anyway. You made it!",
+  "I heard there's a secret smoothie recipe: moon dust + stardust + yarn fuzz!",
+  "TopGolf pro tip: the far target is worth 50 points but REALLY hard to hit!",
+  "The smoothie shop owner is an alien. Best barista in the galaxy!",
+  "Congratulations on making it to the Moon! You're officially an astro-cat!",
 ];
