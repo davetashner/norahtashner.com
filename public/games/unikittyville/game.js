@@ -435,9 +435,15 @@ function completeTransition() {
   currentLevel = levelTransition.toLevel;
   levelTransition.active = false;
   player.x = 100;
-  player.y = GROUND_Y;
+  // Flight levels: start mid-screen instead of on the ground
+  if (currentLevel === 10 || currentLevel === 12) {
+    player.y = 200;
+    player.onGround = false;
+  } else {
+    player.y = GROUND_Y;
+    player.onGround = true;
+  }
   player.vy = 0;
-  player.onGround = true;
   popups = [];
   cooking.active = false;
   fishing.active = false;
@@ -1082,6 +1088,24 @@ function update(dt) {
     playMeow();
   }
 
+  // Flight levels: override velocity and gravity before physics
+  if (currentLevel === 10) {
+    player.vx = Math.max(player.vx, FLIGHT_SPEED);
+    if (keys['ArrowUp']) player.y = Math.max(60, player.y - 3);
+    if (keys['ArrowDown']) player.y = Math.min(GROUND_Y - 80, player.y + 3);
+    player.vy = 0;
+    player.onGround = false;
+  }
+  if (currentLevel === 12) {
+    player.vx = Math.max(player.vx, SPACE_SPEED);
+    if (keys['ArrowUp']) player.y = Math.max(40, player.y - 3.5);
+    if (keys['ArrowDown']) player.y = Math.min(canvas.height - 40, player.y + 3.5);
+    if (keys['ArrowLeft']) player.vx = Math.max(SPACE_SPEED - 1.5, player.vx - 0.5);
+    if (keys['ArrowRight']) player.vx = Math.min(SPACE_SPEED + 2, player.vx + 0.3);
+    player.vy = 0;
+    player.onGround = false;
+  }
+
   // Physics
   const effectiveGravity = currentLevel === 13 ? MOON_GRAVITY : GRAVITY;
   player.vy = applyGravity(player.vy, effectiveGravity);
@@ -1129,8 +1153,8 @@ function update(dt) {
     score += POINTS.YARN_BONUS;
     addPopup(player.x, player.y - 60, '+' + POINTS.YARN_BONUS + ' ALL YARN BONUS!', '#fbbf24');
     playChaChing();
-    // Big glitter celebration from the horn
-    if (!prefersReducedMotion) {
+    // Big glitter celebration from the horn (cap at 120 particles)
+    if (!prefersReducedMotion && glitterParticles.length < 120) {
       const colors = ['#f472b6', '#a78bfa', '#38bdf8', '#fbbf24', '#4ade80', '#fb923c', '#e879f9'];
       for (let i = 0; i < 40; i++) {
         const angle = Math.random() * Math.PI * 2;
@@ -2003,17 +2027,6 @@ function update(dt) {
 
   // ── Transatlantic Flight interactions (level 10) ──
   if (currentLevel === 10) {
-    // Auto-scroll: push player right
-    player.vx = Math.max(player.vx, FLIGHT_SPEED);
-
-    // Vertical movement — up/down keys move player vertically
-    if (keys['ArrowUp']) player.y = Math.max(60, player.y - 3);
-    if (keys['ArrowDown']) player.y = Math.min(GROUND_Y - 80, player.y + 3);
-
-    // Override gravity — flying level
-    player.vy = 0;
-    player.onGround = false;
-
     // Seagull collision
     for (const sg of level10Flight.seagulls) {
       if (sg.hit) continue;
@@ -2132,20 +2145,6 @@ function update(dt) {
 
   // ── Space Flight interactions (level 12) ──
   if (currentLevel === 12) {
-    // Auto-scroll
-    player.vx = Math.max(player.vx, SPACE_SPEED);
-
-    // 4-directional movement
-    if (keys['ArrowUp']) player.y = Math.max(40, player.y - 3.5);
-    if (keys['ArrowDown']) player.y = Math.min(canvas.height - 40, player.y + 3.5);
-    // Left/right also work for fine control
-    if (keys['ArrowLeft']) player.vx = Math.max(SPACE_SPEED - 1.5, player.vx - 0.5);
-    if (keys['ArrowRight']) player.vx = Math.min(SPACE_SPEED + 2, player.vx + 0.3);
-
-    // Override gravity
-    player.vy = 0;
-    player.onGround = false;
-
     // Invulnerability timer
     if (spaceInvulnTimer > 0) spaceInvulnTimer -= 16;
 

@@ -501,11 +501,11 @@ function drawLevelTransition(W, H) {
     ctx.textBaseline = 'middle';
     const textAlpha = Math.min(1, (t - 0.4) / 0.3);
     ctx.globalAlpha = textAlpha;
-    const levelNames = { 1: 'Back to the Meadow!', 2: 'Time to Sled!', 3: 'Welcome to NYC!', 4: 'Benvenuto a Roma!', 5: 'Aloha Hawaii!', 6: 'Welcome to the Alps!', 7: 'Welcome to Camp!' };
-    const levelSubtitles = { 1: playerName + ' returns home!', 2: playerName + ' hits the snowy hills!', 3: playerName + ' arrives in the big city!', 4: playerName + ' explores the Eternal City!', 5: playerName + ' hits the beach!', 6: playerName + ' hits the slopes!', 7: playerName + ' goes camping!' };
-    ctx.fillText(levelNames[levelTransition.toLevel] || 'New Level!', W / 2, H / 2 - 20);
+    const lvl = levelTransition.toLevel;
+    const name = (LEVEL_NAMES[lvl - 1]) || 'Level ' + lvl;
+    ctx.fillText(name, W / 2, H / 2 - 20);
     ctx.font = '20px system-ui';
-    ctx.fillText(levelSubtitles[levelTransition.toLevel] || '', W / 2, H / 2 + 20);
+    ctx.fillText(playerName + ' is on the way!', W / 2, H / 2 + 20);
     ctx.globalAlpha = 1;
     ctx.textBaseline = 'alphabetic';
   }
@@ -4688,14 +4688,14 @@ function drawFlightWorld(W, H, cam, cycle, isNight) {
   const ww = level10Flight.worldW;
   const t = gameTime;
 
-  // Ocean — bottom third of screen
+  // Ocean — bottom third of screen (draw relative to cam so it fills the visible area)
   const oceanTop = H * 0.7;
   const oceanGrad = ctx.createLinearGradient(0, oceanTop, 0, H);
   oceanGrad.addColorStop(0, '#1d4ed8');
   oceanGrad.addColorStop(0.5, '#1e3a8a');
   oceanGrad.addColorStop(1, '#172554');
   ctx.fillStyle = oceanGrad;
-  ctx.fillRect(0, oceanTop, W, H - oceanTop);
+  ctx.fillRect(cam, oceanTop, W, H - oceanTop);
 
   // Animated wave patterns
   ctx.strokeStyle = 'rgba(96, 165, 250, 0.4)';
@@ -4703,9 +4703,9 @@ function drawFlightWorld(W, H, cam, cycle, isNight) {
   for (let row = 0; row < 4; row++) {
     ctx.beginPath();
     const wy = oceanTop + 15 + row * 18;
-    for (let x = -20; x < W + 20; x += 5) {
+    for (let x = cam - 20; x < cam + W + 20; x += 5) {
       const yOff = Math.sin((x + cam * 0.3 + t / 500 + row * 50) / 30) * 5;
-      if (x === -20) ctx.moveTo(x, wy + yOff);
+      if (x === cam - 20) ctx.moveTo(x, wy + yOff);
       else ctx.lineTo(x, wy + yOff);
     }
     ctx.stroke();
