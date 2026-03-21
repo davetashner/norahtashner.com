@@ -141,6 +141,21 @@ const NPC_TALK_RANGE = 60;
 let activeSpeechBubbles = []; // { npc, text, life }
 const SLED_WORLD_W = 5000;
 
+// Sledding terrain height function — slopes downhill with rolling bumps
+function sledTerrainY(x) {
+  const progress = x / SLED_WORLD_W; // 0 to 1
+  const baseY = 250 + progress * 150; // slopes from 250 to 400
+  // Rolling hills/bumps
+  const bump1 = Math.sin(x * 0.008) * 25;
+  const bump2 = Math.sin(x * 0.003 + 1) * 15;
+  const bump3 = Math.sin(x * 0.015) * 10; // small ripples
+  // A few big dips and a launch ramp
+  const bigDip1 = (x > 1200 && x < 1400) ? Math.sin((x - 1200) / 200 * Math.PI) * -40 : 0;
+  const bigDip2 = (x > 2800 && x < 3000) ? Math.sin((x - 2800) / 200 * Math.PI) * -35 : 0;
+  const bigJump = (x > 3800 && x < 4000) ? Math.sin((x - 3800) / 200 * Math.PI) * 30 : 0;
+  return Math.min(GROUND_Y, baseY + bump1 + bump2 + bump3 + bigDip1 + bigDip2 - bigJump);
+}
+
 // Space flight alien collection — persists to Moon level
 let collectedAlienCount = 0;
 const MAX_SPACE_ALIENS = 8;
@@ -439,6 +454,10 @@ function completeTransition() {
   if (currentLevel === 10 || currentLevel === 12) {
     player.y = 200;
     player.onGround = false;
+  } else if (currentLevel === 2) {
+    // Sledding level: start at terrain height
+    player.y = sledTerrainY(100);
+    player.onGround = true;
   } else {
     player.y = GROUND_Y;
     player.onGround = true;
@@ -449,6 +468,8 @@ function completeTransition() {
   fishing.active = false;
   currentScene = null;
   skiing = false;
+  alpsEquipment = null;
+  alpsChoosing = (levelTransition.toLevel === 7);
   sledding = false;
   hammockNapping = false;
   hammockNapTimer = 0;
@@ -541,6 +562,9 @@ let diamondCount = 0;
 let alpsScrollX = 0;
 const ALPS_WORLD_W = 6000;
 const ALPS_SPEED = 3.5; // auto-scroll speed while skiing
+// Alps equipment choice
+let alpsEquipment = null; // 'skis' or 'snowboard' — null means choosing
+let alpsChoosing = false; // true when the equipment selection UI is showing
 
 // ── Level 8: Campground ──
 let stickCount = 0;
@@ -1450,6 +1474,32 @@ function update(dt) {
   // Alps interactions (level 7)
   let nearChalet = false;
   if (currentLevel === 7) {
+    // Equipment selection phase
+    if (alpsChoosing) {
+      player.vx = 0;
+      // Press 1 or S for Skis
+      if (keys['Digit1'] || keys['KeyS']) {
+        keys['Digit1'] = false;
+        keys['KeyS'] = false;
+        alpsEquipment = 'skis';
+        alpsChoosing = false;
+        skiing = true;
+        addPopup(player.x, player.y - 40, 'Skis equipped!', '#60a5fa');
+      }
+      // Press 2 or B for Snowboard
+      if (keys['Digit2'] || keys['KeyB']) {
+        keys['Digit2'] = false;
+        keys['KeyB'] = false;
+        alpsEquipment = 'snowboard';
+        alpsChoosing = false;
+        skiing = true;
+        addPopup(player.x, player.y - 40, 'Snowboard equipped!', '#a78bfa');
+      }
+    }
+
+    if (alpsChoosing) {
+      // Skip the rest of level 7 logic while choosing
+    } else {
     // Auto-ski: push player right continuously
     player.vx = Math.max(player.vx, ALPS_SPEED);
 
@@ -1494,6 +1544,7 @@ function update(dt) {
         crossfadeToMusic(CHALET_MUSIC_ID); // chalet music
       }
     }
+    } // end else (not choosing)
   }
 
   // Oriental interactions (level 6)
@@ -2325,8 +2376,10 @@ function update(dt) {
   // Sledding interactions (level 2)
   let nearTrain = false;
   if (currentLevel === 2) {
-    // Auto-sled: push player right
-    player.vx = Math.max(player.vx, SLED_SPEED);
+    // Auto-sled: push player right, speed varies with terrain slope
+    const terrainSlope = (sledTerrainY(player.x + 5) - sledTerrainY(player.x - 5)) / 10;
+    const slopeBoost = terrainSlope * 2; // positive slope = downhill = faster
+    player.vx = Math.max(player.vx, SLED_SPEED + slopeBoost);
     sledding = true;
 
     // Snowball collection
@@ -2392,6 +2445,8 @@ function update(dt) {
     }
     npc.x += npc.vx * 0.5;
     npc.x = Math.max(40, Math.min(worldW - 40, npc.x));
+    // Keep NPCs on terrain for sledding level
+    if (currentLevel === 2) npc.y = sledTerrainY(npc.x);
     npc.facing = npc.vx >= 0 ? 1 : -1;
     if (Math.abs(npc.vx) > 0.1) {
       npc.walkTimer += dt;
@@ -2514,6 +2569,10 @@ function update(dt) {
 }
 
 function getGroundLevel(x) {
+  // Sledding level: terrain follows downhill slope
+  if (currentLevel === 2) {
+    return sledTerrainY(x);
+  }
   // Pond area is lower (level 1 only)
   if (currentLevel === 1 && x > POND.x + 20 && x < POND.x + POND.w - 20) {
     return GROUND_Y + POND.depth;
