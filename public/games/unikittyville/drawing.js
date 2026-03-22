@@ -1465,9 +1465,9 @@ function darkenHex(hex) {
 function drawLightShowOverlay(W, H) {
   const challenge = LIGHT_SHOW_TARGETS[lightShowChallenge];
   const panelW = Math.round(W * 0.7);
-  const panelH = Math.round(H * 0.55);
+  const panelH = Math.round(H * 0.48);
   const px = Math.round((W - panelW) / 2);
-  const py = Math.round(H * 0.05);
+  const py = Math.round(H * 0.12);
   const font = '"Segoe UI", system-ui, sans-serif';
 
   // Semi-transparent backdrop
@@ -1485,29 +1485,29 @@ function drawLightShowOverlay(W, H) {
   ctx.fillStyle = '#fbbf24';
   ctx.font = 'bold ' + Math.round(H * 0.045) + 'px ' + font;
   ctx.textAlign = 'center';
-  ctx.fillText('Campfire Light Show', W / 2, py + H * 0.06);
+  ctx.fillText('Campfire Light Show', W / 2, py + H * 0.05);
 
   // Challenge number & progress
   ctx.fillStyle = '#a5b4fc';
   ctx.font = Math.round(H * 0.028) + 'px ' + font;
   const completed = lightShowChallengesCompleted.filter(c => c).length;
-  ctx.fillText('Challenge ' + (lightShowChallenge + 1) + '/5  (' + completed + ' completed)', W / 2, py + H * 0.1);
+  ctx.fillText('Challenge ' + (lightShowChallenge + 1) + '/5  (' + completed + ' completed)', W / 2, py + H * 0.085);
 
   // Challenge description
   ctx.fillStyle = '#e2e8f0';
   ctx.font = 'bold ' + Math.round(H * 0.032) + 'px ' + font;
-  ctx.fillText(challenge.desc, W / 2, py + H * 0.15);
+  ctx.fillText(challenge.desc, W / 2, py + H * 0.13);
 
   // Completed checkmark
   if (lightShowChallengesCompleted[lightShowChallenge]) {
     ctx.fillStyle = '#4ade80';
     ctx.font = 'bold ' + Math.round(H * 0.028) + 'px ' + font;
-    ctx.fillText('\u2713 Completed!', W / 2, py + H * 0.19);
+    ctx.fillText('\u2713 Completed!', W / 2, py + H * 0.17);
   }
 
   // Target pattern (show colored circles)
   if (challenge.pattern) {
-    const targetY = py + H * 0.24;
+    const targetY = py + H * 0.21;
     ctx.fillStyle = '#94a3b8';
     ctx.font = Math.round(H * 0.024) + 'px ' + font;
     ctx.fillText('Target:', W / 2, targetY - H * 0.015);
@@ -1535,7 +1535,7 @@ function drawLightShowOverlay(W, H) {
   }
 
   // Your program
-  const progY = py + H * 0.33;
+  const progY = py + H * 0.28;
   ctx.fillStyle = '#94a3b8';
   ctx.font = Math.round(H * 0.024) + 'px ' + font;
   ctx.textAlign = 'center';
@@ -1579,7 +1579,7 @@ function drawLightShowOverlay(W, H) {
 
   // Running indicator
   if (lightShowRunning) {
-    const runY = progY + H * 0.1;
+    const runY = progY + H * 0.08;
     ctx.fillStyle = '#fbbf24';
     ctx.font = 'bold ' + Math.round(H * 0.032) + 'px ' + font;
     ctx.textAlign = 'center';
@@ -1589,7 +1589,7 @@ function drawLightShowOverlay(W, H) {
 
   // Feedback message
   if (lightShowFeedback.timer > 0) {
-    const fbY = py + H * 0.45;
+    const fbY = py + H * 0.38;
     const alpha = Math.min(1, lightShowFeedback.timer / 500);
     ctx.globalAlpha = alpha;
     ctx.fillStyle = lightShowFeedback.color;
