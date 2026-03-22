@@ -1810,7 +1810,7 @@ const level7 = {
     // Rocks and boulders
     { type: 'safari_rock', x: 400 },
     { type: 'safari_rock', x: 1100 },
-    { type: 'safari_rock', x: 2000 },
+    { type: 'market_stall', x: 2000 },
     { type: 'safari_rock', x: 3000 },
     { type: 'safari_rock', x: 4300 },
     // Animal tracks (lead to hidden yarn)
@@ -2002,6 +2002,8 @@ const ROCKET_POS = { x: 3800, y: GROUND_Y };
 const SPACE_SUIT_POS = { x: 2000 };
 // NASA buildings
 const NASA_BUILDING_POS = { x: 1200, w: 180 };
+// Mission Control building (separate from museum)
+const MISSION_CONTROL_POS = { x: 2600, w: 160 };
 
 const level11Cape = {
   worldW: CAPE_WORLD_W,
@@ -2026,6 +2028,7 @@ const level11Cape = {
     { type: 'palm_tree', x: 1800 },
     { type: 'palm_tree', x: 4400 },
     { type: 'nasa_building', x: NASA_BUILDING_POS.x },
+    { type: 'mission_control', x: MISSION_CONTROL_POS.x },
     { type: 'rocket', x: ROCKET_POS.x },
     { type: 'space_suit', x: SPACE_SUIT_POS.x },
   ],
@@ -2212,6 +2215,7 @@ const level13Moon = {
     { type: 'rock', x: 3800 },
     { type: 'rock', x: 5000 },
     { type: 'smoothie_shop', x: 1400 },
+    { type: 'rover_station', x: 3000 },
     { type: 'topgolf', x: 3200 },
   ],
 };
@@ -2220,6 +2224,10 @@ const level13Moon = {
 const SMOOTHIE_SHOP_POS = { x: 1400, w: 120 };
 // TopGolf position
 const TOPGOLF_POS = { x: 3200, w: 140 };
+// Rover Station position
+const ROVER_STATION_POS = { x: 3000, w: 100 };
+// Apollo Landing Site — near end of Moon level, before the completion zone
+const APOLLO_SITE_POS = { x: 4700, w: 100 };
 
 // Moon yarn balls on elevated platforms
 for (const p of level13Moon.platforms) {
@@ -2274,3 +2282,69 @@ npcDialogs[13] = [
   "The smoothie shop owner is an alien. Best barista in the galaxy!",
   "Congratulations on making it to the Moon! You're officially an astro-cat!",
 ];
+
+// ── Time Capsule Collectibles ──
+// One hidden historical artifact per level. Player walks near and presses T to discover.
+const timeCapsules = {
+  1:  { x: 3500, name: 'Wildflower Seeds',        year: '1850',   fact: 'Wildflower meadows support 10x more pollinators.' },
+  2:  { x: 1500, name: 'Wooden Toboggan',          year: '1400s',  fact: 'Indigenous peoples invented the toboggan.' },
+  3:  { x: 3000, name: 'Subway Token',             year: '1953',   fact: 'NYC subway tokens were used from 1953 to 2003.' },
+  4:  { x: 2000, name: 'Roman Coin',               year: '27 BC',  fact: 'Roman denarius coins featured emperors\' portraits.' },
+  5:  { x: 2500, name: 'Polynesian Compass',       year: '400 AD', fact: 'Polynesian navigators used stars to cross oceans.' },
+  6:  { x: 1800, name: 'Ship\'s Bell',             year: '1862',   fact: 'The USS Oriental\'s bell was recovered from the Neuse River.' },
+  7:  { x: 2200, name: 'Swiss Watch',              year: '1755',   fact: 'Swiss watchmaking began in the 1500s.' },
+  8:  { x: 3200, name: 'Arrowhead',                year: '3000 BC',fact: 'Stone arrowheads took hours of careful flint-knapping.' },
+  9:  { x: 3500, name: 'Tribal Mask',              year: '1200 AD',fact: 'African masks represent spirits and nature.' },
+  10: { x: 3000, name: 'Amelia Earhart\'s Compass',year: '1932',   fact: 'Amelia Earhart flew solo across the Atlantic.' },
+  11: { x: 1200, name: 'Apollo Patch',             year: '1969',   fact: 'NASA mission patches are designed by astronaut crews.' },
+  12: { x: 4000, name: 'Voyager Record',           year: '1977',   fact: 'The Voyager Golden Record carries sounds from Earth.' },
+  13: { x: 2500, name: 'Moon Rock',                year: '1969',   fact: 'Apollo astronauts brought back 842 pounds of moon rocks.' },
+};
+
+// ── NPC Quiz Questions ──
+// Triggered randomly (~33%) after dismissing an NPC speech bubble.
+// Questions test comprehension of facts from npcDialogs above.
+const npcQuizzes = {
+  1: [ // Meadow
+    { question: "How many wildflower species are in the meadow?", answers: ["5", "12", "30"], correct: 1 },
+    { question: "What did the pond fish count come out to?", answers: ["12 fish", "100 fish", "47 fish"], correct: 2 },
+    { question: "What does clover come in that was found here?", answers: ["Four leaf varieties", "Three colors", "Two sizes"], correct: 0 },
+    { question: "What bird lives in the windmill?", answers: ["A robin", "A barn owl", "A blue jay"], correct: 1 },
+    { question: "What do the bees' waggle dance mean?", answers: ["Danger is near", "They found good flowers", "It's going to rain"], correct: 1 },
+  ],
+  2: [ // Sledding
+    { question: "What is fresh snow mostly made of?", answers: ["Ice crystals", "90% air", "Frozen rain"], correct: 1 },
+    { question: "What treat is waiting at the bottom of the hill?", answers: ["Hot chocolate", "Warm cookies", "Soup"], correct: 0 },
+    { question: "What frozen treat was packed as an emergency snack?", answers: ["Ice cream sandwich", "Fish popsicle", "Frozen yogurt"], correct: 1 },
+    { question: "What did the snow angel come out as?", answers: ["A snow unicorn", "A snow cat", "A snow dog"], correct: 1 },
+    { question: "How many snowflakes were caught on the tongue?", answers: ["Ten", "Twenty-three", "Forty-seven"], correct: 2 },
+  ],
+  3: [ // NYC
+    { question: "How many acres is Central Park?", answers: ["200 acres", "843 acres", "1,500 acres"], correct: 1 },
+    { question: "How many yellow taxis are there in NYC?", answers: ["5,000", "13,000", "25,000"], correct: 1 },
+    { question: "Why is NYC pizza famous?", answers: ["The cheese", "The water in the dough", "The oven type"], correct: 1 },
+    { question: "How many languages are spoken in NYC?", answers: ["Over 200", "Over 800", "Over 50"], correct: 1 },
+    { question: "What was NYC before Washington DC?", answers: ["A small village", "The first US capital", "A Dutch colony"], correct: 1 },
+  ],
+  4: [ // Rome
+    { question: "How old is Rome?", answers: ["500 years", "1,200 years", "2,700 years"], correct: 2 },
+    { question: "How many spectators could the Colosseum hold?", answers: ["10,000", "50,000", "100,000"], correct: 1 },
+    { question: "How many fountains are there in Rome?", answers: ["Over 500", "Over 2,000", "Over 5,000"], correct: 1 },
+    { question: "How many steps do the Spanish Steps have?", answers: ["135", "200", "88"], correct: 0 },
+    { question: "What did the Romans invent for building?", answers: ["Steel beams", "Glass windows", "Concrete"], correct: 2 },
+  ],
+  5: [ // Hawaii
+    { question: "How many letters are in the Hawaiian alphabet?", answers: ["26", "18", "12"], correct: 2 },
+    { question: "What is the Hawaiian state fish?", answers: ["Clownfish", "Humuhumunukunukuapua'a", "Mahi-mahi"], correct: 1 },
+    { question: "Where was surfing invented?", answers: ["California", "Australia", "Hawaii"], correct: 2 },
+    { question: "What does 'aloha' mean?", answers: ["Only hello", "Hello AND goodbye", "Thank you"], correct: 1 },
+    { question: "Are there snakes in Hawaii?", answers: ["Yes, many", "Just a few", "Zero!"], correct: 2 },
+  ],
+  6: [ // Oriental NC
+    { question: "What is Oriental called in North Carolina?", answers: ["Fishing Capital", "Sailing Capital", "Surfing Capital"], correct: 1 },
+    { question: "How wide is the Neuse River at its mouth?", answers: ["1 mile", "6 miles", "12 miles"], correct: 1 },
+    { question: "How did the town of Oriental get its name?", answers: ["Asian settlers", "A wrecked ship called USS Oriental", "A compass pointing east"], correct: 1 },
+    { question: "What is the Pamlico Sound?", answers: ["A musical note", "Largest lagoon on US East Coast", "A type of whale call"], correct: 1 },
+    { question: "What are horseshoe crabs actually related to?", answers: ["Lobsters", "Spiders", "Turtles"], correct: 1 },
+  ],
+};

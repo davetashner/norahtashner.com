@@ -304,12 +304,298 @@ window.addEventListener('orientationchange', () => { setTimeout(resize, 100); })
 window.addEventListener('keydown', e => {
   if (!e.repeat) keys[e.code] = true;
   if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') e.preventDefault();
+
+  // Postcard writer — capture typing when open in write mode
+  if (postcardOpen && postcardMode === 'write' && !postcardJustSent && !e.repeat) {
+    e.preventDefault();
+    if (e.key === 'Escape') {
+      postcardOpen = false;
+      postcardText = '';
+    } else if (e.key === 'Enter' && postcardText.length > 0) {
+      // Send postcard
+      const theme = POSTCARD_THEMES[currentLevel];
+      const levelName = LEVEL_NAMES[currentLevel - 1] || 'Level ' + currentLevel;
+      const isNew = !postcardSentLevels.has(currentLevel);
+      postcardsSent.push({ level: currentLevel, text: postcardText, levelName: levelName });
+      postcardSentLevels.add(currentLevel);
+      savePostcards();
+      if (isNew) {
+        score += POSTCARD_POINTS;
+        addPopup(player.x, player.y - 40, '+' + POSTCARD_POINTS + ' Postcard sent!', '#fbbf24');
+        playChaChing();
+      } else {
+        addPopup(player.x, player.y - 40, 'Postcard sent!', '#86efac');
+      }
+      postcardJustSent = true;
+      postcardSentTimer = 1200;
+      postcardText = '';
+    } else if (e.key === 'Backspace') {
+      postcardText = postcardText.slice(0, -1);
+    } else if (e.key === 'Tab') {
+      // Switch to gallery mode
+      postcardMode = 'gallery';
+      postcardGalleryScroll = 0;
+    } else if (e.key.length === 1 && postcardText.length < 140 && /[a-zA-Z0-9 !?.,;:'"()\-]/.test(e.key)) {
+      postcardText += e.key;
+    }
+    return;
+  }
+  // Postcard gallery — navigation
+  if (postcardOpen && postcardMode === 'gallery' && !e.repeat) {
+    e.preventDefault();
+    if (e.key === 'Escape') {
+      postcardOpen = false;
+    } else if (e.key === 'Tab') {
+      postcardMode = 'write';
+    } else if (e.key === 'ArrowUp') {
+      postcardGalleryScroll = Math.max(0, postcardGalleryScroll - 1);
+    } else if (e.key === 'ArrowDown') {
+      postcardGalleryScroll = Math.min(Math.max(0, postcardsSent.length - 4), postcardGalleryScroll + 1);
+    }
+    return;
+  }
+  // Postcard "just sent" confirmation — any key dismisses
+  if (postcardOpen && postcardJustSent && !e.repeat) {
+    e.preventDefault();
+    postcardJustSent = false;
+    postcardSentTimer = 0;
+    postcardOpen = false;
+    return;
+  }
+
+  // Art description typing at the Met Museum
+  if (artDescActive && currentScene === Scene.THE_MET && !e.repeat) {
+    e.preventDefault();
+    keys[e.code] = false; // block game from seeing these keys
+    if (e.key === 'Escape') {
+      artDescActive = false;
+      artDescText = '';
+    } else if (e.key === 'Enter' && artDescText.length > 0) {
+      // Save the description
+      const key = 'painting_' + artDescPaintingIdx;
+      if (!artDescriptions[key]) artDescriptions[key] = [];
+      artDescriptions[key].push(artDescText);
+      saveArtDescriptions();
+      score += 20;
+      addPopup(player.x, player.y - 40, '+20 Art description!', '#c084fc');
+      playChaChing();
+      artDescActive = false;
+      artDescText = '';
+    } else if (e.key === 'Backspace') {
+      artDescText = artDescText.slice(0, -1);
+    } else if (e.key.length === 1 && artDescText.length < 100 && /[a-zA-Z0-9 !?.,;:'"()\-]/.test(e.key)) {
+      artDescText += e.key;
+    }
+    return;
+  }
+
+  // Captain's Mission Log — capture typing when open
+  if (missionLogOpen && !e.repeat) {
+    e.preventDefault();
+    if (e.key === 'Escape') {
+      missionLogOpen = false;
+    } else if (e.key === 'Enter') {
+      // Save current entry and advance
+      const text = missionLogTexts[missionLogEntry];
+      if (text.length >= MISSION_LOG_MIN_CHARS && !missionLogScored[missionLogEntry]) {
+        missionLogScored[missionLogEntry] = true;
+        score += MISSION_LOG_ENTRY_POINTS;
+        addPopup(player.x, player.y - 40, '+' + MISSION_LOG_ENTRY_POINTS + ' Log entry saved!', '#60a5fa');
+        playChaChing();
+      }
+      saveMissionLog();
+      if (missionLogEntry < 4) {
+        missionLogEntry++;
+      } else {
+        // All 5 complete — check for bonus
+        const allDone = missionLogScored.every(s => s);
+        if (allDone && !missionLogBonusAwarded) {
+          missionLogBonusAwarded = true;
+          missionLogComplete = true;
+          score += MISSION_LOG_BONUS;
+          addPopup(player.x, player.y - 60, '+' + MISSION_LOG_BONUS + ' Mission Log Complete!', '#fbbf24');
+          playChaChing();
+          saveMissionLog();
+        }
+        missionLogOpen = false;
+      }
+    } else if (e.key === 'Backspace') {
+      missionLogTexts[missionLogEntry] = missionLogTexts[missionLogEntry].slice(0, -1);
+    } else if (e.key === 'Tab') {
+      e.preventDefault(); // prevent focus change
+      // Navigate between entries
+      if (e.shiftKey) {
+        missionLogEntry = Math.max(0, missionLogEntry - 1);
+      } else {
+        missionLogEntry = Math.min(4, missionLogEntry + 1);
+      }
+    } else if (e.key.length === 1 && missionLogTexts[missionLogEntry].length < MISSION_LOG_MAX_CHARS && /[a-zA-Z0-9 !?.,;:'"()\-_]/.test(e.key)) {
+      missionLogTexts[missionLogEntry] += e.key;
+    }
+    return;
+  }
+
   // Baby name typing in hospital name_pick stage
   if (hospitalStage === 'name_pick' && !e.repeat) {
     if (e.key === 'Backspace') {
       kitNameInput = kitNameInput.slice(0, -1);
     } else if (e.key.length === 1 && kitNameInput.length < 12 && /[a-zA-Z ]/.test(e.key)) {
       kitNameInput += e.key;
+    }
+  }
+  // Mission Control typing minigame
+  if (currentScene === Scene.MISSION_CONTROL && missionControl.active && !missionControl.complete && !missionControl.failed && !e.repeat) {
+    const mc = missionControl;
+    const currentCmd = MISSION_COMMANDS[mc.round];
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      mc.typed = mc.typed.slice(0, -1);
+    } else if (e.key.length === 1 && /[a-zA-Z ]/.test(e.key)) {
+      e.preventDefault();
+      const typedChar = e.key.toUpperCase();
+      const expectedChar = currentCmd[mc.typed.length];
+      if (typedChar === expectedChar) {
+        mc.typed += typedChar;
+      } else {
+        mc.errors++;
+      }
+    }
+  }
+  // Fuel calculator digit input — consume keys to prevent game actions
+  if (fuelCalcActive && !e.repeat) {
+    keys[e.code] = false; // block game from seeing these keys
+    if (fuelCalcFeedbackTimer <= 0) {
+      if (/^[0-9]$/.test(e.key) && fuelCalcAnswer.length < 6) {
+        fuelCalcAnswer += e.key;
+      } else if (e.key === 'Backspace') {
+        fuelCalcAnswer = fuelCalcAnswer.slice(0, -1);
+      } else if (e.key === 'Enter' && fuelCalcAnswer.length > 0) {
+        const correctAnswer = FUEL_CALC_PROBLEMS[fuelCalcProblem].answer;
+        if (parseInt(fuelCalcAnswer) === correctAnswer) {
+          fuelCalcFeedback = 'correct';
+          fuelCalcCorrect++;
+          fuelCalcProblem++;
+          fuelCalcAnswer = '';
+          fuelCalcFeedbackTimer = 1200;
+        } else {
+          fuelCalcFeedback = 'wrong';
+          fuelCalcAnswer = '';
+          fuelCalcFeedbackTimer = 1200;
+        }
+      } else if (e.key === 'Escape') {
+        fuelCalcActive = false;
+      }
+    }
+  }
+  // Market haggling digit input
+  if (currentScene === Scene.MARKET && marketActive && !e.repeat) {
+    keys[e.code] = false; // block game from seeing these keys
+    if (marketFeedbackTimer <= 0) {
+      if (/^[0-9]$/.test(e.key) && marketAnswer.length < 6) {
+        marketAnswer += e.key;
+      } else if (e.key === 'Backspace') {
+        marketAnswer = marketAnswer.slice(0, -1);
+      } else if (e.key === 'Enter' && marketAnswer.length > 0) {
+        const correctAnswer = MARKET_PROBLEMS[marketProblem].answer;
+        if (parseInt(marketAnswer) === correctAnswer) {
+          marketFeedback = 'correct';
+          marketCorrect++;
+          score += POINTS.MARKET_HAGGLE;
+          addPopup(player.x, player.y - 40, '+' + POINTS.MARKET_HAGGLE + ' Correct!', '#4ade80');
+          playChaChing();
+        } else {
+          marketFeedback = 'wrong';
+        }
+        marketProblem++;
+        marketAnswer = '';
+        marketFeedbackTimer = 1500;
+      } else if (e.key === 'Escape') {
+        currentScene = null;
+        marketActive = false;
+      }
+    }
+  }
+  // Telegram typing input
+  if (currentScene === Scene.TELEGRAM && telegramActive && !telegramComplete && !e.repeat) {
+    if (e.key.length === 1) {
+      e.preventDefault();
+      const expectedChar = telegramText[telegramTyped.length];
+      if (e.key === expectedChar) {
+        telegramTyped += e.key;
+      } else {
+        telegramErrors++;
+        telegramErrorFlash = performance.now();
+      }
+    }
+  }
+  // Campfire Story Typing
+  if (storyTyping.active && !storyTyping.complete && !e.repeat) {
+    const story = CAMPFIRE_STORIES[storyTyping.storyIndex];
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      storyTyping.active = false;
+    } else if (e.key.length === 1 && storyTyping.typed < story.length) {
+      e.preventDefault();
+      keys[e.code] = false; // block game from seeing these keys
+      const expected = story[storyTyping.typed];
+      if (e.key === expected) {
+        storyTyping.typed++;
+        if (storyTyping.typed >= story.length) {
+          // Story complete!
+          storyTyping.complete = true;
+          storyTyping.completeTimer = 0;
+          const elapsed = (performance.now() - storyTyping.startTime) / 1000;
+          const wpm = Math.round((story.length / 5) / (elapsed / 60));
+          const speedBonus = wpm >= 40 ? POINTS.STORY_SPEED_BONUS : Math.round(POINTS.STORY_SPEED_BONUS * Math.min(1, wpm / 40));
+          const totalPts = POINTS.STORY_TYPING + speedBonus;
+          score += totalPts;
+          addPopup(player.x, player.y - 40, '+' + totalPts + ' Story complete!', '#fbbf24');
+          playChaChing();
+        }
+      } else {
+        storyTyping.errors++;
+      }
+    }
+  }
+  // Whale Song Transcription typing during transatlantic flight (level 10)
+  if (currentLevel === 10 && whaleTranscription.active && !e.repeat) {
+    const wt = whaleTranscription;
+    const target = WHALE_TRANSMISSIONS[wt.currentIndex].text;
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      wt.typed = wt.typed.slice(0, -1);
+    } else if (e.key.length === 1 && wt.typed.length < target.length) {
+      e.preventDefault();
+      const expected = target[wt.typed.length];
+      if (e.key === expected) {
+        wt.typed += e.key;
+      } else {
+        wt.errors++;
+      }
+    }
+  }
+  // Scroll transcription typing in Pantheon
+  if (scrollActive && !scrollComplete && !e.repeat) {
+    if (e.key.length === 1 && scrollTyped < scrollText.length) {
+      e.preventDefault();
+      const expected = scrollText[scrollTyped];
+      if (e.key === expected) {
+        scrollTyped++;
+        if (scrollTyped >= scrollText.length) {
+          // Scroll complete!
+          scrollComplete = true;
+          scrollShowFact = true;
+          scrollFactTimer = 0;
+          const accuracy = Math.max(0, Math.round(((scrollText.length - scrollErrors) / scrollText.length) * 100));
+          score += POINTS.SCROLL;
+          addPopup(player.x, player.y - 40, '+' + POINTS.SCROLL + ' Scroll ' + (scrollRound + 1) + '/5!', '#fbbf24');
+          playChaChing();
+        }
+      } else {
+        scrollErrors++;
+        scrollTotalErrors++;
+        scrollFlashRed = 300; // flash for 300ms
+      }
     }
   }
 });
@@ -352,6 +638,53 @@ window.addEventListener('keyup', e => { keys[e.code] = false; });
     function() { if (currentAction2Key) keys[currentAction2Key] = false; }
   );
 })();
+
+// Tour guide: canvas tap to advance, double-tap to skip (mobile)
+let tourGuideTapTime = 0;
+canvas.addEventListener('touchstart', function(e) {
+  if (!tourGuideActive) return;
+  e.preventDefault();
+  const now = Date.now();
+  if (now - tourGuideTapTime < 350) {
+    // Double-tap: skip all
+    keys['Enter'] = true;
+    setTimeout(() => { keys['Enter'] = false; }, 50);
+  } else {
+    // Single tap: next fact
+    keys['Space'] = true;
+    setTimeout(() => { keys['Space'] = false; }, 50);
+  }
+  tourGuideTapTime = now;
+}, { passive: false });
+
+// ── Quiz touch support ──
+// Tapping the canvas answer buttons triggers quiz answers (works on mobile and desktop)
+canvas.addEventListener('click', function(e) {
+  if (!quizActive) return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const tx = (e.clientX - rect.left) * scaleX;
+  const ty = (e.clientY - rect.top) * scaleY;
+  const W = canvas.width, H = canvas.height;
+  // Match button layout from drawQuizOverlay
+  const boxW = Math.min(W * 0.85, 420);
+  const bx = (W - boxW) / 2;
+  const boxH = 180;
+  const by = (H - boxH) / 2 - 20;
+  // answerY uses 2 lines as estimate (question text wrap); buttons start ~76px from box top
+  const answerY = by + 76;
+  const btnH = 26;
+  const btnW = boxW - 40;
+  for (let i = 0; i < 3; i++) {
+    const btnY = answerY + i * (btnH + 4);
+    if (tx > bx + 20 && tx < bx + 20 + btnW && ty > btnY && ty < btnY + btnH) {
+      keys['Digit' + (i + 1)] = true;
+      setTimeout(() => { keys['Digit' + (i + 1)] = false; }, 100);
+      break;
+    }
+  }
+});
 
 // ── Mobile Fullscreen + Orientation Lock ──
 if (isMobile) {
@@ -404,6 +737,117 @@ document.getElementById('levelSelectBack').addEventListener('click', () => {
   document.getElementById('startScreen').style.display = 'flex';
 });
 
+// ── Learning Dashboard ──
+document.getElementById('learningDashboardBtn').addEventListener('click', () => {
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('learningDashboard').style.display = 'flex';
+  buildLearningDashboard();
+});
+
+document.getElementById('dashboardBack').addEventListener('click', () => {
+  document.getElementById('learningDashboard').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+});
+
+function buildLearningDashboard() {
+  const container = document.getElementById('dashboardContent');
+  container.innerHTML = '';
+
+  // Helper: read JSON from localStorage safely
+  function loadJSON(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+    catch (e) { return fallback; }
+  }
+
+  // Helper: create a styled card section
+  function makeCard(title, icon, content) {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);border-radius:16px;padding:16px 20px;border:1px solid rgba(255,255,255,0.15);';
+    card.innerHTML = '<div style="font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:10px;">' + icon + ' ' + title + '</div>' + content;
+    return card;
+  }
+
+  // Helper: create a bar chart row
+  function makeBar(label, value, max, color) {
+    const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+    return '<div style="margin-bottom:8px;">' +
+      '<div style="display:flex;justify-content:space-between;color:rgba(255,255,255,0.9);font-size:0.85rem;margin-bottom:3px;">' +
+        '<span>' + label + '</span><span>' + value + '/' + max + '</span>' +
+      '</div>' +
+      '<div style="background:rgba(255,255,255,0.15);border-radius:8px;height:14px;overflow:hidden;">' +
+        '<div style="width:' + pct + '%;height:100%;background:' + color + ';border-radius:8px;transition:width 0.5s;min-width:' + (pct > 0 ? '4px' : '0') + ';"></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // ── 1. Subjects Progress (fact categories) ──
+  const facts = loadJSON('factNotebook', []);
+  const categories = { Geography: 0, History: 0, Science: 0, Culture: 0, Language: 0 };
+  for (const f of facts) {
+    if (f.category && categories.hasOwnProperty(f.category)) {
+      categories[f.category]++;
+    }
+  }
+  // Estimate max per category (roughly 20 facts per category is a good target)
+  const catMax = 20;
+  const catColors = { Geography: '#38bdf8', History: '#f59e0b', Science: '#22c55e', Culture: '#f472b6', Language: '#a78bfa' };
+  const catIcons = { Geography: '\uD83C\uDF0D', History: '\uD83C\uDFDB\uFE0F', Science: '\uD83D\uDD2C', Culture: '\uD83C\uDFAD', Language: '\uD83D\uDCAC' };
+  let subjectBars = '';
+  for (const [cat, count] of Object.entries(categories)) {
+    subjectBars += makeBar(catIcons[cat] + ' ' + cat, count, catMax, catColors[cat]);
+  }
+  container.appendChild(makeCard('Subjects Progress', '\uD83D\uDCDA', subjectBars));
+
+  // ── 2. Facts Discovered ──
+  const totalFacts = facts.length;
+  const factsHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
+    '<div style="font-size:2.5rem;color:#fde68a;">' + totalFacts + '</div>' +
+    '<div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">facts discovered across all levels</div>' +
+  '</div>';
+  container.appendChild(makeCard('Facts Discovered', '\uD83D\uDCD6', factsHTML));
+
+  // ── 3. Achievements Earned ──
+  const savedAch = loadJSON('unikittyville_achievements', {});
+  const earnedCount = Object.keys(savedAch).length;
+  const totalAch = 8; // matches achievements array length
+  const achHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
+    '<div style="font-size:2.5rem;color:#fbbf24;">' + earnedCount + '/' + totalAch + '</div>' +
+    '<div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">achievements earned</div>' +
+  '</div>' + makeBar('Progress', earnedCount, totalAch, '#fbbf24');
+  container.appendChild(makeCard('Achievements Earned', '\uD83C\uDFC6', achHTML));
+
+  // ── 4. Levels Visited ──
+  const savedLevels = loadJSON('unikittyville_levels_visited', []);
+  const visitedCount = new Set(savedLevels).size;
+  const totalLvl = typeof TOTAL_LEVELS !== 'undefined' ? TOTAL_LEVELS : 13;
+  let levelDots = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">';
+  for (let i = 1; i <= totalLvl; i++) {
+    const visited = savedLevels.includes(i);
+    const name = (typeof levelRegistry !== 'undefined' && levelRegistry[i]) ? levelRegistry[i].name : ('Level ' + i);
+    const bg = visited ? 'rgba(74,222,128,0.8)' : 'rgba(255,255,255,0.15)';
+    const check = visited ? '\u2713' : '';
+    levelDots += '<div title="' + name + '" style="width:36px;height:36px;border-radius:8px;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#fff;font-weight:700;flex-direction:column;line-height:1.1;">' +
+      '<span>' + i + '</span>' + (check ? '<span style="font-size:0.6rem;">' + check + '</span>' : '') +
+    '</div>';
+  }
+  levelDots += '</div>';
+  const levelsHTML = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">' +
+    '<div style="font-size:2.5rem;color:#4ade80;">' + visitedCount + '/' + totalLvl + '</div>' +
+    '<div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">levels explored</div>' +
+  '</div>' + levelDots;
+  container.appendChild(makeCard('Levels Visited', '\uD83D\uDDFA\uFE0F', levelsHTML));
+
+  // ── 5. Postcards Sent (bonus stat) ──
+  const postcards = loadJSON('unikittyville_postcards', []);
+  if (postcards.length > 0) {
+    const pcHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
+      '<div style="font-size:2.5rem;color:#fb923c;">' + postcards.length + '</div>' +
+      '<div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">postcards sent home</div>' +
+    '</div>';
+    container.appendChild(makeCard('Postcards Sent', '\uD83D\uDCEE', pcHTML));
+  }
+}
+
 function startGameAtLevel(lvl) {
   const name = document.getElementById('nameInput').value.trim();
   playerName = name || 'Sparkle';
@@ -420,6 +864,7 @@ function startGameAtLevel(lvl) {
   document.getElementById('volumeControl').style.display = 'flex';
   document.getElementById('hudName').textContent = playerName;
   initMeows();
+  loadAchievements();
   for (const sfx of [...meowSounds, chaChingSound]) {
     if (sfx) {
       const p = sfx.play();
@@ -435,9 +880,50 @@ function startGameAtLevel(lvl) {
   player.y = GROUND_Y;
   player.vy = 0;
   player.onGround = true;
+  // Activate tour guide for starting level
+  if (!tourGuideSeen.has(lvl)) {
+    tourGuideActive = true;
+    tourGuideStep = 0;
+    tourGuideSeen.add(lvl);
+  }
   startLevelMusic(lvl);
+  loadPostcards();
+  loadMissionLog();
   requestAnimationFrame(loop);
 }
+
+// ── Difficulty Selector ──
+const DIFF_COLORS = { easy: '#22c55e', medium: '#3b82f6', hard: '#9333ea' };
+const DIFF_LABELS = { easy: 'E', medium: 'M', hard: 'H' };
+
+function updateDifficultyUI() {
+  const btns = document.querySelectorAll('.diff-btn');
+  btns.forEach(btn => {
+    const d = btn.getAttribute('data-diff');
+    if (d === gameDifficulty) {
+      btn.style.borderColor = '#fff';
+      btn.style.boxShadow = '0 0 12px rgba(255,255,255,0.4)';
+    } else {
+      btn.style.borderColor = 'transparent';
+      btn.style.boxShadow = 'none';
+    }
+  });
+  const badge = document.getElementById('hudDifficulty');
+  if (badge) {
+    badge.textContent = DIFF_LABELS[gameDifficulty] || 'M';
+    badge.style.background = DIFF_COLORS[gameDifficulty] || DIFF_COLORS.medium;
+  }
+}
+
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setGameDifficulty(btn.getAttribute('data-diff'));
+    updateDifficultyUI();
+  });
+});
+
+// Restore persisted difficulty on load
+updateDifficultyUI();
 
 // ── Start ──
 document.getElementById('startBtn').addEventListener('click', startGame);
@@ -460,6 +946,7 @@ function startGame() {
   document.getElementById('volumeControl').style.display = 'flex';
   document.getElementById('hudName').textContent = playerName;
   initMeows();
+  loadAchievements();
   // Unlock audio on mobile: browsers require a user gesture before playing audio.
   // The Play button click/tap is that gesture. We briefly play/pause SFX elements
   // so subsequent play() calls succeed even outside a direct gesture context.
@@ -474,8 +961,16 @@ function startGame() {
   player.color = selectedFurColor;
   playerEyeColor = selectedEyeColor;
   playerHornColors = hornGradientFromColor(selectedHornColor);
+  // Activate tour guide for level 1
+  if (!tourGuideSeen.has(1)) {
+    tourGuideActive = true;
+    tourGuideStep = 0;
+    tourGuideSeen.add(1);
+  }
   // Start music (requires user gesture, which the click/enter provides)
   startLevelMusic(1);
+  loadPostcards();
+  loadMissionLog();
   requestAnimationFrame(loop);
 }
 
@@ -504,6 +999,19 @@ function setAction(key, label, key2, label2) {
 
 function updatePrompt(near) {
   const el = document.getElementById('prompt');
+  // Hide prompt during hot dog math overlay (UI is drawn on canvas)
+  if (hotdogMath.active) {
+    el.style.display = 'none';
+    setAction(null, '');
+    return;
+  }
+  // Quiz mode overrides all other prompts
+  if (quizActive) {
+    el.textContent = 'Quiz! Press 1, 2, or 3 to answer!';
+    el.style.display = 'block';
+    setAction(null, '');
+    return;
+  }
   if (currentScene === Scene.CAMP_CAMPER) {
     if (campCamperSleeping) {
       el.textContent = 'Sleeping... zzz (Press N to wake up)';
@@ -576,9 +1084,26 @@ function updatePrompt(near) {
     return;
   }
   if (currentScene === Scene.PANTHEON) {
-    el.textContent = 'Inside the Pantheon... Press Enter to leave';
+    if (scrollActive && !scrollComplete) {
+      el.textContent = 'Type the scroll text! Esc to cancel';
+      setAction('Escape', 'Cancel');
+    } else if (scrollActive && scrollComplete) {
+      el.textContent = 'Scroll complete! Press Enter to continue';
+      setAction('Enter', 'Next');
+    } else if (pantheonPuzzle.active && !pantheonPuzzle.complete) {
+      el.textContent = 'Architecture Puzzle: Press 1-5 to place pieces!';
+      setAction('Enter', 'Exit');
+    } else if (pantheonPuzzle.active && pantheonPuzzle.complete) {
+      el.textContent = 'You rebuilt the Pantheon dome! Press Enter to leave';
+      setAction('Enter', 'Exit');
+    } else if (scrollAllDone) {
+      el.textContent = 'All scrolls transcribed! Press A for puzzle, Enter to leave';
+      setAction('KeyA', 'Puzzle', 'Enter', 'Exit');
+    } else {
+      el.textContent = 'Inside the Pantheon... Press T to transcribe scrolls, A for puzzle, Enter to leave';
+      setAction('KeyT', 'Scroll', 'KeyA', 'Puzzle');
+    }
     el.style.display = 'block';
-    setAction('Enter', 'Exit');
     return;
   }
   if (currentScene === Scene.CAMPER) {
@@ -694,20 +1219,41 @@ function updatePrompt(near) {
   }
   if (currentScene === Scene.GRAND_CENTRAL) {
     if (!grandCentralWhisper) {
-      el.textContent = 'Grand Central Terminal! Press W to whisper in the gallery | Enter to leave';
-      setAction('KeyW', 'Whisper', 'Enter', 'Exit');
+      el.textContent = 'Grand Central Terminal! W to whisper | T for Telegram office | Enter to leave';
+      setAction('KeyW', 'Whisper', 'KeyT', 'Telegram');
     } else {
-      el.textContent = 'You whispered: "' + grandCentralWhisper + '" — it echoed! Enter to leave';
-      setAction('Enter', 'Exit');
+      el.textContent = 'You whispered: "' + grandCentralWhisper + '" — it echoed! T for Telegram | Enter to leave';
+      setAction('KeyT', 'Telegram', 'Enter', 'Exit');
+    }
+    el.style.display = 'block';
+    return;
+  }
+  if (currentScene === Scene.TELEGRAM) {
+    const levels = ['Easy', 'Medium', 'Hard'];
+    if (!telegramActive && !telegramComplete) {
+      el.textContent = 'Telegram Office (' + levels[telegramLevel] + ') — Left/Right to change difficulty | Enter to start | Esc to go back';
+      setAction('Enter', 'Start');
+    } else if (telegramActive) {
+      const progress = telegramTyped.length + '/' + telegramText.length;
+      el.textContent = 'Type the telegram! (' + progress + ') | Esc to cancel';
+      setAction(null, '');
+    } else {
+      el.textContent = 'Telegram sent! Enter for another | Esc to go back';
+      setAction('Enter', 'Again');
     }
     el.style.display = 'block';
     return;
   }
   if (currentScene === Scene.THE_MET) {
     const p = MET_PAINTINGS[metPaintingIndex];
-    el.textContent = '"' + p.title + '" — ' + p.level + ' (' + (metPaintingIndex + 1) + '/' + MET_PAINTINGS.length + ') Left/Right | Enter to leave';
+    if (artDescActive) {
+      el.textContent = 'Describe "' + p.title + '" — Type your description, Enter to submit, Esc to cancel';
+      setAction('Enter', 'Submit');
+    } else {
+      el.textContent = '"' + p.title + '" — ' + p.level + ' (' + (metPaintingIndex + 1) + '/' + MET_PAINTINGS.length + ') Left/Right | D: Describe | Enter to leave';
+      setAction('KeyD', 'Describe');
+    }
     el.style.display = 'block';
-    setAction('Enter', 'Exit');
     return;
   }
   if (currentScene === Scene.PIZZA) {
@@ -726,6 +1272,11 @@ function updatePrompt(near) {
       return;
     }
     el.style.display = 'block';
+  } else if (bugCatcherActive) {
+    el.textContent = bugCatcherRule ? bugCatcherRule.text + ' (Space to catch)' : 'Bug Catcher!';
+    el.style.display = 'block';
+    setAction('Space', 'Catch');
+    return;
   } else if (fishing.active) {
     el.textContent = 'Fishing...';
     el.style.display = 'block';
@@ -759,6 +1310,14 @@ function updatePrompt(near) {
     el.textContent = 'Press H to collect honey';
     el.style.display = 'block';
     setAction('KeyH', 'Honey');
+  } else if (near.nearBugNet) {
+    el.textContent = 'Press Space to pick up the Bug Net!';
+    el.style.display = 'block';
+    setAction('Space', 'Pick up');
+  } else if (currentLevel === 1 && hasBugNet && !bugCatcherActive && !bugCatcherFinished && Math.abs(player.x - BUG_NET_POS.x) < 120) {
+    el.textContent = 'Press B to start Bug Catcher!';
+    el.style.display = 'block';
+    setAction('KeyB', 'Bugs');
   } else if (near.nearPizza) {
     el.textContent = 'Press Enter to make pizza!';
     el.style.display = 'block';
@@ -788,9 +1347,13 @@ function updatePrompt(near) {
     el.style.display = 'block';
     setAction('Enter', 'Enter');
   } else if (near.nearHotdog) {
-    el.textContent = score >= 10 ? 'Press C to buy a hot dog (-10 pts)' : 'Not enough points for a hot dog!';
+    if (hotdogMath.complete) {
+      el.textContent = 'You already bought all 5 hot dogs here!';
+    } else {
+      el.textContent = 'Press H for Hot Dog Math Challenge!';
+    }
     el.style.display = 'block';
-    setAction(score >= 10 ? 'KeyC' : null, 'Buy');
+    setAction(hotdogMath.complete ? null : 'KeyH', 'Math');
   } else if (near.nearPark) {
     el.textContent = 'Press Enter to visit Central Park';
     el.style.display = 'block';
@@ -804,9 +1367,9 @@ function updatePrompt(near) {
     el.style.display = 'block';
     setAction('KeyS', 'Swim');
   } else if (near.nearGelato) {
-    el.textContent = 'Press G for gelato! (+5 pts)';
+    el.textContent = 'Press G for gelato (+5 pts) | Enter for Gelato Shop';
     el.style.display = 'block';
-    setAction('KeyG', 'Gelato');
+    setAction('Enter', 'Shop');
   } else if (near.nearPantheonDoor) {
     el.textContent = 'Press Enter to enter the Pantheon';
     el.style.display = 'block';
@@ -835,6 +1398,10 @@ function updatePrompt(near) {
     el.textContent = 'Press Enter to warm up in the chalet!';
     el.style.display = 'block';
     setAction('Enter', 'Enter');
+  } else if (near.nearTrain && trainPuzzleActive) {
+    el.textContent = 'Solve the signal puzzle! Press 1 or 2 to answer.';
+    el.style.display = 'block';
+    setAction(null, '');
   } else if (near.nearTrain) {
     el.textContent = 'Press Enter to take the train to NYC!';
     el.style.display = 'block';
@@ -871,10 +1438,26 @@ function updatePrompt(near) {
     el.textContent = `Need ${5 - stickCount} more sticks to build a fire!`;
     el.style.display = 'block';
     setAction(null, '');
-  } else if (near.nearFirePit && campfire.lit) {
-    el.textContent = 'Press R to roast a marshmallow!';
+  } else if (near.nearFirePit && campfire.lit && storyTyping.active) {
+    el.textContent = 'Type the story! Esc to exit.';
+    el.style.display = 'block';
+    setAction(null, '');
+  } else if (near.nearFirePit && campfire.lit && lightShowActive) {
+    el.textContent = 'Light Show mode! Type colors to program the fire.';
+    el.style.display = 'block';
+    setAction(null, '');
+  } else if (near.nearFirePit && campfire.lit && !near.nearGeometry) {
+    el.textContent = 'R: Roast  L: Light Show  Y: Story Time!';
     el.style.display = 'block';
     setAction('KeyR', 'Roast');
+  } else if (near.nearGeometry) {
+    el.textContent = 'Press G for Campfire Geometry! Build shapes with sticks!';
+    el.style.display = 'block';
+    setAction('KeyG', 'Geometry');
+  } else if (geometryActive) {
+    el.textContent = 'Arrows: Rotate | Space: Place stick | Esc: Exit';
+    el.style.display = 'block';
+    setAction(null, '');
   } else if (near.nearHammock) {
     el.textContent = 'Press N to nap in the hammock!';
     el.style.display = 'block';
@@ -911,6 +1494,16 @@ function updatePrompt(near) {
       setAction('KeyS', 'Exit');
     }
     el.style.display = 'block';
+  } else if (journalActive) {
+    if (journalResult === '') {
+      el.textContent = 'Field Journal: Press 1, 2, or 3 to answer!';
+    } else if (journalResult === 'correct') {
+      el.textContent = 'Correct! Journal entry complete!';
+    } else {
+      el.textContent = 'Not quite — try again!';
+    }
+    el.style.display = 'block';
+    setAction(null, '');
   } else if (safariPhotography.active) {
     el.textContent = 'Taking photo... hold steady!';
     el.style.display = 'block';
@@ -919,6 +1512,14 @@ function updatePrompt(near) {
     el.textContent = 'Riding the cheetah! G: Dismount | Yarn auto-collects nearby!';
     el.style.display = 'block';
     setAction('KeyG', 'Off');
+  } else if (near.nearMarket && !marketComplete) {
+    el.textContent = 'Press Enter to haggle at the market!';
+    el.style.display = 'block';
+    setAction('Enter', 'Enter');
+  } else if (near.nearMarket && marketComplete) {
+    el.textContent = 'Market complete! Great haggling!';
+    el.style.display = 'block';
+    setAction(null, '');
   } else if (near.nearBaobab) {
     el.textContent = 'Press F to pick baobab fruit!';
     el.style.display = 'block';
@@ -956,9 +1557,30 @@ function updatePrompt(near) {
     el.style.display = 'block';
     setAction(null, '');
   } else if (currentScene === Scene.SCUBA_DIVING) {
-    el.textContent = 'Swim with arrow keys! Collect pearls! Q: Talk to mercats | Enter: Surface';
-    el.style.display = 'block';
-    setAction('Enter', 'Surface', 'KeyQ', 'Talk');
+    if (diveLogShowingTimeline) {
+      el.textContent = 'USS Oriental Timeline — Press Enter or Escape to close';
+      el.style.display = 'block';
+      setAction('Enter', 'Close');
+      return;
+    }
+    // Check if near a timeline piece
+    let nearPiece = false;
+    for (let i = 0; i < DIVE_LOG_PIECES.length; i++) {
+      if (diveLogFound.has(i)) continue;
+      const piece = DIVE_LOG_PIECES[i];
+      const dx = scubaPlayer.x - piece.x;
+      const dy = scubaPlayer.y - piece.y;
+      if (dx * dx + dy * dy < 2500) { nearPiece = true; break; }
+    }
+    if (nearPiece) {
+      el.textContent = 'Press T to collect timeline piece! | Q: Talk | Enter: Surface';
+      el.style.display = 'block';
+      setAction('KeyT', 'Collect', 'Enter', 'Surface');
+    } else {
+      el.textContent = 'Swim with arrow keys! Collect pearls! Q: Talk to mercats | Enter: Surface';
+      el.style.display = 'block';
+      setAction('Enter', 'Surface', 'KeyQ', 'Talk');
+    }
     return;
   } else if (currentScene === Scene.SAILING) {
     el.textContent = 'Sailing the Neuse River! Left/Right to steer | Enter: Dock';
@@ -987,7 +1609,9 @@ function updatePrompt(near) {
       el.style.display = 'block';
       setAction('Enter', 'Land');
     } else {
-      el.textContent = 'Fly through the sky! Dodge seagulls, collect rubies!';
+      el.textContent = whaleTranscription.active
+        ? 'Type the radio transmission! Backspace to correct.'
+        : 'Fly through the sky! Dodge seagulls, collect rubies! Type radio transmissions for bonus points!';
       el.style.display = 'block';
       setAction(null, '');
     }
@@ -1017,6 +1641,19 @@ function updatePrompt(near) {
     el.style.display = 'block';
     setAction('Enter', 'Exit');
     return;
+  } else if (currentScene === Scene.MISSION_CONTROL) {
+    if (missionControl.complete || missionControl.failed) {
+      el.textContent = 'Press Enter to exit Mission Control';
+    } else {
+      el.textContent = 'Type the command! Backspace to correct.';
+    }
+    el.style.display = 'block';
+    setAction('Enter', 'Exit');
+    return;
+  } else if (currentLevel === 11 && Math.abs(player.x - MISSION_CONTROL_POS.x - MISSION_CONTROL_POS.w / 2) < BUILDING_RANGE && currentScene === null) {
+    el.textContent = 'Press Enter to enter Mission Control!';
+    el.style.display = 'block';
+    setAction('Enter', 'Enter');
   } else if (currentLevel === 11 && Math.abs(player.x - NASA_BUILDING_POS.x - NASA_BUILDING_POS.w / 2) < BUILDING_RANGE && currentScene === null) {
     el.textContent = 'Press Enter to visit the NASA Museum!';
     el.style.display = 'block';
@@ -1025,8 +1662,12 @@ function updatePrompt(near) {
     el.textContent = 'Press S to put on Space Suit!';
     el.style.display = 'block';
     setAction('KeyS', 'Suit');
+  } else if (currentLevel === 11 && fuelCalcActive) {
+    el.textContent = 'Type your answer and press Enter (Esc to exit)';
+    el.style.display = 'block';
+    setAction('Enter', 'Submit');
   } else if (currentLevel === 11 && Math.abs(player.x - ROCKET_POS.x) < BUILDING_RANGE && !capeFueled) {
-    el.textContent = 'Hold P to fuel the rocket!';
+    el.textContent = 'Press P to calculate rocket fuel!';
     el.style.display = 'block';
     setAction('KeyP', 'Fuel');
   } else if (currentLevel === 11 && capeFueled && capeSpaceSuit && Math.abs(player.x - ROCKET_POS.x) < BUILDING_RANGE && !capeLaunching) {
@@ -1034,7 +1675,15 @@ function updatePrompt(near) {
     el.style.display = 'block';
     setAction('Enter', 'Board');
   } else if (currentScene === Scene.SMOOTHIE_SHOP) {
-    el.textContent = 'C = Fruit | Y = Yogurt | B = Blend | Enter = Exit';
+    if (recipeModeActive) {
+      if (recipeComplete) {
+        el.textContent = 'Blending... next recipe coming up!';
+      } else {
+        el.textContent = 'Press numbers to swap steps | Enter/Esc = Exit';
+      }
+    } else {
+      el.textContent = 'C = Fruit | Y = Yogurt | B = Blend | R = Recipes | Enter = Exit';
+    }
     el.style.display = 'block';
     setAction('KeyC', 'Fruit');
     return;
@@ -1051,6 +1700,45 @@ function updatePrompt(near) {
     el.textContent = 'Press Enter for TopGolf!';
     el.style.display = 'block';
     setAction('Enter', 'Enter');
+  } else if (currentScene === Scene.APOLLO_MISSION) {
+    const am = apolloMission;
+    if (am.celebrateTimer > 0) {
+      el.textContent = 'Apollo Mission Complete! +300 points!';
+    } else if (am.step === 0) {
+      el.textContent = 'Press Space when the boot reaches the green zone!';
+      setAction('Space', 'Step');
+    } else if (am.step === 1) {
+      el.textContent = 'Hold Space to plant the flag!';
+      setAction('Space', 'Plant');
+    } else if (am.step === 2) {
+      el.textContent = 'Left/Right to collect moon rocks! ' + am.rocksCollected + '/5';
+      setAction(null, '');
+    } else if (am.step === 3) {
+      el.textContent = 'Press S to salute the flag!';
+      setAction('KeyS', 'Salute');
+    }
+    el.style.display = 'block';
+  } else if (currentScene === Scene.ROVER_PROGRAMMING) {
+    const rp = roverProg;
+    if (rp.running) {
+      el.textContent = 'Running program... step ' + (rp.runStep + 1) + ' of ' + rp.program.length;
+    } else if (rp.feedback === 'success') {
+      el.textContent = 'Challenge complete! +' + POINTS.ROVER_CHALLENGE;
+    } else if (rp.feedback === 'fail') {
+      el.textContent = 'Try again! Press F/L/R/P to build commands';
+    } else {
+      el.textContent = 'Press F/L/R/P to program rover, Space to RUN, Backspace to delete';
+      setAction('Space', 'Run');
+    }
+    el.style.display = 'block';
+  } else if (currentLevel === 13 && Math.abs(player.x - ROVER_STATION_POS.x) < BUILDING_RANGE && !roverProg.complete) {
+    el.textContent = 'Press Enter for Rover Programming!';
+    el.style.display = 'block';
+    setAction('Enter', 'Enter');
+  } else if (currentLevel === 13 && Math.abs(player.x - APOLLO_SITE_POS.x) < BUILDING_RANGE && !apolloMission.complete) {
+    el.textContent = 'Press Enter for Apollo Landing Recreation!';
+    el.style.display = 'block';
+    setAction('Enter', 'Enter');
   } else if (currentLevel === 13 && player.x > level13Moon.worldW - 300) {
     el.textContent = 'Press Enter to complete your adventure!';
     el.style.display = 'block';
@@ -1059,6 +1747,10 @@ function updatePrompt(near) {
     el.textContent = 'Press Enter to go sledding!';
     el.style.display = 'block';
     setAction('Enter', 'Sled');
+  } else if (near.nearTimeCapsule) {
+    el.textContent = 'Something is glowing... Press T to investigate!';
+    el.style.display = 'block';
+    setAction('KeyT', 'Dig');
   } else {
     el.style.display = 'none';
     setAction(null, '');

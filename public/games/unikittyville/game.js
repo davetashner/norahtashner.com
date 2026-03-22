@@ -1,3 +1,21 @@
+// ── Difficulty Tiers ──
+// 'easy' (ages 5-7), 'medium' (ages 8-10), 'hard' (ages 11-13)
+let gameDifficulty = localStorage.getItem('unikittyville_difficulty') || 'medium';
+
+function setGameDifficulty(diff) {
+  gameDifficulty = diff;
+  try { localStorage.setItem('unikittyville_difficulty', diff); } catch (e) { /* storage unavailable */ }
+}
+
+function getDifficultyMultiplier() {
+  switch (gameDifficulty) {
+    case 'easy':   return { timeLimit: 1.5, hintLevel: 2, pointBonus: 0.5 };
+    case 'hard':   return { timeLimit: 0.7, hintLevel: 0, pointBonus: 1.5 };
+    case 'medium':
+    default:       return { timeLimit: 1.0, hintLevel: 1, pointBonus: 1.0 };
+  }
+}
+
 // ── Constants ──
 const WORLD_W = 4800;
 const GROUND_Y = 420;
@@ -10,7 +28,7 @@ const DAY_LENGTH = 30000; // 30s full cycle
 const POINTS = {
   FISH: 10, BACON: 15, YARN: 20, PIZZA: 25, HOTDOG_COST: 10,
   GELATO: 5, HONEY: 12, TIKI: 15, COCONUT: 10, DIAMOND: 25,
-  SNOWBALL: 15, STICK: 5, CAMPFIRE_BUILD: 25, SMORE: 30,
+  SNOWBALL: 15, STICK: 5, CAMPFIRE_BUILD: 25, SMORE: 30, GEOMETRY_BONUS: 200,
   MARSHMALLOW_CHALET: 20, COCOA: 50, HAMMOCK_NAP: 20,
   BIGFOOT_MILK: 40, DIG_POOL: 15, FILL_POOL: 15, SHELL: 10,
   PEARL: 15, SCUBA_COMPLETE: 50, COOKED_FISH: 20,
@@ -19,7 +37,20 @@ const POINTS = {
   YARN_BONUS: 100, LEPRECHAUN_GOLD: 50,
   FRUIT: 10, ELEPHANT_BOOST: 15, RHINO_HIT: 15,
   SAFARI_PHOTO: 30, SAFARI_PHOTO_DUP: 5, SAFARI_COLLECTION: 100,
-  CHEETAH_RIDE: 50, GIRAFFE_LIFT: 10,
+  CHEETAH_RIDE: 50, GIRAFFE_LIFT: 10, JOURNAL_BONUS: 20,
+  TRAIN_PUZZLE: 25, TRAIN_PUZZLE_BONUS: 100,
+  HOTDOG_MATH: 25,
+  STORY_TYPING: 40, STORY_SPEED_BONUS: 30,
+  LIGHT_SHOW_CHALLENGE: 40, LIGHT_SHOW_BONUS: 150,
+  TELEGRAM_BASE: 30,
+  SCROLL: 35, SCROLL_BONUS: 100,
+  PANTHEON_PUZZLE: 100,
+
+  BUG_CORRECT: 15, BUG_WRONG: 5,
+  DIVE_LOG_PIECE: 30, DIVE_LOG_BONUS: 150,
+  ROVER_CHALLENGE: 50, ROVER_BONUS: 200,
+  MARKET_HAGGLE: 30, MARKET_BONUS: 100,
+  TIME_CAPSULE: 75,
 };
 
 // ── Timing durations (ms) ──
@@ -73,8 +104,140 @@ const Scene = {
   GRAND_CENTRAL: 'grandCentral',
   THE_MET: 'theMet',
   NASA_MUSEUM: 'nasaMuseum',
+  MISSION_CONTROL: 'missionControl',
+  TELEGRAM: 'telegram',
+
+  APOLLO_MISSION: 'apolloMission',
+  ROVER_PROGRAMMING: 'roverProgramming',
+
+  GELATO_SHOP: 'gelatoShop',
+  MARKET: 'market',
 };
 let currentScene = null;
+
+// ── Postcard Writer ──
+const POSTCARD_THEMES = {
+  1:  { color: '#4ade80', greeting: 'Greetings from the Meadow!' },
+  2:  { color: '#93c5fd', greeting: 'Greetings from the Mountains!' },
+  3:  { color: '#94a3b8', greeting: 'Greetings from New York City!' },
+  4:  { color: '#c2410c', greeting: 'Greetings from Roma!' },
+  5:  { color: '#2dd4bf', greeting: 'Aloha from Hawaii!' },
+  6:  { color: '#3b82f6', greeting: 'Greetings from Oriental, NC!' },
+  7:  { color: '#e2e8f0', greeting: 'Greetings from the Alps!' },
+  8:  { color: '#65a30d', greeting: 'Greetings from Camp!' },
+  9:  { color: '#f59e0b', greeting: 'Greetings from Africa!' },
+  10: { color: '#7dd3fc', greeting: 'Greetings from 30,000 feet!' },
+  11: { color: '#6b7280', greeting: 'Greetings from NASA!' },
+  12: { color: '#1e3a5f', greeting: 'Greetings from Outer Space!' },
+  13: { color: '#c0c0c0', greeting: 'Greetings from the Moon!' },
+};
+const POSTCARD_POINTS = 25;
+let postcardOpen = false;
+let postcardMode = 'write'; // 'write' | 'gallery'
+let postcardText = '';
+let postcardsSent = []; // {level, text, levelName}
+let postcardSentLevels = new Set();
+let postcardGalleryScroll = 0;
+let postcardJustSent = false; // brief flash after sending
+let postcardSentTimer = 0;
+
+function loadPostcards() {
+  try {
+    const data = JSON.parse(localStorage.getItem('unikittyville_postcards') || '[]');
+    postcardsSent = data;
+    postcardSentLevels = new Set(data.map(p => p.level));
+  } catch (e) { /* ignore corrupt data */ }
+}
+function savePostcards() {
+  try {
+    localStorage.setItem('unikittyville_postcards', JSON.stringify(postcardsSent));
+  } catch (e) { /* storage full or unavailable */ }
+}
+
+// ── Captain's Mission Log (Moon level) ──
+const MISSION_LOG_PROMPTS = [
+  'My favorite level was ____ because...',
+  'The most amazing fact I learned was...',
+  'If I could visit one place I would go to ____ because...',
+  'The funniest thing that happened was...',
+  'My message to future Moon visitors is...',
+];
+const MISSION_LOG_ENTRY_POINTS = 25;
+const MISSION_LOG_BONUS = 100;
+const MISSION_LOG_MIN_CHARS = 20;
+const MISSION_LOG_MAX_CHARS = 200;
+let missionLogOpen = false;
+let missionLogEntry = 0; // 0-4 current prompt index
+let missionLogTexts = ['', '', '', '', ''];
+let missionLogComplete = false;
+let missionLogScored = [false, false, false, false, false]; // track which entries earned points
+let missionLogBonusAwarded = false;
+
+function loadMissionLog() {
+  try {
+    const data = JSON.parse(localStorage.getItem('unikittyville_missionlog') || 'null');
+    if (data) {
+      missionLogTexts = data.texts || ['', '', '', '', ''];
+      missionLogComplete = data.complete || false;
+      missionLogScored = data.scored || [false, false, false, false, false];
+      missionLogBonusAwarded = data.bonusAwarded || false;
+    }
+  } catch (e) { /* ignore corrupt data */ }
+}
+function saveMissionLog() {
+  try {
+    localStorage.setItem('unikittyville_missionlog', JSON.stringify({
+      texts: missionLogTexts,
+      complete: missionLogComplete,
+      scored: missionLogScored,
+      bonusAwarded: missionLogBonusAwarded,
+    }));
+  } catch (e) { /* storage full or unavailable */ }
+}
+
+// ── Time Capsule Collectibles ──
+const TIME_CAPSULE_RANGE = 80;        // proximity to discover
+const TIME_CAPSULE_GLOW_RANGE = 200;  // visible glow radius
+const TIME_CAPSULE_POINTS = 75;
+let capsulesFound = new Set(JSON.parse(localStorage.getItem('unikittyville_capsules') || '[]'));
+let capsuleCardState = null;  // { level, name, year, fact, timer } or null
+let capsuleGalleryOpen = false;
+
+function saveCapsules() {
+  try { localStorage.setItem('unikittyville_capsules', JSON.stringify([...capsulesFound])); } catch (e) { /* storage unavailable */ }
+}
+
+// ── Fact Notebook ──
+let factNotebook = JSON.parse(localStorage.getItem('factNotebook') || '[]');
+let notebookOpen = false;
+let notebookCategory = 'All';
+let notebookScroll = 0;
+const NOTEBOOK_CATEGORIES = ['All', 'Geography', 'History', 'Science', 'Culture', 'Language'];
+const NOTEBOOK_LINES_PER_PAGE = 8;
+
+function categorizeFact(text) {
+  const t = text.toLowerCase();
+  // History keywords
+  if (/\b(years? old|ancient|centur|history|built in|founded|histor|dynasty|empire|medieval|pharaoh|king|queen|war|battle|invented)\b/.test(t)) return 'History';
+  // Geography keywords
+  if (/\b(miles?|meters?|feet|mountain|ocean|river|island|continent|country|lake|valley|volcano|desert|north|south|east|west|elevation|altitude|tall|deep|wide|long)\b/.test(t)) return 'Geography';
+  // Science keywords
+  if (/\b(species|animal|fish|bird|turtle|whale|dolphin|elephant|giraffe|rhino|cheetah|coral|reef|plant|tree|flower|mineral|crystal|fossil|dinosaur|star|planet|moon|sun|gravity|orbit|rocket|space|atom|cell|dna|evolv)\b/.test(t)) return 'Science';
+  // Language keywords
+  if (/\b(means?|word for|translat|language|dialect|speak|phrase|say|greeting|hello|goodbye|aloha|mahalo|ciao|bongiorno|guten|bonjour|merci|gracias|danke)\b/.test(t)) return 'Language';
+  // Culture keywords
+  if (/\b(tradition|festival|celebrat|custom|music|dance|art|food|recipe|cook|dish|cuisine|temple|shrine|church|cathedral|museum|paint|sculpt|legend|myth|folk|story|song)\b/.test(t)) return 'Culture';
+  return 'Culture'; // default
+}
+
+function addFactToNotebook(text, level) {
+  // Don't add duplicates
+  if (factNotebook.some(f => f.text === text)) return;
+  const category = categorizeFact(text);
+  const levelName = levelRegistry[level] ? levelRegistry[level].name : ('Level ' + level);
+  factNotebook.push({ text, level, levelName, category });
+  localStorage.setItem('factNotebook', JSON.stringify(factNotebook));
+}
 
 // ── State ──
 let playerName = 'Sparkle';
@@ -111,6 +274,18 @@ let pizzaMaking = { active: false, progress: 0, stage: 'idle', pizzaCount: 0 };
 const PIZZA_SHOP = { x: 1000, w: 80 };
 let hotdogCount = 0;
 const HOTDOG_POSITIONS = [600, 2000, 3400];
+// Hot Dog Math minigame state
+const HOTDOG_MATH_PRICES = [1.50, 2.75, 3.25, 4.10, 6.50];
+let hotdogMath = {
+  active: false,
+  round: 0,       // 0-4 (5 rounds)
+  price: 0,       // current round price
+  paid: 0,        // amount paid so far (in cents to avoid float issues)
+  complete: false, // all 5 rounds done
+  feedback: '',    // feedback message (correct/overpaid)
+  feedbackTimer: 0,
+  vendorX: 0,     // which vendor triggered the minigame
+};
 const CENTRAL_PARK_POS = { x: 2200, w: 160 };
 const HOSPITAL_POS = { x: 1800, w: 120 };
 const FAO_SCHWARZ_POS = { x: 700, w: 100 };
@@ -149,8 +324,38 @@ let empireAtTop = false;
 let thirtyRockDance = { active: false, sequence: [], input: [], timer: 0, score: 0, showing: true };
 // Grand Central
 let grandCentralWhisper = '';
+// Grand Central Telegram
+const TELEGRAM_MESSAGES = [
+  // Level 1 — easy (3-5 word phrases, uppercase)
+  'HELLO NEW YORK', 'SEND HELP SOON', 'ARRIVED SAFELY STOP',
+  'MEET ME AT NOON', 'YARN SHIPMENT COMING', 'ALL IS WELL HERE',
+  'NEED MORE FISH', 'WEATHER IS GREAT',
+  // Level 2 — medium (short sentences)
+  'THE TRAIN ARRIVES AT NOON', 'PLEASE SEND SUPPLIES QUICKLY',
+  'GRAND CENTRAL IS BEAUTIFUL', 'THE CITY NEVER SLEEPS',
+  'SPARKLE LOVES NEW YORK CITY', 'UNICORNS ARE REAL I SAW ONE',
+  // Level 3 — hard (longer with punctuation)
+  'Dear Mom, NYC is amazing! Love, Sparkle.',
+  'The fog rolled in at midnight, hiding the stars.',
+  'Pack the yarn, fish, and bacon for the trip!',
+  'Wish you were here! The city lights are magical.',
+];
+const TELEGRAM_LEVEL_RANGES = [[0, 8], [8, 14], [14, 18]]; // [start, end) indices per difficulty
+let telegramActive = false;
+let telegramText = '';
+let telegramTyped = '';
+let telegramErrors = 0;
+let telegramStartTime = 0;
+let telegramComplete = false;
+let telegramLevel = 0; // 0-2 (difficulty)
+let telegramErrorFlash = 0; // timestamp of last error for red flash
 // Met Museum
 let metPaintingIndex = 0;
+let artDescActive = false;
+let artDescText = '';
+let artDescPaintingIdx = -1;
+let artDescriptions = JSON.parse(localStorage.getItem('unikittyville_artDescriptions') || '{}');
+function saveArtDescriptions() { localStorage.setItem('unikittyville_artDescriptions', JSON.stringify(artDescriptions)); }
 const MET_PAINTINGS = [
   { title: 'Meadow at Sunrise', artist: 'Claude Meownet', level: 'Meadow', color: '#86efac', draw: 'meadow' },
   { title: 'Starry Sled Night', artist: 'Vincent van Paw', level: 'Sledding', color: '#1e3a5f', draw: 'sled' },
@@ -184,7 +389,68 @@ let gelatoCount = 0;
 const FOUNTAIN_POS = { x: 1500 };
 const GELATO_POSITIONS = [1000, 2800];
 const PANTHEON_POS = { x: 2600 };
+// Pantheon architecture puzzle
+let pantheonPuzzle = {
+  active: false,
+  placed: 0, // 0-5 pieces placed (bottom to top)
+  feedback: '',
+  feedbackTimer: 0,
+  animating: false,
+  animProgress: 0,
+  complete: false,
+};
+const PANTHEON_PIECES = [
+  { name: 'Foundation', fact: "The Pantheon's foundation is 24 feet thick \u2014 made of Roman concrete!" },
+  { name: 'Walls', fact: "The walls are 20 feet thick and get thinner as they go up, saving weight!" },
+  { name: 'Lower Dome', fact: "Roman concrete gets lighter higher up \u2014 they mixed in volcanic pumice!" },
+  { name: 'Upper Dome', fact: "The dome spans 142 feet \u2014 the largest unreinforced concrete dome ever built!" },
+  { name: 'Oculus', fact: "The oculus (eye) at the top is 27 feet wide \u2014 the only source of light!" },
+];
 const FIAT_POS = { x: 4500 };
+// Scroll transcription minigame (Pantheon)
+const SCROLL_TEXTS = [
+  { text: 'All roads lead to Rome', fact: 'The Roman road network stretched over 250,000 miles!' },
+  { text: 'Veni Vidi Vici', fact: '"I came, I saw, I conquered" — Julius Caesar, 47 BC' },
+  { text: 'When in Rome do as the Romans do', fact: 'This proverb dates back to Saint Augustine in 390 AD!' },
+  { text: 'Rome was not built in a day', fact: 'It took over 1,000 years to build the Roman Empire!' },
+  { text: 'The Roman Empire lasted over 1000 years', fact: 'From 27 BC to 476 AD in the West — and even longer in the East!' },
+];
+let scrollActive = false;
+let scrollRound = 0; // 0-4
+let scrollText = '';
+let scrollTyped = 0; // index into scrollText
+let scrollErrors = 0;
+let scrollStartTime = 0;
+let scrollComplete = false; // current scroll complete
+let scrollAllDone = false; // all 5 scrolls done
+let scrollShowFact = false; // showing fact after completion
+let scrollFactTimer = 0;
+let scrollFlashRed = 0; // timer for red flash on wrong key
+let scrollTotalErrors = 0; // total errors across all scrolls
+let scrollBonusAwarded = false; // all-5 bonus
+
+// Gelato Shop minigame state
+const GELATO_FLAVORS = [
+  { name: 'Strawberry', color: '#ef4444' },
+  { name: 'Chocolate', color: '#92400e' },
+  { name: 'Pistachio', color: '#22c55e' },
+  { name: 'Vanilla', color: '#fef3c7' },
+  { name: 'Lemon', color: '#fde047' },
+  { name: 'Blueberry', color: '#6366f1' },
+];
+const GELATO_ORDERS = [
+  { desc: '1/2 Strawberry, 1/2 Chocolate', fractions: { Strawberry: 2, Chocolate: 2 } },
+  { desc: '1/2 Vanilla, 1/4 Pistachio, 1/4 Lemon', fractions: { Vanilla: 2, Pistachio: 1, Lemon: 1 } },
+  { desc: '1/3 Blueberry, 1/3 Strawberry, 1/3 Chocolate', fractions: { Blueberry: 1, Strawberry: 1, Chocolate: 1 }, thirds: true },
+  { desc: '3/4 Pistachio, 1/4 Vanilla', fractions: { Pistachio: 3, Vanilla: 1 } },
+  { desc: '1/4 Strawberry, 1/4 Chocolate, 1/4 Pistachio, 1/4 Vanilla', fractions: { Strawberry: 1, Chocolate: 1, Pistachio: 1, Vanilla: 1 } },
+];
+let gelatoRound = 0;
+let gelatoCup = [];          // array of flavor names (each entry = 1 scoop = 1/4 cup, or 1/3 for thirds orders)
+let gelatoOrder = null;       // current GELATO_ORDERS entry
+let gelatoComplete = false;   // all 5 rounds done
+let gelatoMessage = '';       // feedback message
+let gelatoMsgTimer = 0;       // how long to show message
 // Hawaii interactions
 let tikiCount = 0;
 let coconutCount = 0;
@@ -212,6 +478,18 @@ const SLED_SPEED = 3.0;
 // NPC dialogue system
 const NPC_TALK_RANGE = 60;
 let activeSpeechBubbles = []; // { npc, text, life }
+
+// NPC Quiz system — triggered randomly after NPC dialogue
+let quizActive = false;
+let quizQuestion = '';
+let quizAnswers = [];
+let quizCorrect = 0;       // index of correct answer (0, 1, or 2)
+let quizResultTimer = 0;   // countdown for result message display
+let quizResultText = '';    // "Correct! +50" or "Not quite! The answer is..."
+let quizResultColor = '';   // color for the result message
+const QUIZ_CHANCE = 0.33;  // ~1 in 3 chance of quiz after dialogue
+const QUIZ_BONUS = 50;
+const QUIZ_RESULT_DURATION = 2000; // 2 seconds
 const SLED_WORLD_W = 5000;
 
 // Sledding terrain height function — slopes downhill with rolling bumps
@@ -234,6 +512,49 @@ let collectedAlienCount = 0;
 const MAX_SPACE_ALIENS = 8;
 let spaceInvulnTimer = 0; // brief invulnerability after asteroid hit
 
+// Whale Song Transcription — radio transmissions during transatlantic flight (level 10)
+const WHALE_TRANSMISSIONS = [
+  { x: 1000, text: 'Whale spotted below' },
+  { x: 2000, text: 'Blue whales are the largest animals ever' },
+  { x: 3000, text: 'Humpback whales sing songs' },
+  { x: 4000, text: 'Dolphins travel in groups called pods' },
+  { x: 5000, text: 'The ocean covers seventy percent of Earth' },
+];
+const WHALE_TRANSCRIPTION_POINTS = 25;
+const WHALE_TRANSCRIPTION_BONUS = 75;
+const WHALE_TRANSCRIPTION_TIMEOUT = 15000; // 15 seconds to type each
+let whaleTranscription = {
+  active: false,         // is a transmission currently showing?
+  currentIndex: -1,      // which transmission (0-4)
+  typed: '',             // what the player has typed so far
+  errors: 0,            // error count for current transmission
+  timeLeft: 0,          // ms remaining for current transmission
+  completed: new Set(),  // indices of completed transmissions
+  expired: new Set(),    // indices of expired (timed-out) transmissions
+  allBonusAwarded: false,
+};
+
+// Mission Control typing minigame state
+const MISSION_COMMANDS = [
+  'SYSTEMS CHECK',
+  'ALL ENGINES GO',
+  'IGNITION SEQUENCE START',
+  'MAIN ENGINE THROTTLE UP',
+  'WE HAVE LIFTOFF',
+];
+let missionControl = {
+  active: false,
+  round: 0,        // 0-4
+  typed: '',        // what the player has typed so far
+  errors: 0,       // total errors
+  startTime: 0,    // Date.now() when minigame started
+  complete: false,  // all 5 commands done
+  timeLeft: 60000,  // 60 seconds in ms
+  failed: false,    // ran out of time
+  rocketY: 0,       // for launch animation
+  showResult: 0,    // timer for showing result before exit
+};
+
 // Cape Canaveral state
 let capeSpaceSuit = false;
 let capeFueling = 0;
@@ -241,6 +562,19 @@ let capeFueled = false;
 let capeLaunching = false;
 let capeCountdown = 10000; // 10 seconds
 let capeLaunchPower = 0;
+
+// Fuel calculator math problems
+let fuelCalcActive = false;
+let fuelCalcProblem = 0; // 0-2
+let fuelCalcAnswer = '';
+let fuelCalcCorrect = 0; // how many solved
+let fuelCalcFeedback = ''; // 'correct' | 'wrong' | ''
+let fuelCalcFeedbackTimer = 0;
+const FUEL_CALC_PROBLEMS = [
+  { question: 'Each fuel tank holds 5 gallons.\nWe need 4 tanks.\nHow many gallons total?', answer: 20 },
+  { question: '30 oxygen canisters split equally\namong 6 astronauts.\nHow many each?', answer: 5 },
+  { question: 'The rocket burns 8 gallons per minute.\nHow many gallons for a 7-minute burn?', answer: 56 },
+];
 
 // Moon level constants
 const MOON_GRAVITY = 0.1;
@@ -254,6 +588,69 @@ let smoothieBlending = false;
 let smoothieProgress = 0;
 let smoothieCount = 0;
 
+// Recipe Mode state
+let recipeModeActive = false;
+let recipeRound = 0;       // 0-2
+let recipeSteps = [];       // current shuffled order
+let recipeCorrectOrder = [];
+let recipeFirstSwap = null; // null or index of first selected step
+let recipeComplete = false; // current round solved
+let recipeSolved = 0;       // count of rounds solved (0-3)
+let recipeCompleteTimer = 0; // animation timer after solving
+let recipeAllDone = false;  // all 3 rounds finished
+let recipeBlendAnim = 0;    // blender spin animation frame
+
+const RECIPE_DATA = [
+  {
+    name: 'Strawberry Smoothie',
+    color: '#ef4444',
+    steps: ['Add strawberries', 'Add yogurt', 'Add ice', 'Blend']
+  },
+  {
+    name: 'Tropical Smoothie',
+    color: '#f59e0b',
+    steps: ['Peel banana', 'Slice mango', 'Add coconut milk', 'Add ice', 'Blend']
+  },
+  {
+    name: 'Power Smoothie',
+    color: '#22c55e',
+    steps: ['Add spinach', 'Add blueberries', 'Add protein powder', 'Add almond milk', 'Add honey', 'Blend']
+  }
+];
+
+function shuffleRecipeSteps(correctSteps) {
+  const arr = correctSteps.slice();
+  // Do 3-4 random swaps to ensure it's shuffled but solvable
+  const swaps = 3 + Math.floor(Math.random() * 2);
+  for (let s = 0; s < swaps; s++) {
+    const i = Math.floor(Math.random() * arr.length);
+    let j = Math.floor(Math.random() * arr.length);
+    while (j === i) j = Math.floor(Math.random() * arr.length);
+    const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  // Ensure it's actually different from correct order
+  const same = arr.every((s, i) => s === correctSteps[i]);
+  if (same) {
+    // swap first two
+    const tmp = arr[0]; arr[0] = arr[1]; arr[1] = tmp;
+  }
+  return arr;
+}
+
+function startRecipeRound(round) {
+  recipeRound = round;
+  recipeCorrectOrder = RECIPE_DATA[round].steps.slice();
+  recipeSteps = shuffleRecipeSteps(recipeCorrectOrder);
+  recipeFirstSwap = null;
+  recipeComplete = false;
+  recipeCompleteTimer = 0;
+  recipeBlendAnim = 0;
+}
+
+function checkRecipeOrder() {
+  return recipeSteps.every((s, i) => s === recipeCorrectOrder[i]);
+}
+
 // TopGolf state
 let golfBall = { active: false, x: 0, y: 0, vx: 0, vy: 0 };
 let golfAngle = Math.PI / 4;
@@ -261,7 +658,357 @@ let golfScore = 0;
 let golfPower = 0;
 let golfCharging = false;
 
+// Apollo Mission minigame state
+let apolloMission = {
+  active: false,
+  step: 0,        // 0-3: first step, plant flag, collect rocks, salute
+  progress: 0,    // generic progress for current step
+  rocksCollected: 0,
+  rockPositions: [],  // x positions of rocks to collect
+  rockPlayerX: 0,     // player x within rock collection scene
+  bootY: 0,           // boot descent position for step 1
+  complete: false,
+  celebrateTimer: 0,
+  stepTimer: 0,       // timing for step 1 press-at-right-moment
+};
+
+// Rover Programming minigame state (Moon level)
+const ROVER_CHALLENGES = [
+  {
+    name: 'Go forward 3 and pick up',
+    gridW: 5, gridH: 5,
+    roverStart: { x: 0, y: 2, dir: 0 }, // dir: 0=right,1=down,2=left,3=up
+    samples: [{ x: 3, y: 2 }],
+    walls: [],
+    solution: 'FFFP',
+  },
+  {
+    name: 'Turn and collect',
+    gridW: 5, gridH: 5,
+    roverStart: { x: 0, y: 2, dir: 0 },
+    samples: [{ x: 2, y: 0 }],
+    walls: [],
+    solution: 'FFLFFP',
+  },
+  {
+    name: 'Navigate around obstacle',
+    gridW: 5, gridH: 5,
+    roverStart: { x: 0, y: 2, dir: 0 },
+    samples: [{ x: 3, y: 2 }],
+    walls: [{ x: 2, y: 2 }],
+    solution: 'FLFRFFP',
+  },
+  {
+    name: 'Collect 2 samples',
+    gridW: 5, gridH: 5,
+    roverStart: { x: 0, y: 2, dir: 0 },
+    samples: [{ x: 2, y: 2 }, { x: 4, y: 2 }],
+    walls: [],
+    solution: 'FFPFFP',
+  },
+  {
+    name: 'Complex path',
+    gridW: 5, gridH: 5,
+    roverStart: { x: 0, y: 0, dir: 0 },
+    samples: [{ x: 2, y: 2 }, { x: 4, y: 0 }],
+    walls: [{ x: 1, y: 1 }, { x: 3, y: 1 }],
+    solution: null, // multiple solutions
+  },
+];
+
+let roverProg = {
+  active: false,
+  challenge: 0,         // 0-4
+  program: [],           // array of 'F','L','R','P'
+  running: false,        // animation in progress
+  runStep: 0,            // current command index during run
+  runTimer: 0,           // ms timer for step animation
+  roverPos: { x: 0, y: 0 },
+  roverDir: 0,           // 0=right,1=down,2=left,3=up
+  samples: [],           // {x,y,collected}
+  walls: [],
+  feedback: '',          // '' | 'success' | 'fail'
+  feedbackTimer: 0,
+  complete: false,
+  challengesDone: 0,     // count of completed challenges
+};
+
 // Space flight alien collection — persists to Moon level (defined in level 12 section)
+
+// Train signal puzzle state (end of sledding level)
+let trainPuzzleActive = false;
+let trainPuzzleRound = 0; // 0-4 (5 puzzles)
+let trainPuzzleFeedback = ''; // '' | 'correct' | 'wrong'
+let trainPuzzleFeedbackTimer = 0;
+let trainPuzzleComplete = false;
+let trainPuzzleScore = 0; // track per-puzzle session score
+
+const TRAIN_PUZZLES = [
+  {
+    rule: 'IF the light is RED, THEN press 1 to STOP.\nIF GREEN, press 2 to GO.',
+    condition: 'RED light',
+    visual: 'red_light',
+    answer: 1,
+    hint: 'The light is RED — that means STOP!'
+  },
+  {
+    rule: 'IF the track goes LEFT, THEN press 1.\nIF RIGHT, press 2.',
+    condition: 'Track goes RIGHT',
+    visual: 'right_track',
+    answer: 2,
+    hint: 'The track points RIGHT — press 2!'
+  },
+  {
+    rule: 'IF train is FAST AND track is CURVED,\nTHEN press 1 to SLOW DOWN.\nOtherwise press 2.',
+    condition: 'FAST + CURVED',
+    visual: 'fast_curved',
+    answer: 1,
+    hint: 'The train is FAST and the track is CURVED — slow down!'
+  },
+  {
+    rule: 'IF it\'s SNOWING OR track is ICY,\nTHEN press 1 for SAND.\nOtherwise press 2.',
+    condition: 'SNOWING',
+    visual: 'snowing',
+    answer: 1,
+    hint: 'It\'s SNOWING — lay down sand!'
+  },
+  {
+    rule: 'IF NOT daytime,\nTHEN press 1 for HEADLIGHTS.\nOtherwise press 2.',
+    condition: 'NIGHTTIME',
+    visual: 'night',
+    answer: 1,
+    hint: 'It\'s NOT daytime — turn on the headlights!'
+  }
+];
+
+// ── Achievement Badges ──
+const ACHIEVEMENT_BONUS = 200;
+const achievements = [
+  { id: 'junior_geographer', name: 'Junior Geographer', description: 'Visit 5 different levels', icon: '\u{1F30D}', earned: false, hint: 'Explore more levels!' },
+  { id: 'marine_biologist', name: 'Marine Biologist', description: 'Complete the scuba diving level', icon: '\u{1F420}', earned: false, hint: 'Dive deep in the Oriental level' },
+  { id: 'chefs_kiss', name: "Chef's Kiss", description: 'Make 3 pizzas, 3 s\'mores, and 3 smoothies', icon: '\u{1F468}\u200D\u{1F373}', earned: false, hint: 'Cook in NYC, Campground & Moon' },
+  { id: 'shutterfly', name: 'Shutterfly', description: 'Take 5 safari photos', icon: '\u{1F4F8}', earned: false, hint: 'Photograph animals on safari' },
+  { id: 'astronaut', name: 'Astronaut', description: 'Reach the Moon', icon: '\u{1F680}', earned: false, hint: 'Blast off from Cape Canaveral' },
+  { id: 'world_traveler', name: 'World Traveler', description: 'Visit all 13 levels', icon: '\u2708\uFE0F', earned: false, hint: 'See every destination' },
+  { id: 'kits_best_friend', name: "Kit's Best Friend", description: 'Complete the hospital delivery and picnic', icon: '\u{1F37C}', earned: false, hint: 'Deliver Kit and visit the park' },
+  { id: 'high_scorer', name: 'High Scorer', description: 'Reach 10,000 points', icon: '\u2B50', earned: false, hint: 'Keep collecting and exploring!' },
+];
+let levelsVisited = new Set();
+let achievementScreenOpen = false;
+let achievementCheckCounter = 0;
+let achievementPopup = null; // { name, icon, timer }
+const ACHIEVEMENT_POPUP_DURATION = 3000;
+
+// Load earned achievements from localStorage
+function loadAchievements() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('unikittyville_achievements') || '{}');
+    for (const a of achievements) {
+      if (saved[a.id]) a.earned = true;
+    }
+    const savedLevels = JSON.parse(localStorage.getItem('unikittyville_levels_visited') || '[]');
+    for (const lv of savedLevels) levelsVisited.add(lv);
+  } catch (e) { /* ignore corrupt data */ }
+}
+
+function saveAchievements() {
+  try {
+    const data = {};
+    for (const a of achievements) { if (a.earned) data[a.id] = true; }
+    localStorage.setItem('unikittyville_achievements', JSON.stringify(data));
+    localStorage.setItem('unikittyville_levels_visited', JSON.stringify([...levelsVisited]));
+  } catch (e) { /* storage full or unavailable */ }
+}
+
+function awardAchievement(id) {
+  const a = achievements.find(b => b.id === id);
+  if (!a || a.earned) return;
+  a.earned = true;
+  score += ACHIEVEMENT_BONUS;
+  addPopup(player.x, player.y - 60, '+' + ACHIEVEMENT_BONUS + ' Achievement!', '#fbbf24');
+  achievementPopup = { name: a.name, icon: a.icon, timer: ACHIEVEMENT_POPUP_DURATION };
+  playChaChing();
+  saveAchievements();
+}
+
+function checkAchievements() {
+  // Track current level visit
+  levelsVisited.add(currentLevel);
+
+  // Junior Geographer — visit 5 different levels
+  if (levelsVisited.size >= 5) awardAchievement('junior_geographer');
+
+  // World Traveler — visit all 13 levels
+  if (levelsVisited.size >= 13) awardAchievement('world_traveler');
+
+  // Astronaut — reach the Moon (level 13)
+  if (currentLevel === 13) awardAchievement('astronaut');
+
+  // High Scorer — reach 10,000 points
+  if (score >= 10000) awardAchievement('high_scorer');
+
+  // Chef's Kiss — 3 pizzas, 3 s'mores, 3 smoothies
+  if (pizzaMaking.pizzaCount >= 3 && smoreCount >= 3 && smoothieCount >= 3) {
+    awardAchievement('chefs_kiss');
+  }
+
+  // Shutterfly — take 5+ safari photos (4 unique species + any duplicates, or just total count)
+  if (safariPhotoCount >= 4) awardAchievement('shutterfly');
+
+  // Kit's Best Friend — hospital delivery and picnic
+  if (hospitalDelivered && kitParkBonus) awardAchievement('kits_best_friend');
+
+  // Marine Biologist — checked when exiting scuba (set a flag)
+  // (awarded inline when exiting scuba scene)
+
+  saveAchievements();
+  }
+
+// ── Bug Catcher minigame (level 1) ──
+const BUG_NET_POS = { x: 2520 }; // near the flower garden at x=2450
+let hasBugNet = false;
+let bugCatcherActive = false;
+let bugCatcherRound = 0; // 0-4 (5 rounds total)
+let bugCatcherBugs = []; // array of bug objects
+let bugCatcherRule = null; // { text, matchFn }
+let bugCatcherCorrect = 0;
+let bugCatcherWrong = 0;
+let bugCatcherRoundComplete = false;
+let bugCatcherRoundTimer = 0;
+let bugCatcherFinished = false;
+const BUG_COLORS = ['red', 'blue', 'green', 'yellow'];
+const BUG_SIZES = ['big', 'small'];
+const BUG_PATTERNS = ['spots', 'stripes', 'plain'];
+const BUG_TYPES = ['butterfly', 'beetle', 'ladybug', 'caterpillar'];
+const BUG_COLOR_HEX = { red: '#ef4444', blue: '#3b82f6', green: '#22c55e', yellow: '#facc15' };
+
+const BUG_CATCHER_RULES = [
+  { text: 'Find RED bugs!', matchFn: b => b.color === 'red' },
+  { text: 'Find BIG bugs!', matchFn: b => b.size === 'big' },
+  { text: 'Find RED AND SMALL bugs!', matchFn: b => b.color === 'red' && b.size === 'small' },
+  { text: 'Find bugs with SPOTS OR STRIPES!', matchFn: b => b.pattern === 'spots' || b.pattern === 'stripes' },
+  { text: 'Find bugs that are NOT BLUE!', matchFn: b => b.color !== 'blue' },
+];
+
+function generateBugCatcherBugs() {
+  const bugs = [];
+  for (let i = 0; i < 10; i++) {
+    bugs.push({
+      x: 100 + Math.random() * 760,
+      y: 80 + Math.random() * 300,
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 1.5,
+      color: BUG_COLORS[Math.floor(Math.random() * BUG_COLORS.length)],
+      size: BUG_SIZES[Math.floor(Math.random() * BUG_SIZES.length)],
+      pattern: BUG_PATTERNS[Math.floor(Math.random() * BUG_PATTERNS.length)],
+      type: BUG_TYPES[Math.floor(Math.random() * BUG_TYPES.length)],
+      caught: false,
+      wobble: Math.random() * Math.PI * 2,
+    });
+  }
+  // Ensure at least 2 matching bugs for current rule
+  const rule = BUG_CATCHER_RULES[bugCatcherRound];
+  let matchCount = bugs.filter(b => rule.matchFn(b)).length;
+  let idx = 0;
+  while (matchCount < 2 && idx < bugs.length) {
+    // Force some bugs to match
+    if (!rule.matchFn(bugs[idx])) {
+      if (bugCatcherRound === 0) bugs[idx].color = 'red';
+      else if (bugCatcherRound === 1) bugs[idx].size = 'big';
+      else if (bugCatcherRound === 2) { bugs[idx].color = 'red'; bugs[idx].size = 'small'; }
+      else if (bugCatcherRound === 3) bugs[idx].pattern = Math.random() < 0.5 ? 'spots' : 'stripes';
+      else if (bugCatcherRound === 4) { if (bugs[idx].color === 'blue') bugs[idx].color = 'red'; }
+      if (rule.matchFn(bugs[idx])) matchCount++;
+    }
+    idx++;
+  }
+  return bugs;
+}
+
+function startBugCatcherRound() {
+  bugCatcherRule = BUG_CATCHER_RULES[bugCatcherRound];
+  bugCatcherBugs = generateBugCatcherBugs();
+  bugCatcherRoundComplete = false;
+  bugCatcherRoundTimer = 0;
+}
+
+function updateBugCatcher(dt) {
+  if (!bugCatcherActive || bugCatcherFinished) return;
+
+  // Advance round after brief pause
+  if (bugCatcherRoundComplete) {
+    bugCatcherRoundTimer += dt;
+    if (bugCatcherRoundTimer > 1500) {
+      bugCatcherRound++;
+      if (bugCatcherRound >= 5) {
+        bugCatcherFinished = true;
+        bugCatcherActive = false;
+        const bonus = Math.max(0, bugCatcherCorrect * 15 - bugCatcherWrong * 5);
+        score += bonus;
+        addPopup(player.x, player.y - 60, `+${bonus} Bug Catcher Complete!`, '#a78bfa');
+        playChaChing();
+        return;
+      }
+      startBugCatcherRound();
+    }
+    return;
+  }
+
+  // Move bugs with wandering AI
+  for (const bug of bugCatcherBugs) {
+    if (bug.caught) continue;
+    bug.wobble += 0.05;
+    // Wandering: slight random direction changes
+    bug.vx += (Math.random() - 0.5) * 0.1;
+    bug.vy += (Math.random() - 0.5) * 0.08;
+    // Clamp speed
+    bug.vx = Math.max(-2.5, Math.min(2.5, bug.vx));
+    bug.vy = Math.max(-2, Math.min(2, bug.vy));
+    bug.x += bug.vx;
+    bug.y += bug.vy;
+    // Bounce off screen edges
+    if (bug.x < 30) { bug.x = 30; bug.vx = Math.abs(bug.vx); }
+    if (bug.x > 930) { bug.x = 930; bug.vx = -Math.abs(bug.vx); }
+    if (bug.y < 60) { bug.y = 60; bug.vy = Math.abs(bug.vy); }
+    if (bug.y > 420) { bug.y = 420; bug.vy = -Math.abs(bug.vy); }
+  }
+
+  // Catch bug with Space (collision with player)
+  if (keys['Space']) {
+    keys['Space'] = false;
+    const cam = Math.max(0, Math.min(getCurrentWorldW() - canvas.width, player.x - canvas.width / 2));
+    const playerScreenX = player.x - cam;
+    const playerScreenY = player.y - 20; // center of player
+    for (const bug of bugCatcherBugs) {
+      if (bug.caught) continue;
+      const dx = bug.x - playerScreenX;
+      const dy = bug.y - playerScreenY;
+      const catchRadius = bug.size === 'big' ? 35 : 28;
+      if (dx * dx + dy * dy < catchRadius * catchRadius) {
+        bug.caught = true;
+        if (bugCatcherRule.matchFn(bug)) {
+          bugCatcherCorrect++;
+          score += 15;
+          addPopup(player.x, player.y - 40, '+15 Correct!', '#4ade80');
+          playChaChing();
+        } else {
+          bugCatcherWrong++;
+          score = Math.max(0, score - 5);
+          addPopup(player.x, player.y - 40, '-5 Wrong bug!', '#ef4444');
+        }
+        break; // only catch one at a time
+      }
+    }
+  }
+
+  // Check if all matching bugs caught = round complete
+  const uncaughtMatches = bugCatcherBugs.filter(b => !b.caught && bugCatcherRule.matchFn(b));
+  if (uncaughtMatches.length === 0) {
+    bugCatcherRoundComplete = true;
+    bugCatcherRoundTimer = 0;
+    addPopup(player.x, player.y - 60, `Round ${bugCatcherRound + 1} complete!`, '#fbbf24');
+  }
+}
 
 let popups = []; // floating score popups
 let keys = {};
@@ -274,6 +1021,11 @@ let lastMeowTime = 0;
 let lastChaChingTime = 0;
 let currentLevel = 1;
 let levelTransition = { active: false, timer: 0, toLevel: 0 };
+
+// Tour Guide Mode — educational introductions per level
+let tourGuideActive = false;
+let tourGuideStep = 0; // 0, 1, or 2 (which fact is showing)
+const tourGuideSeen = new Set(); // levels already introduced this session
 const meowSounds = [];
 let chaChingSound = null;
 
@@ -572,14 +1324,29 @@ function completeTransition() {
   alpsAirborne = false;
   alpsAirTimer = 0;
   sledding = false;
+  trainPuzzleActive = false;
+  trainPuzzleRound = 0;
+  trainPuzzleFeedback = '';
+  trainPuzzleFeedbackTimer = 0;
+  trainPuzzleComplete = false;
+  trainPuzzleScore = 0;
   hammockNapping = false;
   hammockNapTimer = 0;
   bigfootDrinking = false;
   bigfootDrinkTimer = 0;
   roasting = { active: false, progress: 0, done: false };
   activeSpeechBubbles = [];
+  quizActive = false;
+  quizResultTimer = 0;
   pizzaMaking.stage = 'idle';
   pizzaMaking.progress = 0;
+  // Reset hot dog math minigame
+  hotdogMath.active = false;
+  hotdogMath.round = 0;
+  hotdogMath.paid = 0;
+  hotdogMath.complete = false;
+  hotdogMath.feedback = '';
+  hotdogMath.feedbackTimer = 0;
   // Reset hospital minigame stage (but keep delivery/stroller/color state)
   hospitalStage = 'idle';
   hospitalProgress = 0;
@@ -600,9 +1367,24 @@ function completeTransition() {
   campCamperShowering = false;
   campCamperShowerTimer = 0;
   ridingCheetah = false;
+  marketActive = false;
+  marketProblem = 0;
+  marketAnswer = '';
+  marketCorrect = 0;
+  marketFeedback = '';
+  marketFeedbackTimer = 0;
+  marketComplete = false;
   safariPhotography = { active: false, timer: 0, targetAnimal: '' };
+  scrollActive = false;
+  scrollComplete = false;
+  scrollShowFact = false;
+  journalActive = false;
+  journalAnimal = '';
+  journalResult = '';
+  journalResultTimer = 0;
   cheetahSpeech = { text: '', timer: 0 };
   dustParticles = [];
+  missionControl = { active: false, round: 0, typed: '', errors: 0, startTime: 0, complete: false, timeLeft: 60000, failed: false, rocketY: 0, showResult: 0 };
   // Keep space suit on for levels 11-13 (Cape → Space → Moon)
   if (!(levelTransition.toLevel >= 11 && levelTransition.toLevel <= 13 && capeSpaceSuit)) {
     capeSpaceSuit = false;
@@ -612,6 +1394,24 @@ function completeTransition() {
   capeLaunching = false;
   capeCountdown = 10000;
   capeLaunchPower = 0;
+  fuelCalcActive = false;
+  fuelCalcProblem = 0;
+  fuelCalcAnswer = '';
+  fuelCalcCorrect = 0;
+  fuelCalcFeedback = '';
+  fuelCalcFeedbackTimer = 0;
+  // Reset whale transcription state when re-entering level 10
+  if (levelTransition.toLevel === 10) {
+    whaleTranscription = {
+      active: false, currentIndex: -1, typed: '', errors: 0, timeLeft: 0,
+      completed: new Set(), expired: new Set(), allBonusAwarded: false,
+    };
+    // Reset flight obstacles
+    for (const sg of level10Flight.seagulls) sg.hit = false;
+    for (const storm of level10Flight.storms) storm.hit = false;
+    for (const hur of level10Flight.hurricanes) hur.hit = false;
+    for (const ruby of level10Flight.yarnBalls) ruby.collected = false;
+  }
   // Reset space flight obstacles when re-entering level 12
   if (levelTransition.toLevel === 12) {
     spaceInvulnTimer = 0;
@@ -626,10 +1426,41 @@ function completeTransition() {
   smoothieBlending = false;
   smoothieProgress = 0;
   smoothieCount = 0;
+  recipeModeActive = false;
+  recipeRound = 0;
+  recipeSteps = [];
+  recipeCorrectOrder = [];
+  recipeFirstSwap = null;
+  recipeComplete = false;
+  recipeSolved = 0;
+  recipeCompleteTimer = 0;
+  recipeAllDone = false;
+  recipeBlendAnim = 0;
   golfBall = { active: false, x: 0, y: 0, vx: 0, vy: 0 };
   golfScore = 0;
   golfPower = 0;
   golfCharging = false;
+  apolloMission = {
+    active: false, step: 0, progress: 0, rocksCollected: 0,
+    rockPositions: [], rockPlayerX: 0, bootY: 0, complete: false,
+    celebrateTimer: 0, stepTimer: 0,
+  };
+  roverProg = {
+    active: false, challenge: 0, program: [], running: false,
+    runStep: 0, runTimer: 0, roverPos: { x: 0, y: 0 }, roverDir: 0,
+    samples: [], walls: [], feedback: '', feedbackTimer: 0,
+    complete: false, challengesDone: 0,
+  };
+
+  // Reset bug catcher (keep hasBugNet and bugCatcherFinished across level switches)
+  bugCatcherActive = false;
+  bugCatcherRound = 0;
+  bugCatcherBugs = [];
+  bugCatcherRule = null;
+  bugCatcherCorrect = 0;
+  bugCatcherWrong = 0;
+  bugCatcherRoundComplete = false;
+  bugCatcherRoundTimer = 0;
   // Stop any looping SFX from previous level
   stopLoopSfx('sfxSailWind');
   stopLoopSfx('sfxWaterLapping');
@@ -638,6 +1469,13 @@ function completeTransition() {
   stopLoopSfx('sfxGrassRustle');
   stopLoopSfx('sfxSavannaWind');
   stopLoopSfx('sfxFlightWind');
+
+  // Activate tour guide for first visit to each level
+  if (!tourGuideSeen.has(levelTransition.toLevel)) {
+    tourGuideActive = true;
+    tourGuideStep = 0;
+    tourGuideSeen.add(levelTransition.toLevel);
+  }
 }
 
 function getCurrentPlatforms() { return levelRegistry[currentLevel].platforms; }
@@ -653,13 +1491,24 @@ const DIVE_SPOT_POS = { x: 4800 };
 let shellCount = 0;
 // Scuba diving minigame
 let scubaPlayer = { x: 200, y: 200, vx: 0, vy: 0 };
-const SCUBA_WORLD_W = 1200;
+const SCUBA_WORLD_W = 2200;
 const SCUBA_WORLD_H = 500;
 const SCUBA_BUOYANCY = -0.04;
 const SCUBA_SWIM_FORCE = 0.45;
 const SCUBA_DRAG = 0.92;
 let scubaCollectibles = [];
 let scubaPearlCount = 0;
+// USS Oriental Dive Log — timeline pieces
+const DIVE_LOG_PIECES = [
+  { x: 400, y: 200, year: '1861', event: 'The Civil War begins. The Union Navy needs transport ships.' },
+  { x: 800, y: 280, year: '1862', event: 'The USS Oriental is captured by Confederate forces near Hatteras.' },
+  { x: 1200, y: 160, year: '1862', event: 'The ship sinks in the Neuse River during a storm.' },
+  { x: 1600, y: 320, year: '1953', event: 'Local divers discover the wreck and begin documenting artifacts.' },
+  { x: 2000, y: 240, year: '2010', event: 'The site becomes a protected underwater heritage trail.' },
+];
+let diveLogFound = new Set();
+let diveLogShowingTimeline = false;
+let diveLogTimelineTimer = 0;
 // Level select
 let levelSelectUnlocked = true; // permanently unlocked for dev/debug
 // LEVEL_NAMES and TOTAL_LEVELS are now derived from levelRegistry (defined in drawing.js)
@@ -696,6 +1545,35 @@ const BIGFOOT_DRINK_DURATION = 3000;
 let campPool = { dug: false, filled: false, digging: false, digProgress: 0, filling: false, fillProgress: 0 };
 let leprechaunGold = 0;
 let leprechaunSpeech = { text: '', timer: 0 };
+// Campfire Light Show minigame
+let lightShowActive = false;
+let lightShowProgram = '';     // string of color codes: R, B, G, Y, W
+let lightShowRepeat = false;   // whether X (repeat x3) was added
+let lightShowRunning = false;
+let lightShowStep = 0;
+let lightShowTimer = 0;
+let lightShowChallenge = 0;    // 0-4 (which challenge)
+let lightShowChallengesCompleted = [false, false, false, false, false];
+let lightShowFeedback = { text: '', timer: 0, color: '#fff' };
+const LIGHT_SHOW_STEP_MS = 500; // ms per color step when running
+const LIGHT_SHOW_TARGETS = [
+  { desc: 'Make the fire go: Red, Blue, Red, Blue', pattern: 'RBRB' },
+  { desc: 'Make the fire go: Red, Green, Blue', pattern: 'RGB' },
+  { desc: 'Make a rainbow: R, Y, G, B, W', pattern: 'RYGBW' },
+  { desc: 'Use REPEAT: make Red, Blue loop 3 times', pattern: 'RBRBRBRBRBRB', needsRepeat: true, basePattern: 'RBRB' },
+  { desc: 'Free mode: create your own light show!', pattern: null },
+];
+const LIGHT_SHOW_COLORS = {
+  R: '#ef4444', B: '#3b82f6', G: '#22c55e', Y: '#facc15', W: '#ffffff'
+};
+// Campfire Story Typing minigame
+const CAMPFIRE_STORIES = [
+  "Once upon a time a brave little kitten climbed the tallest tree in the forest. From the top she could see the whole world sparkling below.",
+  "The stars twinkled above the campfire as the crickets sang their nightly song. It was the perfect end to a perfect adventure day.",
+  "Deep in the woods there lived a friendly bear who loved to share honey with all the forest animals. Everyone called him Sunny.",
+];
+let storyTyping = { active: false, storyIndex: 0, typed: 0, errors: 0, startTime: 0, complete: false, completeTimer: 0, sessionPick: -1 };
+
 // Camp camper (end of campground level)
 let campCamperPlayerX = 0;
 let campCamperSleeping = false;
@@ -705,6 +1583,23 @@ let campCamperShowering = false;
 let campCamperShowerTimer = 0;
 const CAMP_CAMPER_POS = { x: 4700 };
 
+// ── Level 8: Campfire Geometry minigame ──
+let geometryActive = false;
+let geometryShapeIndex = 0; // 0-4 (triangle, square, pentagon, hexagon, star)
+let geometrySticks = []; // placed sticks [{x1, y1, x2, y2}]
+let geometryAngle = 0; // current stick rotation in radians
+let geometryComplete = false; // true when current shape is done
+let geometryAllComplete = false; // true when all 5 shapes completed
+let geometryCompletionTimer = 0; // timer for showing completion message
+const GEOMETRY_SHAPES = [
+  { name: 'Triangle', sides: 3, fact: 'A triangle has 3 sides and 3 angles that add up to 180 degrees!' },
+  { name: 'Square', sides: 4, fact: 'A square has 4 equal sides and 4 right angles (90 degrees each)!' },
+  { name: 'Pentagon', sides: 5, fact: 'A pentagon has 5 sides. The Pentagon building in Washington DC has this shape!' },
+  { name: 'Hexagon', sides: 6, fact: 'Hexagons are found in beehives! Bees are natural geometers!' },
+  { name: 'Star', sides: 5, fact: 'A five-pointed star is made of 5 triangles around a pentagon!', isStar: true },
+];
+const GEOMETRY_COMPLETION_DISPLAY = 3000; // ms to show fact before advancing
+
 // ── Level 8: Africa Safari ──
 let fruitCount = 0;
 let safariPhotoCount = 0;
@@ -713,12 +1608,42 @@ let ridingCheetah = false;
 let cheetahSpeech = { text: '', timer: 0 };
 let safariPhotography = { active: false, timer: 0, targetAnimal: '' };
 const SAFARI_PHOTO_DURATION = 1500; // 1.5s timing window
-let safariPhotosTaken = { elephant: false, rhino: false, antelope: false, giraffe: false };
+let safariPhotosTaken = { elephant: false, rhino: false, antelope: false, giraffe: false, cheetah: false };
 let photoGalleryOpen = false;
+// Safari Field Journal — fill-in-the-blank observations after photos
+const JOURNAL_ENTRIES = {
+  elephant: { sentence: 'The elephant uses its long ____ to drink water.', choices: ['tail', 'trunk', 'ears'], correct: 1 },
+  giraffe:  { sentence: 'Giraffes have ____ spots, and no two patterns are alike.', choices: ['striped', 'brown', 'square'], correct: 1 },
+  cheetah:  { sentence: 'The cheetah is the ____ land animal on Earth.', choices: ['slowest', 'biggest', 'fastest'], correct: 2 },
+  rhino:    { sentence: "A rhino's horn is made of the same material as your ____.", choices: ['fingernails', 'teeth', 'bones'], correct: 0 },
+  antelope: { sentence: 'Antelopes can ____ very high to escape predators.', choices: ['swim', 'dig', 'jump'], correct: 2 },
+};
+let journalActive = false;
+let journalAnimal = '';
+let journalResult = ''; // '', 'correct', 'wrong'
+let journalResultTimer = 0;
+const JOURNAL_RESULT_DURATION = 1500;
+let journalCompleted = new Set(); // animals whose journal entry is done
 let dustParticles = []; // cheetah ride dust trail
 const CHEETAH_SPEED = 6.5; // faster than normal 4px
 const CHEETAH_YARN_MAGNET = 80; // auto-collect radius while riding
 const SAFARI_JEEP_POS_GAME = { x: 5200 };
+// Market haggling minigame
+const MARKET_POS = { x: 2000, w: 120 };
+const MARKET_PROBLEMS = [
+  { question: 'Necklace costs 25 coins.\nHow many can you buy with 100 coins?', answer: 4 },
+  { question: 'Mask is 30 coins.\nYou buy 3 from 100 coins.\nHow much change?', answer: 10 },
+  { question: 'Basket is 40 coins, 50% off.\nWhat is the sale price?', answer: 20 },
+  { question: 'Drum costs 35 coins.\nFabric costs 15 coins.\nWhat is the total?', answer: 50 },
+  { question: '100 coins - 2 necklaces (25 each)\n- 1 drum (35).\nHow many coins left?', answer: 15 },
+];
+let marketActive = false;
+let marketProblem = 0; // 0-4
+let marketAnswer = '';
+let marketCorrect = 0;
+let marketFeedback = ''; // 'correct' | 'wrong' | ''
+let marketFeedbackTimer = 0;
+let marketComplete = false;
 // Watering hole crocodile and parrot
 let wateringHoleTimer = 0; // ms spent in the watering hole
 let crocVisible = false;
@@ -768,6 +1693,9 @@ function initScubaCollectibles() {
     { x: 1050, y: 280, type: 'Pearl', color: '#e9d5ff', collected: false },
     { x: 200, y: 380, type: 'Shell', color: '#fda4af', collected: false },
     { x: 1100, y: 120, type: 'Pearl', color: '#e9d5ff', collected: false },
+    { x: 1400, y: 250, type: 'Pearl', color: '#e9d5ff', collected: false },
+    { x: 1700, y: 150, type: 'Shell', color: '#fda4af', collected: false },
+    { x: 1900, y: 350, type: 'Pearl', color: '#e9d5ff', collected: false },
   ];
 }
 initScubaCollectibles();
@@ -831,6 +1759,85 @@ function update(dt) {
       completeTransition();
     }
     return;
+  }
+
+  // Postcard "just sent" timer
+  if (postcardJustSent) {
+    postcardSentTimer -= dt;
+    if (postcardSentTimer <= 0) {
+      postcardJustSent = false;
+      postcardOpen = false;
+    }
+  }
+
+  // Block all game input while postcard is open
+  if (postcardOpen) return;
+
+  // Block all game input while mission log is open
+  if (missionLogOpen) return;
+
+  // Tour guide overlay — block normal input while active
+  if (tourGuideActive) {
+    if (keys['Space']) {
+      keys['Space'] = false;
+      tourGuideStep++;
+      if (tourGuideStep >= 3) {
+        tourGuideActive = false;
+      }
+    }
+    if (keys['Enter']) {
+      keys['Enter'] = false;
+      tourGuideActive = false;
+    }
+    return;
+  }
+
+  // Time Capsule card overlay — dismiss with T, Enter, or Escape
+  if (capsuleCardState) {
+    capsuleCardState.timer -= dt;
+    if (keys['KeyT'] || keys['Enter'] || keys['Escape'] || capsuleCardState.timer <= 0) {
+      keys['KeyT'] = false;
+      keys['Enter'] = false;
+      keys['Escape'] = false;
+      capsuleCardState = null;
+    }
+    return; // freeze while card is showing
+  }
+
+  // Time Capsule gallery overlay — T to close, arrow keys to scroll
+  if (capsuleGalleryOpen) {
+    if (keys['KeyT'] || keys['Escape'] || keys['Enter']) {
+      keys['KeyT'] = false;
+      keys['Escape'] = false;
+      keys['Enter'] = false;
+      capsuleGalleryOpen = false;
+    }
+    return; // freeze while gallery is open
+  }
+
+  // Fact Notebook overlay — N to toggle (only when not in a scene/minigame)
+  if (notebookOpen) {
+    if (keys['KeyN'] || keys['Enter'] || keys['Escape']) {
+      keys['KeyN'] = false;
+      keys['Enter'] = false;
+      keys['Escape'] = false;
+      notebookOpen = false;
+    }
+    if (keys['ArrowUp']) { keys['ArrowUp'] = false; notebookScroll = Math.max(0, notebookScroll - 1); }
+    if (keys['ArrowDown']) { keys['ArrowDown'] = false; notebookScroll++; }
+    if (keys['ArrowLeft']) {
+      keys['ArrowLeft'] = false;
+      const idx = NOTEBOOK_CATEGORIES.indexOf(notebookCategory);
+      notebookCategory = NOTEBOOK_CATEGORIES[(idx - 1 + NOTEBOOK_CATEGORIES.length) % NOTEBOOK_CATEGORIES.length];
+      notebookScroll = 0;
+    }
+    if (keys['ArrowRight']) {
+      keys['ArrowRight'] = false;
+      const idx = NOTEBOOK_CATEGORIES.indexOf(notebookCategory);
+      notebookCategory = NOTEBOOK_CATEGORIES[(idx + 1) % NOTEBOOK_CATEGORIES.length];
+      notebookScroll = 0;
+    }
+    return; // freeze the game while notebook is open
   }
 
   if (currentScene === Scene.CAMP_CAMPER) {
@@ -948,6 +1955,39 @@ function update(dt) {
         playSfx('sfxPearlPickup');
       }
     }
+    // USS Oriental Dive Log — timeline piece collection (T key)
+    if (diveLogShowingTimeline) {
+      // Dismiss timeline overlay with Enter or Escape
+      if (keys['Enter'] || keys['Escape']) {
+        keys['Enter'] = false;
+        keys['Escape'] = false;
+        diveLogShowingTimeline = false;
+      }
+      hud.score.textContent = score;
+      return; // freeze movement while viewing timeline
+    }
+    for (let i = 0; i < DIVE_LOG_PIECES.length; i++) {
+      if (diveLogFound.has(i)) continue;
+      const piece = DIVE_LOG_PIECES[i];
+      const dx = scubaPlayer.x - piece.x;
+      const dy = scubaPlayer.y - piece.y;
+      if (dx * dx + dy * dy < 2500) { // 50px proximity
+        if (keys['KeyT']) {
+          keys['KeyT'] = false;
+          diveLogFound.add(i);
+          score += POINTS.DIVE_LOG_PIECE;
+          addPopup(player.x, player.y - 40, '+' + POINTS.DIVE_LOG_PIECE + ' ' + piece.year + ' found!', '#fbbf24');
+          playChaChing();
+          if (diveLogFound.size === DIVE_LOG_PIECES.length) {
+            // All 5 pieces collected — bonus and show timeline
+            score += POINTS.DIVE_LOG_BONUS;
+            addPopup(player.x, player.y - 60, '+' + POINTS.DIVE_LOG_BONUS + ' Timeline Complete!', '#f59e0b');
+            diveLogShowingTimeline = true;
+            diveLogTimelineTimer = gameTime;
+          }
+        }
+      }
+    }
     // Talk to mercats (Q key)
     for (const mc of scubaMercats) {
       if (Math.abs(scubaPlayer.x - mc.x) < 50 && Math.abs(scubaPlayer.y - mc.y) < 50) {
@@ -959,6 +1999,7 @@ function update(dt) {
             const text = dialogs[Math.floor(Math.random() * dialogs.length)];
             activeSpeechBubbles.push({ npc: mc, text, life: TIMING.SPEECH_BUBBLE_LIFE });
             playSfx('sfxMercatChirp');
+            addFactToNotebook(text, 6); // Oriental level
           }
         }
       }
@@ -983,6 +2024,7 @@ function update(dt) {
       score += POINTS.SCUBA_COMPLETE;
       addPopup(player.x, player.y - 40, '+' + POINTS.SCUBA_COMPLETE + ' Great dive!', '#38bdf8');
       playChaChing();
+      awardAchievement('marine_biologist');
     }
     // HUD updates during scuba
     hud.score.textContent = score;
@@ -1286,14 +2328,83 @@ function update(dt) {
       score += 15;
       addPopup(player.x, player.y - 40, '+15 Echo!', '#a78bfa');
     }
+    // Enter telegram office
+    if (keys['KeyT']) {
+      keys['KeyT'] = false;
+      currentScene = Scene.TELEGRAM;
+      telegramActive = false;
+      telegramComplete = false;
+      telegramTyped = '';
+      telegramErrors = 0;
+      grandCentralWhisper = '';
+    }
     if (keys['Enter']) { keys['Enter'] = false; currentScene = null; grandCentralWhisper = ''; }
+    return;
+  }
+
+  // Grand Central Telegram — typing practice
+  if (currentScene === Scene.TELEGRAM) {
+    if (!telegramActive && !telegramComplete) {
+      // Start a new telegram when player presses Enter
+      if (keys['Enter']) {
+        keys['Enter'] = false;
+        const range = TELEGRAM_LEVEL_RANGES[telegramLevel];
+        const idx = range[0] + Math.floor(Math.random() * (range[1] - range[0]));
+        telegramText = TELEGRAM_MESSAGES[idx];
+        telegramTyped = '';
+        telegramErrors = 0;
+        telegramStartTime = performance.now();
+        telegramActive = true;
+        telegramComplete = false;
+        telegramErrorFlash = 0;
+      }
+      // Change difficulty with left/right
+      if (keys['ArrowLeft']) { keys['ArrowLeft'] = false; telegramLevel = Math.max(0, telegramLevel - 1); }
+      if (keys['ArrowRight']) { keys['ArrowRight'] = false; telegramLevel = Math.min(2, telegramLevel + 1); }
+      // Exit with Escape
+      if (keys['Escape']) { keys['Escape'] = false; currentScene = Scene.GRAND_CENTRAL; }
+    } else if (telegramActive && !telegramComplete) {
+      // Typing is handled by the keydown listener in ui.js
+      // Check completion
+      if (telegramTyped.length === telegramText.length) {
+        telegramComplete = true;
+        telegramActive = false;
+        const elapsed = (performance.now() - telegramStartTime) / 1000; // seconds
+        const words = telegramText.split(' ').length;
+        const wpm = Math.round((words / elapsed) * 60);
+        const accuracy = Math.round(((telegramText.length - telegramErrors) / telegramText.length) * 100);
+        const speedBonus = Math.max(0, Math.min(20, Math.round(wpm / 5)));
+        const accuracyBonus = accuracy === 100 ? 10 : 0;
+        const pts = POINTS.TELEGRAM_BASE + speedBonus + accuracyBonus;
+        score += pts;
+        addPopup(player.x, player.y - 40, '+' + pts + ' Telegram sent!', '#fbbf24');
+        // Unlock next difficulty after completing current
+        if (telegramLevel < 2) telegramLevel++;
+      }
+      // Allow Escape to cancel current telegram
+      if (keys['Escape']) { keys['Escape'] = false; telegramActive = false; telegramTyped = ''; }
+    } else if (telegramComplete) {
+      // After completion, Enter starts a new telegram or Escape goes back
+      if (keys['Enter']) { keys['Enter'] = false; telegramComplete = false; }
+      if (keys['Escape']) { keys['Escape'] = false; currentScene = Scene.GRAND_CENTRAL; telegramComplete = false; }
+    }
     return;
   }
 
   // The Met Museum — art gallery
   if (currentScene === Scene.THE_MET) {
+    if (artDescActive) {
+      // Art description mode — input handled by keydown listener
+      return;
+    }
     if (keys['ArrowRight']) { keys['ArrowRight'] = false; metPaintingIndex = Math.min(MET_PAINTINGS.length - 1, metPaintingIndex + 1); }
     if (keys['ArrowLeft']) { keys['ArrowLeft'] = false; metPaintingIndex = Math.max(0, metPaintingIndex - 1); }
+    if (keys['KeyD']) {
+      keys['KeyD'] = false;
+      artDescActive = true;
+      artDescText = '';
+      artDescPaintingIdx = metPaintingIndex;
+    }
     if (keys['Enter']) {
       keys['Enter'] = false;
       score += 10;
@@ -1310,6 +2421,54 @@ function update(dt) {
       score += 30;
       addPopup(player.x, player.y - 40, '+30 Space history!', '#60a5fa');
       currentScene = null;
+    }
+    return;
+  }
+
+  // Mission Control typing minigame
+  if (currentScene === Scene.MISSION_CONTROL) {
+    const mc = missionControl;
+    if (mc.complete || mc.failed) {
+      // Show result then exit
+      mc.showResult += 16;
+      if (mc.complete) {
+        mc.rocketY += 3; // animate rocket going up
+      }
+      if (mc.showResult > 3000 || keys['Enter']) {
+        keys['Enter'] = false;
+        currentScene = null;
+        mc.active = false;
+      }
+    } else {
+      // Count down timer
+      mc.timeLeft -= 16;
+      if (mc.timeLeft <= 0) {
+        mc.timeLeft = 0;
+        mc.failed = true;
+        mc.showResult = 0;
+      }
+      // Typing is handled by keydown listener in ui.js
+      // Check if current command is complete
+      const currentCmd = MISSION_COMMANDS[mc.round];
+      if (mc.typed === currentCmd) {
+        // Command completed!
+        score += 30;
+        addPopup(player.x, player.y - 40, '+30 ' + currentCmd + '!', '#22c55e');
+        playChaChing();
+        mc.round++;
+        mc.typed = '';
+        if (mc.round >= MISSION_COMMANDS.length) {
+          // All commands done!
+          mc.complete = true;
+          mc.showResult = 0;
+          const elapsed = 60000 - mc.timeLeft;
+          if (elapsed <= 60000) {
+            // Under time limit — bonus!
+            score += 100;
+            addPopup(player.x, player.y - 60, '+100 All commands! LIFTOFF!', '#fbbf24');
+          }
+        }
+      }
     }
     return;
   }
@@ -1456,8 +2615,122 @@ function update(dt) {
   }
 
   if (currentScene === Scene.PANTHEON) {
-    if (keys['Enter']) {
+    // Scroll transcription minigame
+    if (scrollActive) {
+      if (scrollFlashRed > 0) scrollFlashRed -= dt;
+      if (scrollComplete) {
+        scrollFactTimer += dt;
+        if (scrollFactTimer > 3000) {
+          // Move to next scroll or finish
+          scrollRound++;
+          if (scrollRound >= SCROLL_TEXTS.length) {
+            scrollAllDone = true;
+            scrollActive = false;
+            if (!scrollBonusAwarded) {
+              scrollBonusAwarded = true;
+              score += POINTS.SCROLL_BONUS;
+              addPopup(player.x, player.y - 40, '+' + POINTS.SCROLL_BONUS + ' All scrolls complete!', '#fbbf24');
+              playChaChing();
+            }
+          } else {
+            scrollText = SCROLL_TEXTS[scrollRound].text;
+            scrollTyped = 0;
+            scrollErrors = 0;
+            scrollComplete = false;
+            scrollShowFact = false;
+            scrollFactTimer = 0;
+          }
+        }
+      }
+      // Enter during fact display skips wait
+      if (scrollComplete && keys['Enter']) {
+        keys['Enter'] = false;
+        scrollFactTimer = 3001;
+      }
+      // Escape to cancel scroll mode
+      if (keys['Escape']) {
+        keys['Escape'] = false;
+        scrollActive = false;
+      }
+    } else {
+      // T starts scroll transcription (if not all done)
+      if (keys['KeyT'] && !scrollAllDone) {
+        keys['KeyT'] = false;
+        scrollActive = true;
+        scrollRound = 0;
+        scrollText = SCROLL_TEXTS[0].text;
+        scrollTyped = 0;
+        scrollErrors = 0;
+        scrollComplete = false;
+        scrollShowFact = false;
+        scrollFactTimer = 0;
+        scrollFlashRed = 0;
+        scrollTotalErrors = 0;
+        scrollBonusAwarded = false;
+        scrollStartTime = Date.now();
+      }
+      if (keys['Enter']) {
+        keys['Enter'] = false;
+        currentScene = null;
+        player.y = GROUND_Y;
+        player.vy = 0;
+        player.onGround = true;
+      }
+    }
+    // Animate piece placement
+    if (pantheonPuzzle.animating) {
+      pantheonPuzzle.animProgress += dt / 600; // ~0.6s animation
+      if (pantheonPuzzle.animProgress >= 1) {
+        pantheonPuzzle.animating = false;
+        pantheonPuzzle.animProgress = 0;
+      }
+      return;
+    }
+    // Feedback timer
+    if (pantheonPuzzle.feedbackTimer > 0) {
+      pantheonPuzzle.feedbackTimer -= dt;
+      if (pantheonPuzzle.feedbackTimer <= 0) pantheonPuzzle.feedback = '';
+    }
+    // Start puzzle with A
+    if (!pantheonPuzzle.active && !scrollActive && keys['KeyA']) {
+      keys['KeyA'] = false;
+      pantheonPuzzle.active = true;
+      pantheonPuzzle.placed = 0;
+      pantheonPuzzle.feedback = '';
+      pantheonPuzzle.complete = false;
+    }
+    // Puzzle piece placement with 1-5
+    if (pantheonPuzzle.active && !pantheonPuzzle.complete) {
+      for (let i = 1; i <= 5; i++) {
+        if (keys['Digit' + i]) {
+          keys['Digit' + i] = false;
+          if (i === pantheonPuzzle.placed + 1) {
+            // Correct piece
+            pantheonPuzzle.animating = true;
+            pantheonPuzzle.animProgress = 0;
+            pantheonPuzzle.placed = i;
+            pantheonPuzzle.feedback = PANTHEON_PIECES[i - 1].fact;
+            pantheonPuzzle.feedbackTimer = 5000;
+            if (i === 5) {
+              // Puzzle complete
+              pantheonPuzzle.complete = true;
+              score += POINTS.PANTHEON_PUZZLE;
+              addPopup(player.x, player.y - 40, '+' + POINTS.PANTHEON_PUZZLE + ' Master Architect!', '#fbbf24');
+              playChaChing();
+            }
+          } else {
+            // Wrong order
+            pantheonPuzzle.feedback = 'Try a lower piece first!';
+            pantheonPuzzle.feedbackTimer = 2000;
+          }
+          break;
+        }
+      }
+    }
+    // Exit with Enter (when not in scroll mode)
+    if (!scrollActive && keys['Enter']) {
       keys['Enter'] = false;
+      pantheonPuzzle.active = false;
       currentScene = null;
       player.y = GROUND_Y;
       player.vy = 0;
@@ -1555,20 +2828,31 @@ function update(dt) {
     return;
   }
 
-  // Movement
+  // Geometry minigame update (overlay — blocks normal movement)
+  if (geometryActive) {
+    updateGeometryMinigame(dt);
+    hud.score.textContent = score;
+    return;
+  }
+
+  // Movement (blocked during hotdog math, light show and fuel calculator overlay)
   player.vx = 0;
+  if (journalActive) {
+    // Block all movement/jumping during journal
+  } else {
   const effectiveMoveSpeed = currentLevel === 13 ? MOON_MOVE_SPEED : MOVE_SPEED;
-  if (keys['ArrowLeft']) { player.vx = -effectiveMoveSpeed; player.facing = -1; }
-  if (keys['ArrowRight']) { player.vx = effectiveMoveSpeed; player.facing = 1; }
+  if (!hotdogMath.active && !lightShowActive && !fuelCalcActive && !marketActive && keys['ArrowLeft']) { player.vx = -effectiveMoveSpeed; player.facing = -1; }
+  if (!hotdogMath.active && !lightShowActive && !fuelCalcActive && !marketActive && keys['ArrowRight']) { player.vx = effectiveMoveSpeed; player.facing = 1; }
   if (keys['ArrowUp']) { player.vx += 0; } // up on land is no-op for now
   if (keys['ArrowDown']) { player.vx += 0; }
 
-  // Jump
-  if (keys['Space'] && player.onGround) {
+  // Jump (blocked during light show and fuel calculator)
+  if (!lightShowActive && !fuelCalcActive && keys['Space'] && player.onGround) {
     player.vy = currentLevel === 13 ? MOON_JUMP_VEL : JUMP_VEL;
     player.onGround = false;
     playMeow();
   }
+  } // end journalActive else block
 
   // Flight levels: override velocity and gravity before physics
   if (currentLevel === 10) {
@@ -1787,6 +3071,33 @@ function update(dt) {
     }
   }
 
+  // Bug net pickup (level 1 — near flower garden)
+  let nearBugNet = false;
+  if (currentLevel === 1 && !hasBugNet && Math.abs(player.x - BUG_NET_POS.x) < INTERACT_RANGE) {
+    nearBugNet = true;
+    if (keys['Space']) {
+      keys['Space'] = false;
+      hasBugNet = true;
+      addPopup(BUG_NET_POS.x, GROUND_Y - 60, 'Got Bug Net!', '#a78bfa');
+    }
+  }
+
+  // Bug catcher activation (level 1 — B key when you have the net)
+  if (currentLevel === 1 && hasBugNet && !bugCatcherActive && !bugCatcherFinished && keys['KeyB']) {
+    keys['KeyB'] = false;
+    bugCatcherActive = true;
+    bugCatcherRound = 0;
+    bugCatcherCorrect = 0;
+    bugCatcherWrong = 0;
+    bugCatcherFinished = false;
+    startBugCatcherRound();
+  }
+
+  // Update bug catcher minigame
+  if (bugCatcherActive) {
+    updateBugCatcher(dt);
+  }
+
   // Pizza shop entry (level 2 only)
   const nearPizza = currentLevel === 3 && Math.abs(player.x - PIZZA_SHOP.x) < 50;
   if (keys['Enter'] && nearPizza && currentScene !== Scene.PIZZA) {
@@ -1848,21 +3159,30 @@ function update(dt) {
     metPaintingIndex = 0;
   }
 
-  // Hot dog stands (level 2 — buy for 10 points)
+  // Hot dog stands (level 3 — math minigame with H key)
   let nearHotdog = false;
-  if (currentLevel === 3) {
+  if (currentLevel === 3 && !hotdogMath.active) {
     for (const hx of HOTDOG_POSITIONS) {
       if (Math.abs(player.x - hx) < INTERACT_RANGE) {
         nearHotdog = true;
-        if (keys['KeyC'] && score >= POINTS.HOTDOG_COST) {
-          keys['KeyC'] = false;
-          score -= POINTS.HOTDOG_COST;
-          hotdogCount++;
-          addPopup(player.x, player.y - 40, 'Hot Dog! -10pts', '#fbbf24');
+        if (keys['KeyH'] && !hotdogMath.complete) {
+          keys['KeyH'] = false;
+          hotdogMath.active = true;
+          hotdogMath.round = 0;
+          hotdogMath.price = HOTDOG_MATH_PRICES[0];
+          hotdogMath.paid = 0;
+          hotdogMath.feedback = '';
+          hotdogMath.feedbackTimer = 0;
+          hotdogMath.vendorX = hx;
         }
         break;
       }
     }
+  }
+
+  // Hot dog math minigame update
+  if (hotdogMath.active) {
+    updateHotdogMath();
   }
 
   // Central Park entry (level 2)
@@ -1915,6 +3235,16 @@ function update(dt) {
           addPopup(player.x, player.y - 40, '+' + POINTS.GELATO + ' Gelato!', '#fda4af');
           playChaChing();
         }
+        // Enter gelato shop minigame
+        if (keys['Enter'] && currentScene === null && !gelatoComplete) {
+          keys['Enter'] = false;
+          currentScene = Scene.GELATO_SHOP;
+          gelatoRound = 0;
+          gelatoCup = [];
+          gelatoOrder = GELATO_ORDERS[0];
+          gelatoMessage = '';
+          gelatoMsgTimer = 0;
+        }
         break;
       }
     }
@@ -1924,6 +3254,13 @@ function update(dt) {
       if (keys['Enter']) {
         keys['Enter'] = false;
         currentScene = Scene.PANTHEON;
+        pantheonPuzzle.active = false;
+        pantheonPuzzle.placed = 0;
+        pantheonPuzzle.feedback = '';
+        pantheonPuzzle.feedbackTimer = 0;
+        pantheonPuzzle.animating = false;
+        pantheonPuzzle.animProgress = 0;
+        pantheonPuzzle.complete = false;
       }
     }
     // Fiat → Hawaii
@@ -2112,6 +3449,8 @@ function update(dt) {
         currentScene = Scene.SCUBA_DIVING;
         scubaPlayer = { x: 200, y: 100, vx: 0, vy: 0 };
         scubaPearlCount = 0;
+        diveLogFound = new Set();
+        diveLogShowingTimeline = false;
         initScubaCollectibles();
         crossfadeToMusic(SCUBA_MUSIC_ID);
         playSfx('sfxDiveSplash');
@@ -2149,6 +3488,7 @@ function update(dt) {
   let nearWaterPump = false;
   let nearPool = false;
   let nearCampCamper = false;
+  let nearGeometry = false;
   if (currentLevel === 8) {
     // Stick collection
     for (let i = 0; i < STICK_POSITIONS.length; i++) {
@@ -2177,12 +3517,45 @@ function update(dt) {
         addPopup(FIRE_PIT_POS.x, player.y - 40, '+' + POINTS.CAMPFIRE_BUILD + ' Campfire built!', '#f97316');
         playChaChing();
       }
-      // Roast marshmallow near lit campfire
-      if (campfire.lit && !roasting.active && !roasting.done && keys['KeyR']) {
+      // Roast marshmallow near lit campfire (not during light show)
+      if (campfire.lit && !lightShowActive && !roasting.active && !roasting.done && keys['KeyR']) {
         keys['KeyR'] = false;
         roasting.active = true;
         roasting.progress = 0;
         roasting.done = false;
+      }
+      // Enter light show mode (L key near lit campfire)
+      if (campfire.lit && !lightShowActive && !roasting.active && keys['KeyL']) {
+        keys['KeyL'] = false;
+        lightShowActive = true;
+        lightShowProgram = '';
+        lightShowRepeat = false;
+        lightShowRunning = false;
+        lightShowStep = 0;
+        lightShowTimer = 0;
+      }
+      // Story Typing minigame — press Y near lit campfire
+      if (campfire.lit && !lightShowActive && !roasting.active && !storyTyping.active && !geometryActive && keys['KeyY']) {
+        keys['KeyY'] = false;
+        if (storyTyping.sessionPick < 0) storyTyping.sessionPick = Math.floor(Math.random() * CAMPFIRE_STORIES.length);
+        storyTyping.active = true;
+        storyTyping.storyIndex = storyTyping.sessionPick;
+        storyTyping.typed = 0;
+        storyTyping.errors = 0;
+        storyTyping.startTime = performance.now();
+        storyTyping.complete = false;
+        storyTyping.completeTimer = 0;
+      }
+      // Geometry minigame — press G near fire pit with 5+ sticks
+      if (stickCount >= 5 && !geometryActive && !geometryAllComplete) nearGeometry = true;
+      if (nearGeometry && keys['KeyG']) {
+        keys['KeyG'] = false;
+        geometryActive = true;
+        geometryShapeIndex = 0;
+        geometrySticks = [];
+        geometryAngle = 0;
+        geometryComplete = false;
+        geometryCompletionTimer = 0;
       }
     }
     // Roasting progress
@@ -2207,6 +3580,17 @@ function update(dt) {
         roasting.active = false;
         addPopup(FIRE_PIT_POS.x, player.y - 40, 'Burnt marshmallow!', '#ef4444');
         setTimeout(() => { roasting.done = false; }, 500);
+      }
+    }
+    // Light show minigame update
+    if (lightShowActive) {
+      updateLightShowMinigame(dt);
+    }
+    // Story typing completion timer
+    if (storyTyping.active && storyTyping.complete) {
+      storyTyping.completeTimer += dt;
+      if (storyTyping.completeTimer >= 3000) {
+        storyTyping.active = false;
       }
     }
     // Hammock nap
@@ -2336,6 +3720,7 @@ function update(dt) {
   let nearSafariJeep = false;
   let nearWateringHole = false;
   let nearElephant = false;
+  let nearMarket = false;
   if (currentLevel === 9) {
     // Start ambient savanna wind if not already playing
     startLoopSfx('sfxSavannaWind');
@@ -2468,6 +3853,45 @@ function update(dt) {
       }
     }
 
+    // Market stall — enter with Enter key
+    if (player.x > MARKET_POS.x - MARKET_POS.w / 2 && player.x < MARKET_POS.x + MARKET_POS.w / 2) {
+      nearMarket = true;
+      if (currentScene !== Scene.MARKET && !marketComplete && keys['Enter']) {
+        keys['Enter'] = false;
+        currentScene = Scene.MARKET;
+        marketActive = true;
+        marketProblem = 0;
+        marketAnswer = '';
+        marketCorrect = 0;
+        marketFeedback = '';
+        marketFeedbackTimer = 0;
+      }
+    }
+    // Market haggling feedback timer
+    if (currentScene === Scene.MARKET && marketFeedbackTimer > 0) {
+      marketFeedbackTimer -= dt;
+      if (marketFeedbackTimer <= 0) {
+        marketFeedback = '';
+        if (marketProblem >= MARKET_PROBLEMS.length) {
+          // All problems done
+          marketActive = false;
+          marketComplete = true;
+          if (marketCorrect >= MARKET_PROBLEMS.length) {
+            score += POINTS.MARKET_BONUS;
+            addPopup(player.x, player.y - 60, '+' + POINTS.MARKET_BONUS + ' Perfect haggling!', '#fbbf24');
+            playChaChing();
+          }
+          currentScene = null;
+        }
+      }
+    }
+    // Exit market with Escape
+    if (currentScene === Scene.MARKET && keys['Escape']) {
+      keys['Escape'] = false;
+      currentScene = null;
+      marketActive = false;
+    }
+
     // Elephant water launch — press E near elephant to get launched high
     for (const ex of ELEPHANT_POSITIONS) {
       if (Math.abs(player.x - ex) < 60) {
@@ -2539,8 +3963,8 @@ function update(dt) {
       }
     }
 
-    // Photo gallery toggle — press V to view/close
-    if (keys['KeyV']) {
+    // Photo gallery toggle — press V to view/close (not during journal)
+    if (keys['KeyV'] && !journalActive) {
       keys['KeyV'] = false;
       photoGalleryOpen = !photoGalleryOpen;
     }
@@ -2559,8 +3983,15 @@ function update(dt) {
             score += POINTS.SAFARI_PHOTO;
             addPopup(player.x, player.y - 40, '+' + POINTS.SAFARI_PHOTO + ' Great photo!', '#fbbf24');
             playSfx('sfxPhotoSuccess');
-            // Bonus for all 4 species
-            if (safariPhotoCount >= 4) {
+            // Activate field journal entry if not already completed
+            if (JOURNAL_ENTRIES[animal] && !journalCompleted.has(animal)) {
+              journalActive = true;
+              journalAnimal = animal;
+              journalResult = '';
+              journalResultTimer = 0;
+            }
+            // Bonus for all 5 species
+            if (safariPhotoCount >= 5) {
               score += POINTS.SAFARI_COLLECTION;
               addPopup(player.x, player.y - 60, '+' + POINTS.SAFARI_COLLECTION + ' Safari collection complete!', '#f97316');
               playChaChing();
@@ -2576,7 +4007,7 @@ function update(dt) {
         }
       }
     }
-    if (!safariPhotography.active && keys['KeyP']) {
+    if (!safariPhotography.active && !journalActive && keys['KeyP']) {
       keys['KeyP'] = false;
       // Check if near any animal for photography
       let targetAnimal = '';
@@ -2592,11 +4023,49 @@ function update(dt) {
       for (const gx of GIRAFFE_POSITIONS) {
         if (Math.abs(player.x - gx) < 80) targetAnimal = 'giraffe';
       }
+      if (Math.abs(player.x - CHEETAH_POS.x) < 80 && !ridingCheetah) targetAnimal = 'cheetah';
       if (targetAnimal) {
         safariPhotography.active = true;
         safariPhotography.timer = 0;
         safariPhotography.targetAnimal = targetAnimal;
         playSfx('sfxCameraShutter');
+      }
+    }
+
+    // Safari Field Journal — handle answer input
+    if (journalActive) {
+      if (journalResult === '') {
+        // Waiting for player to pick 1, 2, or 3
+        for (let i = 0; i < 3; i++) {
+          if (keys['Digit' + (i + 1)]) {
+            keys['Digit' + (i + 1)] = false;
+            const entry = JOURNAL_ENTRIES[journalAnimal];
+            if (i === entry.correct) {
+              journalResult = 'correct';
+              journalCompleted.add(journalAnimal);
+              score += POINTS.JOURNAL_BONUS;
+              addPopup(player.x, player.y - 40, '+' + POINTS.JOURNAL_BONUS + ' Journal complete!', '#4ade80');
+              playChaChing();
+            } else {
+              journalResult = 'wrong';
+            }
+            journalResultTimer = JOURNAL_RESULT_DURATION;
+            break;
+          }
+        }
+      } else {
+        // Showing result feedback
+        journalResultTimer -= dt;
+        if (journalResultTimer <= 0) {
+          if (journalResult === 'wrong') {
+            // Let them try again
+            journalResult = '';
+          } else {
+            // Correct — close journal
+            journalActive = false;
+            journalAnimal = '';
+          }
+        }
       }
     }
 
@@ -2722,6 +4191,48 @@ function update(dt) {
       }
     }
 
+    // Whale Song Transcription — trigger radio transmissions at world x positions
+    const wt = whaleTranscription;
+    if (wt.active) {
+      // Count down timer
+      wt.timeLeft -= 16;
+      if (wt.timeLeft <= 0) {
+        // Expired — auto-dismiss
+        wt.expired.add(wt.currentIndex);
+        wt.active = false;
+        addPopup(player.x, player.y - 40, 'Transmission lost!', '#94a3b8');
+      }
+      // Check if current transmission is fully typed
+      const target = WHALE_TRANSMISSIONS[wt.currentIndex].text;
+      if (wt.typed === target) {
+        wt.completed.add(wt.currentIndex);
+        wt.active = false;
+        score += WHALE_TRANSCRIPTION_POINTS;
+        addPopup(player.x, player.y - 40, '+' + WHALE_TRANSCRIPTION_POINTS + ' Transcribed!', '#22c55e');
+        playChaChing();
+        // Check if all 5 completed — award bonus
+        if (!wt.allBonusAwarded && wt.completed.size === WHALE_TRANSMISSIONS.length) {
+          wt.allBonusAwarded = true;
+          score += WHALE_TRANSCRIPTION_BONUS;
+          addPopup(player.x, player.y - 60, '+' + WHALE_TRANSCRIPTION_BONUS + ' All transmissions!', '#fbbf24');
+        }
+      }
+    } else {
+      // Check if player has crossed a new transmission trigger point
+      for (let i = 0; i < WHALE_TRANSMISSIONS.length; i++) {
+        if (wt.completed.has(i) || wt.expired.has(i)) continue;
+        const tx = WHALE_TRANSMISSIONS[i].x;
+        if (player.x >= tx && player.x < tx + 80) {
+          wt.active = true;
+          wt.currentIndex = i;
+          wt.typed = '';
+          wt.errors = 0;
+          wt.timeLeft = WHALE_TRANSCRIPTION_TIMEOUT;
+          break;
+        }
+      }
+    }
+
     // Level exit — reach Florida
     if (player.x > level10Flight.worldW - 400 && keys['Enter']) {
       keys['Enter'] = false;
@@ -2736,6 +4247,16 @@ function update(dt) {
       keys['Enter'] = false;
       currentScene = Scene.NASA_MUSEUM;
     }
+    // Mission Control entry
+    if (Math.abs(player.x - MISSION_CONTROL_POS.x - MISSION_CONTROL_POS.w / 2) < BUILDING_RANGE && keys['Enter'] && currentScene === null) {
+      keys['Enter'] = false;
+      currentScene = Scene.MISSION_CONTROL;
+      missionControl = {
+        active: true, round: 0, typed: '', errors: 0,
+        startTime: Date.now(), complete: false,
+        timeLeft: 60000, failed: false, rocketY: 0, showResult: 0,
+      };
+    }
     // Space suit
     if (!capeSpaceSuit && Math.abs(player.x - SPACE_SUIT_POS.x) < BUILDING_RANGE && keys['KeyS']) {
       keys['KeyS'] = false;
@@ -2743,17 +4264,34 @@ function update(dt) {
       addPopup(player.x, player.y - 30, 'Space Suit ON!', '#60a5fa');
     }
 
-    // Fuel rocket
-    if (Math.abs(player.x - ROCKET_POS.x) < BUILDING_RANGE && !capeFueled) {
+    // Fuel rocket — start fuel calculator
+    if (Math.abs(player.x - ROCKET_POS.x) < BUILDING_RANGE && !capeFueled && !fuelCalcActive) {
       if (keys['KeyP']) {
-        capeFueling += 16; // ~dt
-        if (capeFueling >= 3000) {
-          capeFueled = true;
-          capeFueling = 3000;
-          addPopup(ROCKET_POS.x, GROUND_Y - 200, 'Rocket Fueled!', '#22c55e');
+        keys['KeyP'] = false;
+        fuelCalcActive = true;
+        fuelCalcProblem = 0;
+        fuelCalcAnswer = '';
+        fuelCalcCorrect = 0;
+        fuelCalcFeedback = '';
+        fuelCalcFeedbackTimer = 0;
+      }
+    }
+
+    // Fuel calculator logic
+    if (fuelCalcActive) {
+      // Feedback timer
+      if (fuelCalcFeedbackTimer > 0) {
+        fuelCalcFeedbackTimer -= 16;
+        if (fuelCalcFeedbackTimer <= 0) {
+          fuelCalcFeedback = '';
+          if (fuelCalcCorrect >= 3) {
+            // All problems solved — rocket fully fueled!
+            fuelCalcActive = false;
+            capeFueled = true;
+            capeFueling = 3000;
+            addPopup(ROCKET_POS.x, GROUND_Y - 200, 'Rocket Fueled!', '#22c55e');
+          }
         }
-      } else {
-        capeFueling = Math.max(0, capeFueling - 8); // drain if not holding
       }
     }
 
@@ -2847,12 +4385,41 @@ function update(dt) {
       smoothieProgress = 0;
     }
 
+    // Rover Station entry
+    if (Math.abs(player.x - ROVER_STATION_POS.x) < BUILDING_RANGE && keys['Enter'] && currentScene === null && !roverProg.complete) {
+      keys['Enter'] = false;
+      currentScene = Scene.ROVER_PROGRAMMING;
+      roverProg.active = true;
+      roverProg.challenge = 0;
+      roverProg.challengesDone = 0;
+      initRoverChallenge(0);
+    }
+
     // TopGolf entry
     if (Math.abs(player.x - TOPGOLF_POS.x) < BUILDING_RANGE && keys['Enter'] && currentScene === null) {
       keys['Enter'] = false;
       currentScene = Scene.TOPGOLF;
       golfBall.active = false;
       golfAngle = Math.PI / 4;
+    }
+
+    // Apollo Landing Site entry
+    if (Math.abs(player.x - APOLLO_SITE_POS.x) < BUILDING_RANGE && keys['Enter'] && currentScene === null && !apolloMission.complete) {
+      keys['Enter'] = false;
+      currentScene = Scene.APOLLO_MISSION;
+      apolloMission.active = true;
+      apolloMission.step = 0;
+      apolloMission.progress = 0;
+      apolloMission.rocksCollected = 0;
+      apolloMission.bootY = 0;
+      apolloMission.stepTimer = 0;
+      apolloMission.celebrateTimer = 0;
+      // Generate 5 random rock positions spread across the scene
+      apolloMission.rockPositions = [];
+      for (let i = 0; i < 5; i++) {
+        apolloMission.rockPositions.push(-150 + i * 75 + Math.random() * 30);
+      }
+      apolloMission.rockPlayerX = 0;
     }
 
     // Game completion at end of level
@@ -2865,35 +4432,170 @@ function update(dt) {
 
   // Smoothie Shop minigame
   if (currentScene === Scene.SMOOTHIE_SHOP) {
-    if (keys['KeyC'] && !smoothieBlending && smoothieIngredients < 3) {
-      keys['KeyC'] = false;
-      smoothieIngredients++;
-      addPopup(player.x, player.y - 30, 'Added fruit!', '#f59e0b');
-    }
-    if (keys['KeyY'] && !smoothieYogurt && !smoothieBlending) {
-      keys['KeyY'] = false;
-      smoothieYogurt = true;
-      addPopup(player.x, player.y - 30, 'Added yogurt!', '#f8fafc');
-    }
-    if (keys['KeyB'] && smoothieIngredients >= 2 && smoothieYogurt && !smoothieBlending) {
-      keys['KeyB'] = false;
-      smoothieBlending = true;
-      smoothieProgress = 0;
-    }
-    if (smoothieBlending) {
-      smoothieProgress += 16;
-      if (smoothieProgress >= 2000) {
-        smoothieBlending = false;
-        smoothieCount++;
-        score += 75;
-        addPopup(player.x, player.y - 40, '+75 Smoothie!', '#a78bfa');
-        playChaChing();
-        smoothieIngredients = 0;
-        smoothieYogurt = false;
+    if (recipeModeActive) {
+      // Recipe Mode logic
+      if (recipeComplete) {
+        recipeCompleteTimer += 16;
+        recipeBlendAnim += 0.3;
+        if (recipeCompleteTimer >= 2000) {
+          // Move to next round or finish
+          if (recipeRound < 2) {
+            startRecipeRound(recipeRound + 1);
+          } else {
+            // All rounds done
+            recipeAllDone = true;
+            if (recipeSolved === 3) {
+              score += 100;
+              addPopup(player.x, player.y - 40, '+100 All Recipes Bonus!', '#fbbf24');
+              playChaChing();
+            }
+            recipeModeActive = false;
+          }
+        }
+      } else {
+        // Handle number key presses for swapping steps
+        const maxStep = recipeSteps.length;
+        for (let n = 1; n <= maxStep; n++) {
+          const keyCode = 'Digit' + n;
+          if (keys[keyCode]) {
+            keys[keyCode] = false;
+            const idx = n - 1;
+            if (recipeFirstSwap === null) {
+              recipeFirstSwap = idx;
+            } else if (recipeFirstSwap === idx) {
+              // Deselect if same step pressed
+              recipeFirstSwap = null;
+            } else {
+              // Swap the two steps
+              const tmp = recipeSteps[recipeFirstSwap];
+              recipeSteps[recipeFirstSwap] = recipeSteps[idx];
+              recipeSteps[idx] = tmp;
+              recipeFirstSwap = null;
+              // Check if order is now correct
+              if (checkRecipeOrder()) {
+                recipeComplete = true;
+                recipeCompleteTimer = 0;
+                recipeSolved++;
+                score += 50;
+                addPopup(player.x, player.y - 40, '+50 Recipe Fixed!', '#22c55e');
+                playChaChing();
+              }
+            }
+          }
+        }
+      }
+      // Exit recipe mode with Escape
+      if (keys['Escape']) {
+        keys['Escape'] = false;
+        recipeModeActive = false;
+      }
+      // Exit shop with Enter when not completing
+      if (keys['Enter'] && !recipeComplete) {
+        keys['Enter'] = false;
+        recipeModeActive = false;
+      }
+    } else {
+      // Normal smoothie shop mode
+      if (keys['KeyR'] && !smoothieBlending && !recipeAllDone) {
+        keys['KeyR'] = false;
+        recipeModeActive = true;
+        recipeSolved = 0;
+        startRecipeRound(0);
+      }
+      if (keys['KeyC'] && !smoothieBlending && smoothieIngredients < 3) {
+        keys['KeyC'] = false;
+        smoothieIngredients++;
+        addPopup(player.x, player.y - 30, 'Added fruit!', '#f59e0b');
+      }
+      if (keys['KeyY'] && !smoothieYogurt && !smoothieBlending) {
+        keys['KeyY'] = false;
+        smoothieYogurt = true;
+        addPopup(player.x, player.y - 30, 'Added yogurt!', '#f8fafc');
+      }
+      if (keys['KeyB'] && smoothieIngredients >= 2 && smoothieYogurt && !smoothieBlending) {
+        keys['KeyB'] = false;
+        smoothieBlending = true;
         smoothieProgress = 0;
       }
+      if (smoothieBlending) {
+        smoothieProgress += 16;
+        if (smoothieProgress >= 2000) {
+          smoothieBlending = false;
+          smoothieCount++;
+          score += 75;
+          addPopup(player.x, player.y - 40, '+75 Smoothie!', '#a78bfa');
+          playChaChing();
+          smoothieIngredients = 0;
+          smoothieYogurt = false;
+          smoothieProgress = 0;
+        }
+      }
+      if (keys['Enter'] && !smoothieBlending) {
+        keys['Enter'] = false;
+        currentScene = null;
+      }
     }
-    if (keys['Enter'] && !smoothieBlending) {
+  }
+
+  // Gelato Shop minigame
+  if (currentScene === Scene.GELATO_SHOP) {
+    if (gelatoMsgTimer > 0) gelatoMsgTimer -= 16;
+
+    const maxScoops = gelatoOrder && gelatoOrder.thirds ? 3 : 4;
+
+    // Number keys 1-6 add scoops
+    for (let i = 0; i < 6; i++) {
+      const key = 'Digit' + (i + 1);
+      if (keys[key] && gelatoCup.length < maxScoops && !gelatoComplete) {
+        keys[key] = false;
+        gelatoCup.push(GELATO_FLAVORS[i].name);
+        addPopup(player.x, player.y - 30, '+' + GELATO_FLAVORS[i].name, GELATO_FLAVORS[i].color);
+      }
+    }
+
+    // Check if cup is full — compare with order
+    if (gelatoCup.length === maxScoops && gelatoMsgTimer <= 0) {
+      // Count scoops by flavor
+      const cupCounts = {};
+      for (const f of gelatoCup) cupCounts[f] = (cupCounts[f] || 0) + 1;
+      // Compare with order
+      const orderFracs = gelatoOrder.fractions;
+      let match = true;
+      for (const [flavor, count] of Object.entries(orderFracs)) {
+        if ((cupCounts[flavor] || 0) !== count) { match = false; break; }
+      }
+      // Also check no extra flavors
+      for (const [flavor, count] of Object.entries(cupCounts)) {
+        if ((orderFracs[flavor] || 0) !== count) { match = false; break; }
+      }
+
+      if (match) {
+        score += 40;
+        addPopup(player.x, player.y - 40, '+40 Perfect order!', '#22c55e');
+        playChaChing();
+        gelatoMessage = 'Perfetto! The customer loves it!';
+        gelatoMsgTimer = 1500;
+        gelatoRound++;
+        if (gelatoRound >= GELATO_ORDERS.length) {
+          score += 100;
+          addPopup(player.x, player.y - 60, '+100 All orders complete!', '#fbbf24');
+          gelatoComplete = true;
+          gelatoMessage = 'Magnifico! All 5 orders complete! +100 bonus!';
+          gelatoMsgTimer = 3000;
+        } else {
+          gelatoOrder = GELATO_ORDERS[gelatoRound];
+        }
+        gelatoCup = [];
+      } else {
+        gelatoMessage = 'Wrong mix! Try again...';
+        gelatoMsgTimer = 1200;
+        gelatoCup = [];
+      }
+    }
+
+    // Escape / Enter to exit
+    if (keys['Escape'] || (keys['Enter'] && gelatoComplete)) {
+      keys['Escape'] = false;
       keys['Enter'] = false;
       currentScene = null;
     }
@@ -2901,8 +4603,12 @@ function update(dt) {
 
   // TopGolf minigame
   if (currentScene === Scene.TOPGOLF) {
-    const tgCx = canvas.width / 2;
-    const tgCy = canvas.height / 2;
+    // Use world-space coordinates (matching drawing.js ctx.translate(-cam,0))
+    const W = canvas.width, H = canvas.height;
+    const ww = getCurrentWorldW();
+    const tgCam = Math.max(0, Math.min(ww - W, player.x - W / 2));
+    const tgCx = tgCam + W / 2;
+    const tgCy = H / 2;
 
     if (!golfBall.active) {
       // Aiming
@@ -2962,6 +4668,237 @@ function update(dt) {
     }
   }
 
+  // Apollo Mission minigame
+  if (currentScene === Scene.APOLLO_MISSION) {
+    const am = apolloMission;
+
+    if (am.celebrateTimer > 0) {
+      // Celebration phase after completing all 4 steps
+      am.celebrateTimer -= 16;
+      if (am.celebrateTimer <= 0) {
+        currentScene = null;
+        am.active = false;
+        am.complete = true;
+      }
+    } else if (am.step === 0) {
+      // Step 1: "First Step" — boot descends, press Space at the right moment
+      am.bootY += 0.8; // boot descends slowly
+      am.stepTimer += 16;
+      // Sweet spot: bootY between 70 and 90 (near the ground)
+      if (keys['Space']) {
+        keys['Space'] = false;
+        if (am.bootY >= 65 && am.bootY <= 95) {
+          // Perfect timing!
+          addPopup(player.x, player.y - 30, 'Perfect step!', '#fbbf24');
+          am.step = 1;
+          am.progress = 0;
+        } else {
+          // Missed — reset boot
+          addPopup(player.x, player.y - 30, 'Too early! Try again', '#ef4444');
+          am.bootY = 0;
+          am.stepTimer = 0;
+        }
+      }
+      // If boot goes past the zone, reset
+      if (am.bootY > 110) {
+        am.bootY = 0;
+        am.stepTimer = 0;
+      }
+    } else if (am.step === 1) {
+      // Step 2: "Plant the Flag" — hold Space to drive flag into ground
+      if (keys['Space']) {
+        am.progress = Math.min(100, am.progress + 1.2);
+      } else {
+        am.progress = Math.max(0, am.progress - 0.3);
+      }
+      if (am.progress >= 100) {
+        addPopup(player.x, player.y - 30, 'Flag planted!', '#fbbf24');
+        am.step = 2;
+        am.progress = 0;
+        am.rocksCollected = 0;
+        am.rockPlayerX = 0;
+        am.stepTimer = 15000; // 15 seconds timer
+      }
+    } else if (am.step === 2) {
+      // Step 3: "Collect Moon Rocks" — move left/right to collect 5 rocks in 15s
+      am.stepTimer -= 16;
+      if (keys['ArrowLeft']) am.rockPlayerX = Math.max(-180, am.rockPlayerX - 4);
+      if (keys['ArrowRight']) am.rockPlayerX = Math.min(180, am.rockPlayerX + 4);
+      // Check collection
+      for (let i = 0; i < am.rockPositions.length; i++) {
+        if (am.rockPositions[i] !== null && Math.abs(am.rockPlayerX - am.rockPositions[i]) < 20) {
+          am.rockPositions[i] = null;
+          am.rocksCollected++;
+          addPopup(player.x, player.y - 30, 'Rock ' + am.rocksCollected + '/5!', '#fbbf24');
+        }
+      }
+      if (am.rocksCollected >= 5) {
+        addPopup(player.x, player.y - 30, 'All rocks collected!', '#22c55e');
+        am.step = 3;
+        am.progress = 0;
+      } else if (am.stepTimer <= 0) {
+        // Time's up — reset step
+        addPopup(player.x, player.y - 30, 'Time up! Try again', '#ef4444');
+        am.rocksCollected = 0;
+        am.rockPlayerX = 0;
+        am.stepTimer = 15000;
+        for (let i = 0; i < 5; i++) {
+          am.rockPositions[i] = -150 + i * 75 + Math.random() * 30;
+        }
+      }
+    } else if (am.step === 3) {
+      // Step 4: "Salute" — press S to salute the flag
+      if (keys['KeyS']) {
+        keys['KeyS'] = false;
+        // All 4 steps complete!
+        am.step = 4;
+        score += 300;
+        addPopup(player.x, player.y - 40, '+300 Apollo Mission Complete!', '#fbbf24');
+        playChaChing();
+        am.celebrateTimer = 3000; // 3 second celebration
+      }
+    }
+
+    // Exit with Escape (abort mission)
+    if (keys['Escape']) {
+      keys['Escape'] = false;
+      currentScene = null;
+      am.active = false;
+      am.step = 0;
+      am.progress = 0;
+    }
+  }
+
+  // Rover Programming minigame
+  if (currentScene === Scene.ROVER_PROGRAMMING) {
+    const rp = roverProg;
+
+    if (rp.feedbackTimer > 0) {
+      rp.feedbackTimer -= dt;
+      if (rp.feedbackTimer <= 0) {
+        if (rp.feedback === 'success') {
+          rp.challenge++;
+          if (rp.challenge >= ROVER_CHALLENGES.length) {
+            // All challenges complete!
+            if (rp.challengesDone >= ROVER_CHALLENGES.length) {
+              score += POINTS.ROVER_BONUS;
+              addPopup(player.x, player.y - 40, '+' + POINTS.ROVER_BONUS + ' All Challenges Complete!', '#fbbf24');
+              playChaChing();
+            }
+            rp.active = false;
+            rp.complete = true;
+            currentScene = null;
+          } else {
+            initRoverChallenge(rp.challenge);
+          }
+        } else {
+          // fail — reset to try again
+          initRoverChallenge(rp.challenge);
+        }
+      }
+    } else if (rp.running) {
+      // Animate command execution
+      rp.runTimer -= dt;
+      if (rp.runTimer <= 0) {
+        if (rp.runStep >= rp.program.length) {
+          // Check if all samples collected
+          const allCollected = rp.samples.every(s => s.collected);
+          if (allCollected) {
+            rp.feedback = 'success';
+            rp.feedbackTimer = 1200;
+            rp.challengesDone++;
+            score += POINTS.ROVER_CHALLENGE;
+            addPopup(player.x, player.y - 40, '+' + POINTS.ROVER_CHALLENGE + ' Challenge Complete!', '#4ade80');
+            playChaChing();
+          } else {
+            rp.feedback = 'fail';
+            rp.feedbackTimer = 1500;
+            addPopup(player.x, player.y - 40, 'Missed samples! Try again', '#ef4444');
+          }
+          rp.running = false;
+        } else {
+          const cmd = rp.program[rp.runStep];
+          let valid = true;
+          if (cmd === 'F') {
+            const dirs = [{x:1,y:0},{x:0,y:1},{x:-1,y:0},{x:0,y:-1}];
+            const d = dirs[rp.roverDir];
+            const nx = rp.roverPos.x + d.x;
+            const ny = rp.roverPos.y + d.y;
+            const ch = ROVER_CHALLENGES[rp.challenge];
+            // Check bounds and walls
+            if (nx < 0 || nx >= ch.gridW || ny < 0 || ny >= ch.gridH ||
+                rp.walls.some(w => w.x === nx && w.y === ny)) {
+              valid = false;
+              rp.feedback = 'fail';
+              rp.feedbackTimer = 1500;
+              rp.running = false;
+              addPopup(player.x, player.y - 40, 'Rover hit a wall!', '#ef4444');
+            } else {
+              rp.roverPos.x = nx;
+              rp.roverPos.y = ny;
+            }
+          } else if (cmd === 'L') {
+            rp.roverDir = (rp.roverDir + 3) % 4; // turn left
+          } else if (cmd === 'R') {
+            rp.roverDir = (rp.roverDir + 1) % 4; // turn right
+          } else if (cmd === 'P') {
+            // Pick up sample at current position
+            for (const s of rp.samples) {
+              if (!s.collected && s.x === rp.roverPos.x && s.y === rp.roverPos.y) {
+                s.collected = true;
+              }
+            }
+          }
+          if (valid) {
+            rp.runStep++;
+            rp.runTimer = 400; // 400ms per step
+          }
+        }
+      }
+    } else {
+      // Input mode — build command sequence
+      if (keys['KeyF']) {
+        keys['KeyF'] = false;
+        if (rp.program.length < 20) rp.program.push('F');
+      }
+      if (keys['KeyL']) {
+        keys['KeyL'] = false;
+        if (rp.program.length < 20) rp.program.push('L');
+      }
+      if (keys['KeyR']) {
+        keys['KeyR'] = false;
+        if (rp.program.length < 20) rp.program.push('R');
+      }
+      if (keys['KeyP']) {
+        keys['KeyP'] = false;
+        if (rp.program.length < 20) rp.program.push('P');
+      }
+      if (keys['Backspace']) {
+        keys['Backspace'] = false;
+        rp.program.pop();
+      }
+      if (keys['Space'] && rp.program.length > 0) {
+        keys['Space'] = false;
+        // Start running the program
+        rp.running = true;
+        rp.runStep = 0;
+        rp.runTimer = 400;
+        rp.feedback = '';
+        // Reset rover to start position
+        const ch = ROVER_CHALLENGES[rp.challenge];
+        rp.roverPos = { x: ch.roverStart.x, y: ch.roverStart.y };
+        rp.roverDir = ch.roverStart.dir;
+        rp.samples = ch.samples.map(s => ({ x: s.x, y: s.y, collected: false }));
+      }
+      // Exit with Escape
+      if (keys['Escape']) {
+        keys['Escape'] = false;
+        currentScene = null;
+        rp.active = false;
+      }
+    }
+  }
+
   // Rainbow bridge portal (level 1 → level 2 sledding)
   if (currentLevel === 1) {
     const dx = player.x - BRIDGE_PORTAL.x;
@@ -3015,9 +4952,55 @@ function update(dt) {
     if (player.x > SLED_WORLD_W - 200) {
       nearTrain = true;
       player.vx = 0;
-      if (keys['Enter']) {
+      if (!trainPuzzleActive && !trainPuzzleComplete && keys['Enter']) {
         keys['Enter'] = false;
-        switchToLevel(3); // go to NYC
+        trainPuzzleActive = true;
+        trainPuzzleRound = 0;
+        trainPuzzleFeedback = '';
+        trainPuzzleFeedbackTimer = 0;
+        trainPuzzleScore = 0;
+      }
+    }
+
+    // Train signal puzzle input handling
+    if (trainPuzzleActive && trainPuzzleFeedback !== 'correct' && trainPuzzleFeedback !== 'wrong') {
+      const puzzle = TRAIN_PUZZLES[trainPuzzleRound];
+      if (keys['Digit1'] || keys['Digit2']) {
+        const pressed = keys['Digit1'] ? 1 : 2;
+        keys['Digit1'] = false;
+        keys['Digit2'] = false;
+        if (pressed === puzzle.answer) {
+          trainPuzzleFeedback = 'correct';
+          trainPuzzleFeedbackTimer = 1200;
+          trainPuzzleScore += POINTS.TRAIN_PUZZLE;
+          score += POINTS.TRAIN_PUZZLE;
+          addPopup(player.x, player.y - 40, '+' + POINTS.TRAIN_PUZZLE + ' Correct!', '#4ade80');
+          playChaChing();
+        } else {
+          trainPuzzleFeedback = 'wrong';
+          trainPuzzleFeedbackTimer = 2000;
+        }
+      }
+    }
+
+    // Train puzzle feedback timer
+    if (trainPuzzleActive && trainPuzzleFeedbackTimer > 0) {
+      trainPuzzleFeedbackTimer -= dt;
+      if (trainPuzzleFeedbackTimer <= 0) {
+        if (trainPuzzleFeedback === 'correct') {
+          trainPuzzleRound++;
+          if (trainPuzzleRound >= TRAIN_PUZZLES.length) {
+            // All puzzles complete!
+            trainPuzzleActive = false;
+            trainPuzzleComplete = true;
+            score += POINTS.TRAIN_PUZZLE_BONUS;
+            addPopup(player.x, player.y - 60, '+' + POINTS.TRAIN_PUZZLE_BONUS + ' All signals set!', '#fbbf24');
+            playChaChing();
+            switchToLevel(3); // board the train to NYC
+          }
+        }
+        trainPuzzleFeedback = '';
+        trainPuzzleFeedbackTimer = 0;
       }
     }
   }
@@ -3070,6 +5053,7 @@ function update(dt) {
             const text = levelDialogs[Math.floor(Math.random() * levelDialogs.length)];
             activeSpeechBubbles.push({ npc, text, life: TIMING.SPEECH_BUBBLE_LIFE });
             npc.facing = player.x < npc.x ? -1 : 1;
+            addFactToNotebook(text, currentLevel);
           }
         }
         break;
@@ -3077,10 +5061,82 @@ function update(dt) {
     }
   }
 
+  // Time Capsule — T key when outdoors (not in a scene that uses T)
+  if (keys['KeyT'] && currentScene === null) {
+    const capsule = timeCapsules[currentLevel];
+    if (capsule) {
+      const dx = Math.abs(player.x - capsule.x);
+      if (dx < TIME_CAPSULE_RANGE && !capsulesFound.has(currentLevel)) {
+        // Discover the artifact!
+        keys['KeyT'] = false;
+        capsulesFound.add(currentLevel);
+        saveCapsules();
+        score += POINTS.TIME_CAPSULE;
+        addPopup(player.x, player.y - 40, '+' + POINTS.TIME_CAPSULE + ' Artifact found!', '#f59e0b');
+        playChaChing();
+        capsuleCardState = { level: currentLevel, name: capsule.name, year: capsule.year, fact: capsule.fact, timer: 8000 };
+      } else if (dx >= TIME_CAPSULE_RANGE || capsulesFound.has(currentLevel)) {
+        // Open gallery when not near an undiscovered capsule
+        keys['KeyT'] = false;
+        capsuleGalleryOpen = true;
+      }
+    } else {
+      // No capsule for this level — open gallery
+      keys['KeyT'] = false;
+      capsuleGalleryOpen = true;
+    }
+  }
+
+  // Notebook toggle — N key when not in a scene
+  if (currentScene === null && keys['KeyN']) {
+    keys['KeyN'] = false;
+    notebookOpen = true;
+    notebookScroll = 0;
+  }
+
   // Update speech bubbles
   for (let i = activeSpeechBubbles.length - 1; i >= 0; i--) {
     activeSpeechBubbles[i].life -= dt;
-    if (activeSpeechBubbles[i].life <= 0) activeSpeechBubbles.splice(i, 1);
+    if (activeSpeechBubbles[i].life <= 0) {
+      activeSpeechBubbles.splice(i, 1);
+      // Chance to trigger a quiz after dialogue ends
+      if (!quizActive && quizResultTimer <= 0) {
+        const quizzes = npcQuizzes[currentLevel];
+        if (quizzes && quizzes.length > 0 && Math.random() < QUIZ_CHANCE) {
+          const q = quizzes[Math.floor(Math.random() * quizzes.length)];
+          quizActive = true;
+          quizQuestion = q.question;
+          quizAnswers = q.answers;
+          quizCorrect = q.correct;
+        }
+      }
+    }
+  }
+
+  // Handle quiz input (1, 2, 3 keys)
+  if (quizActive) {
+    for (let i = 0; i < 3; i++) {
+      if (keys['Digit' + (i + 1)]) {
+        keys['Digit' + (i + 1)] = false;
+        quizActive = false;
+        if (i === quizCorrect) {
+          score += QUIZ_BONUS;
+          quizResultText = 'Correct! +' + QUIZ_BONUS + ' points!';
+          quizResultColor = '#4ade80';
+          addPopup(player.x, player.y - 40, '+' + QUIZ_BONUS + ' Quiz bonus!', '#4ade80');
+        } else {
+          quizResultText = 'Not quite! The answer is: ' + quizAnswers[quizCorrect];
+          quizResultColor = '#fbbf24';
+        }
+        quizResultTimer = QUIZ_RESULT_DURATION;
+        break;
+      }
+    }
+  }
+
+  // Update quiz result timer
+  if (quizResultTimer > 0) {
+    quizResultTimer -= dt;
   }
 
   // Popups
@@ -3089,6 +5145,9 @@ function update(dt) {
     popups[i].life -= dt;
     if (popups[i].life <= 0) popups.splice(i, 1);
   }
+
+  // Hot dog math feedback timer
+  updateHotdogMathFeedback(dt);
 
   // Glitter horn effect — spray when crossing a 100-point milestone
   const currentMilestone = Math.floor(score / 100);
@@ -3119,6 +5178,26 @@ function update(dt) {
     p.vy += 0.05; // light gravity
     p.life -= dt;
     if (p.life <= 0) glitterParticles.splice(i, 1);
+  }
+
+  // Achievement check (every 60 frames ~ once per second)
+  achievementCheckCounter++;
+  if (achievementCheckCounter >= 60) {
+    achievementCheckCounter = 0;
+    checkAchievements();
+  }
+
+  // Achievement popup countdown
+  if (achievementPopup) {
+    achievementPopup.timer -= dt;
+    if (achievementPopup.timer <= 0) achievementPopup = null;
+  }
+
+  // Toggle achievement screen with B (only when not in a scene and not in Alps equipment choice)
+  // B key may have been consumed earlier by level-specific handlers (campfire, smoothie blend)
+  if (keys['KeyB'] && currentScene === null && !alpsChoosing) {
+    keys['KeyB'] = false;
+    achievementScreenOpen = !achievementScreenOpen;
   }
 
   // HUD update
@@ -3155,16 +5234,39 @@ function update(dt) {
     hud.controls.style.display = inScene ? 'none' : 'flex';
   }
 
+  // Postcard toggle — W key when outdoors and W wasn't consumed by a level-specific action
+  // (pool fill on level 8, Grand Central whisper, etc. already consumed KeyW above)
+  if (keys['KeyW'] && currentScene === null) {
+    keys['KeyW'] = false;
+    postcardOpen = true;
+    postcardMode = 'write';
+    postcardText = '';
+    postcardJustSent = false;
+  }
+
+  // Mission Log toggle — M key on Moon level when outdoors
+  if (keys['KeyM'] && currentLevel === 13 && currentScene === null) {
+    keys['KeyM'] = false;
+    missionLogOpen = true;
+    loadMissionLog();
+  }
+
+  // Time capsule proximity check
+  const capsuleForLevel = timeCapsules[currentLevel];
+  const nearTimeCapsule = currentScene === null && capsuleForLevel && !capsulesFound.has(currentLevel) &&
+    Math.abs(player.x - capsuleForLevel.x) < TIME_CAPSULE_RANGE;
+
   // Prompt
   updatePrompt({
     inPond, nearGrill, nearHouse, nearCamper, nearWindmill, nearBeehive,
     nearPizza, nearHotdog, nearPark, nearTaxi, nearFountain, nearGelato,
     nearPantheonDoor, nearFiat, nearTiki, nearCoconut, nearSurf, nearAirport,
     nearChalet, nearTrain, nearNpc, nearStick, nearFirePit, nearHammock,
-    nearBigfoot, nearDigSite, nearWaterPump, nearPool, nearCampCamper,
+    nearBigfoot, nearDigSite, nearWaterPump, nearPool, nearCampCamper, nearGeometry,
     nearSailboat, nearDiveSpot, nearBaobab, nearCheetah, nearSafariJeep,
-    nearWateringHole, nearElephant, nearHospital,
-    nearFao, nearEmpire, nearThirtyRock, nearGrandCentral, nearMet
+    nearWateringHole, nearElephant, nearMarket, nearHospital,
+    nearFao, nearEmpire, nearThirtyRock, nearGrandCentral, nearMet,
+    nearBugNet, nearTimeCapsule
   });
 }
 
@@ -3186,6 +5288,190 @@ function getGroundLevel(x) {
 
 function addPopup(x, y, text, color) {
   popups.push({ x, y, text, color, life: TIMING.POPUP_LIFE });
+}
+
+function initRoverChallenge(idx) {
+  const ch = ROVER_CHALLENGES[idx];
+  roverProg.program = [];
+  roverProg.running = false;
+  roverProg.runStep = 0;
+  roverProg.runTimer = 0;
+  roverProg.roverPos = { x: ch.roverStart.x, y: ch.roverStart.y };
+  roverProg.roverDir = ch.roverStart.dir;
+  roverProg.samples = ch.samples.map(s => ({ x: s.x, y: s.y, collected: false }));
+  roverProg.walls = ch.walls.map(w => ({ x: w.x, y: w.y }));
+  roverProg.feedback = '';
+  roverProg.feedbackTimer = 0;
+}
+
+function updateHotdogMath() {
+  // Show feedback for a moment before advancing
+  if (hotdogMath.feedbackTimer > 0) return;
+
+  const priceCents = Math.round(hotdogMath.price * 100);
+
+  // Coin/bill key inputs
+  const coinKeys = [
+    { code: 'Digit1', value: 100, label: '$1' },
+    { code: 'Digit5', value: 500, label: '$5' },
+    { code: 'KeyQ', value: 25, label: '25\u00a2' },
+    { code: 'KeyD', value: 10, label: '10\u00a2' },
+    { code: 'KeyN', value: 5, label: '5\u00a2' },
+    { code: 'KeyP', value: 1, label: '1\u00a2' },
+  ];
+
+  for (const ck of coinKeys) {
+    if (keys[ck.code]) {
+      keys[ck.code] = false;
+      hotdogMath.paid += ck.value;
+      playChaChing();
+      break;
+    }
+  }
+
+  // Check if paid enough
+  if (hotdogMath.paid >= priceCents) {
+    const overpay = hotdogMath.paid - priceCents;
+    hotdogCount++;
+    score += POINTS.HOTDOG_MATH;
+    hud.score.textContent = score;
+    hud.hotdog.textContent = hotdogCount;
+
+    if (overpay === 0) {
+      hotdogMath.feedback = 'Exact change! +' + POINTS.HOTDOG_MATH + ' Math Bonus!';
+    } else {
+      const changeDollars = (overpay / 100).toFixed(2);
+      hotdogMath.feedback = 'Overpaid! Change: $' + changeDollars +
+        ' ($' + (hotdogMath.paid / 100).toFixed(2) + ' - $' + hotdogMath.price.toFixed(2) +
+        ' = $' + changeDollars + ') +' + POINTS.HOTDOG_MATH + ' pts!';
+    }
+    hotdogMath.feedbackTimer = 2500;
+    addPopup(player.x, player.y - 40, '+' + POINTS.HOTDOG_MATH + ' Math Bonus!', '#22c55e');
+  }
+
+  // Escape to cancel
+  if (keys['Escape']) {
+    keys['Escape'] = false;
+    hotdogMath.active = false;
+    hotdogMath.paid = 0;
+  }
+}
+
+function updateHotdogMathFeedback(dt) {
+  if (!hotdogMath.active || hotdogMath.feedbackTimer <= 0) return;
+  hotdogMath.feedbackTimer -= dt;
+  if (hotdogMath.feedbackTimer <= 0) {
+    hotdogMath.feedbackTimer = 0;
+    // Advance to next round
+    hotdogMath.round++;
+    if (hotdogMath.round >= HOTDOG_MATH_PRICES.length) {
+      // All rounds complete
+      hotdogMath.active = false;
+      hotdogMath.complete = true;
+      addPopup(player.x, player.y - 60, 'All 5 hot dogs bought!', '#fbbf24');
+    } else {
+      hotdogMath.price = HOTDOG_MATH_PRICES[hotdogMath.round];
+      hotdogMath.paid = 0;
+      hotdogMath.feedback = '';
+    }
+  }
+}
+
+// ── Campfire Geometry Minigame ──
+function getGeometryTargetEdges(shapeIndex) {
+  const shape = GEOMETRY_SHAPES[shapeIndex];
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2 - 20;
+  const radius = 80;
+  const edges = [];
+  if (shape.isStar) {
+    // 5-pointed star: alternate outer/inner vertices
+    const outerR = radius;
+    const innerR = radius * 0.38;
+    const points = [];
+    for (let i = 0; i < 10; i++) {
+      const angle = -Math.PI / 2 + (i / 10) * Math.PI * 2;
+      const r = i % 2 === 0 ? outerR : innerR;
+      points.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+    }
+    for (let i = 0; i < 10; i++) {
+      edges.push({ x1: points[i].x, y1: points[i].y, x2: points[(i + 1) % 10].x, y2: points[(i + 1) % 10].y });
+    }
+  } else {
+    const n = shape.sides;
+    const points = [];
+    for (let i = 0; i < n; i++) {
+      const angle = -Math.PI / 2 + (i / n) * Math.PI * 2;
+      points.push({ x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius });
+    }
+    for (let i = 0; i < n; i++) {
+      edges.push({ x1: points[i].x, y1: points[i].y, x2: points[(i + 1) % n].x, y2: points[(i + 1) % n].y });
+    }
+  }
+  return edges;
+}
+
+function updateGeometryMinigame(dt) {
+  if (geometryComplete) {
+    geometryCompletionTimer += dt;
+    if (geometryCompletionTimer >= GEOMETRY_COMPLETION_DISPLAY) {
+      geometryComplete = false;
+      geometryCompletionTimer = 0;
+      geometryShapeIndex++;
+      geometrySticks = [];
+      geometryAngle = 0;
+      if (geometryShapeIndex >= GEOMETRY_SHAPES.length) {
+        // All shapes completed!
+        geometryActive = false;
+        geometryAllComplete = true;
+        score += POINTS.GEOMETRY_BONUS;
+        addPopup(player.x, player.y - 40, '+' + POINTS.GEOMETRY_BONUS + ' Geometry Master!', '#a855f7');
+        playChaChing();
+      }
+    }
+    return;
+  }
+
+  // Rotate current stick with left/right arrows
+  if (keys['ArrowLeft']) { geometryAngle -= 0.05; }
+  if (keys['ArrowRight']) { geometryAngle += 0.05; }
+
+  // Place stick with Space
+  if (keys['Space']) {
+    keys['Space'] = false;
+    const edges = getGeometryTargetEdges(geometryShapeIndex);
+    const nextEdgeIndex = geometrySticks.length;
+    if (nextEdgeIndex < edges.length) {
+      // Snap to target position
+      const target = edges[nextEdgeIndex];
+      // Check if the player's angle is close enough to the target edge angle
+      const targetAngle = Math.atan2(target.y2 - target.y1, target.x2 - target.x1);
+      let angleDiff = geometryAngle - targetAngle;
+      // Normalize to [-PI, PI]
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+      // Accept if within ~45 degrees
+      if (Math.abs(angleDiff) < Math.PI / 4) {
+        geometrySticks.push({ x1: target.x1, y1: target.y1, x2: target.x2, y2: target.y2 });
+        playChaChing();
+        // Check if shape is complete
+        if (geometrySticks.length >= edges.length) {
+          geometryComplete = true;
+          geometryCompletionTimer = 0;
+          score += 25;
+          addPopup(player.x, player.y - 40, '+25 ' + GEOMETRY_SHAPES[geometryShapeIndex].name + '!', '#a855f7');
+        }
+      } else {
+        addPopup(player.x, player.y - 40, 'Rotate closer to the guide!', '#f87171');
+      }
+    }
+  }
+
+  // Exit geometry mode with Escape
+  if (keys['Escape']) {
+    keys['Escape'] = false;
+    geometryActive = false;
+  }
 }
 
 function updatePizzaMinigame(dt) {
@@ -3240,4 +5526,129 @@ function updatePizzaMinigame(dt) {
   // HUD updates still needed
   hud.score.textContent = score;
   hud.pizza.textContent = pizzaMaking.pizzaCount;
+}
+
+function updateLightShowMinigame(dt) {
+  // Feedback timer
+  if (lightShowFeedback.timer > 0) {
+    lightShowFeedback.timer -= dt;
+  }
+
+  // If running the program, animate through steps
+  if (lightShowRunning) {
+    lightShowTimer += dt;
+    const expanded = lightShowRepeat ? (lightShowProgram + lightShowProgram + lightShowProgram) : lightShowProgram;
+    if (lightShowTimer >= LIGHT_SHOW_STEP_MS) {
+      lightShowTimer -= LIGHT_SHOW_STEP_MS;
+      lightShowStep++;
+      if (lightShowStep >= expanded.length) {
+        // Finished running — check result
+        lightShowRunning = false;
+        lightShowStep = -1;
+        checkLightShowResult(expanded);
+      }
+    }
+    // Escape to stop early
+    if (keys['Escape']) {
+      keys['Escape'] = false;
+      lightShowRunning = false;
+      lightShowStep = -1;
+    }
+    return; // no editing while running
+  }
+
+  // Exit light show (Escape)
+  if (keys['Escape']) {
+    keys['Escape'] = false;
+    lightShowActive = false;
+    return;
+  }
+
+  // Add color letters
+  const colorKeys = { KeyR: 'R', KeyB: 'B', KeyG: 'G', KeyY: 'Y', KeyW: 'W' };
+  for (const [code, letter] of Object.entries(colorKeys)) {
+    if (keys[code]) {
+      keys[code] = false;
+      if (lightShowProgram.length < 12) {
+        lightShowProgram += letter;
+      }
+    }
+  }
+
+  // X = toggle repeat
+  if (keys['KeyX']) {
+    keys['KeyX'] = false;
+    lightShowRepeat = !lightShowRepeat;
+  }
+
+  // Backspace = delete last
+  if (keys['Backspace']) {
+    keys['Backspace'] = false;
+    lightShowProgram = lightShowProgram.slice(0, -1);
+  }
+
+  // Space or Enter = run program
+  if ((keys['Space'] || keys['Enter']) && lightShowProgram.length > 0) {
+    keys['Space'] = false;
+    keys['Enter'] = false;
+    lightShowRunning = true;
+    lightShowStep = 0;
+    lightShowTimer = 0;
+  }
+
+  // N = next challenge
+  if (keys['KeyN']) {
+    keys['KeyN'] = false;
+    if (lightShowChallenge < 4) {
+      lightShowChallenge++;
+      lightShowProgram = '';
+      lightShowRepeat = false;
+      lightShowFeedback = { text: '', timer: 0, color: '#fff' };
+    }
+  }
+}
+
+function checkLightShowResult(expanded) {
+  const challenge = LIGHT_SHOW_TARGETS[lightShowChallenge];
+
+  // Free mode (challenge 5) — always awards points
+  if (challenge.pattern === null) {
+    if (!lightShowChallengesCompleted[lightShowChallenge] && expanded.length >= 2) {
+      lightShowChallengesCompleted[lightShowChallenge] = true;
+      score += POINTS.LIGHT_SHOW_CHALLENGE;
+      lightShowFeedback = { text: '+' + POINTS.LIGHT_SHOW_CHALLENGE + ' Beautiful light show!', timer: 3000, color: '#fbbf24' };
+      playChaChing();
+      checkLightShowAllComplete();
+    } else if (lightShowChallengesCompleted[lightShowChallenge]) {
+      lightShowFeedback = { text: 'Great show! Already completed.', timer: 2000, color: '#86efac' };
+    } else {
+      lightShowFeedback = { text: 'Add at least 2 colors!', timer: 2000, color: '#fca5a5' };
+    }
+    return;
+  }
+
+  // Check if expanded matches the target
+  if (expanded === challenge.pattern) {
+    if (!lightShowChallengesCompleted[lightShowChallenge]) {
+      lightShowChallengesCompleted[lightShowChallenge] = true;
+      score += POINTS.LIGHT_SHOW_CHALLENGE;
+      lightShowFeedback = { text: '+' + POINTS.LIGHT_SHOW_CHALLENGE + ' Pattern matched!', timer: 3000, color: '#86efac' };
+      addPopup(FIRE_PIT_POS.x, player.y - 40, '+' + POINTS.LIGHT_SHOW_CHALLENGE + ' Light Show!', '#fbbf24');
+      playChaChing();
+      checkLightShowAllComplete();
+    } else {
+      lightShowFeedback = { text: 'Already completed! Press N for next.', timer: 2000, color: '#86efac' };
+    }
+  } else {
+    lightShowFeedback = { text: 'Not quite! Try again.', timer: 2000, color: '#fca5a5' };
+  }
+}
+
+function checkLightShowAllComplete() {
+  if (lightShowChallengesCompleted.every(c => c)) {
+    score += POINTS.LIGHT_SHOW_BONUS;
+    addPopup(FIRE_PIT_POS.x, player.y - 60, '+' + POINTS.LIGHT_SHOW_BONUS + ' All challenges complete!', '#a78bfa');
+    playChaChing();
+  }
+  hud.score.textContent = score;
 }

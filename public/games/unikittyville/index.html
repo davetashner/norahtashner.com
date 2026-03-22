@@ -386,6 +386,23 @@
       border-radius: 14px;
     }
 
+    #learningDashboardBtn {
+      font-size: 0.95rem;
+      padding: 10px 28px;
+      min-height: 44px;
+    }
+
+    /* Difficulty selector */
+    #difficultySelector {
+      gap: 6px !important;
+      margin: 8px 0 !important;
+    }
+    .diff-btn {
+      font-size: 0.8rem !important;
+      padding: 6px 14px !important;
+      min-height: 36px;
+    }
+
     /* HUD */
     #hud {
       top: calc(4px + var(--sat));
@@ -524,10 +541,23 @@
       </div>
     </div>
   </div>
+  <div id="difficultySelector" style="display:flex;gap:10px;margin:10px 0;align-items:center;">
+    <button class="diff-btn" data-diff="easy" aria-label="Easy difficulty (ages 5-7)" style="font-size:0.95rem;padding:8px 20px;border-radius:999px;border:3px solid transparent;cursor:pointer;font-weight:700;transition:transform 0.15s,border-color 0.15s,box-shadow 0.15s;background:#22c55e;color:#fff;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">Easy (5-7)</button>
+    <button class="diff-btn" data-diff="medium" aria-label="Medium difficulty (ages 8-10)" style="font-size:0.95rem;padding:8px 20px;border-radius:999px;border:3px solid #fff;cursor:pointer;font-weight:700;transition:transform 0.15s,border-color 0.15s,box-shadow 0.15s;background:#3b82f6;color:#fff;box-shadow:0 0 12px rgba(255,255,255,0.4);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">Medium (8-10)</button>
+    <button class="diff-btn" data-diff="hard" aria-label="Hard difficulty (ages 11-13)" style="font-size:0.95rem;padding:8px 20px;border-radius:999px;border:3px solid transparent;cursor:pointer;font-weight:700;transition:transform 0.15s,border-color 0.15s,box-shadow 0.15s;background:#9333ea;color:#fff;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">Hard (11-13)</button>
+  </div>
   <label for="nameInput">Name your kitty:</label>
   <input type="text" id="nameInput" aria-label="Name your kitty" placeholder="Sparkle" maxlength="16" autofocus>
   <button id="startBtn" aria-label="Start game">Play!</button>
   <button id="levelSelectBtn" aria-label="Open level select" style="margin-top:12px;font-size:1rem;padding:10px 32px;background:linear-gradient(135deg,#38bdf8,#818cf8);color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:600;letter-spacing:1px;transition:transform 0.15s,box-shadow 0.15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">Level Select</button>
+  <button id="learningDashboardBtn" aria-label="Open learning progress" style="margin-top:8px;font-size:1rem;padding:10px 32px;background:linear-gradient(135deg,#f472b6,#c084fc);color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:600;letter-spacing:1px;transition:transform 0.15s,box-shadow 0.15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">Learning Progress</button>
+</div>
+
+<div id="learningDashboard" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#4c1d95 0%,#7c3aed 50%,#a78bfa 100%);flex-direction:column;align-items:center;z-index:100;overflow-y:auto;padding:20px;">
+  <h2 style="font-size:2rem;color:#fff;text-shadow:2px 2px 0 #3b0764;margin-bottom:0.5rem;">Learning Progress</h2>
+  <p style="color:rgba(255,255,255,0.8);margin-bottom:1.5rem;font-size:0.95rem;">Track your educational adventure!</p>
+  <div id="dashboardContent" style="width:100%;max-width:500px;display:flex;flex-direction:column;gap:16px;"></div>
+  <button id="dashboardBack" aria-label="Back to start screen" style="margin-top:1.5rem;margin-bottom:1.5rem;font-size:1rem;padding:10px 32px;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:12px;cursor:pointer;font-weight:600;touch-action:manipulation;">Back</button>
 </div>
 
 <div id="levelSelectScreen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#a78bfa 0%,#818cf8 50%,#38bdf8 100%);flex-direction:column;justify-content:center;align-items:center;z-index:100;">
@@ -543,6 +573,7 @@
   <p>Unikittyville plays best in landscape mode</p>
 </div>
 <div id="hud" aria-live="polite">
+  <span id="hudDifficulty" title="Difficulty" style="background:rgba(255,255,255,0.2);border-radius:6px;padding:1px 6px;font-size:0.8em;letter-spacing:1px;">M</span>
   <span id="hudLevel">Level 1</span>
   <span id="hudName"></span>
   <span>Score: <b id="hudScore">0</b></span>
@@ -568,10 +599,13 @@
   <span>Arrow Keys: Move</span>
   <span>Space: Jump</span>
   <span>Q: Talk</span>
+  <span>W: Postcard</span>
+  <span>N: Notebook</span>
   <span>Enter: Enter/Exit</span>
   <span class="ctrl-item" data-levels="1">F: Fish</span>
   <span class="ctrl-item" data-levels="1,3,8">C: Cook</span>
   <span class="ctrl-item" data-levels="1">H: Honey</span>
+  <span class="ctrl-item" data-levels="1">B: Bug Catch</span>
   <span class="ctrl-item" data-levels="5">T: Tiki</span>
   <span class="ctrl-item" data-levels="5">C: Coconut</span>
   <span class="ctrl-item" data-levels="4">G: Gelato</span>
@@ -592,6 +626,8 @@
   <span class="ctrl-item" data-levels="13">C: Add Fruit</span>
   <span class="ctrl-item" data-levels="13">Y: Yogurt</span>
   <span class="ctrl-item" data-levels="13">B: Blend</span>
+  <span class="ctrl-item" data-levels="13">M: Captain's Log</span>
+  <span>B: Badges</span>
 </div>
 <div id="prompt"></div>
 <div id="touch-controls">
