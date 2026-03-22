@@ -1300,6 +1300,141 @@ function drawChaletInterior(cam, W, H) {
   } else if (!drinkingCocoa) {
     ctx.fillText('Up/Down: Aim    Space: Toss    Enter: Leave', cx, cy + 140);
   }
+
+  // Baby Kit sleeping in crib (only after hospital delivery)
+  if (hospitalDelivered) {
+    const cribX = cx + 150;   // right side of chalet
+    const cribY = cy + 55;    // sitting on the floor
+    const breathe = Math.sin(gameTime / 400) * 1.5; // gentle breathing bob
+
+    // Crib rockers (curved bottom runners)
+    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cribX, cribY + 28, 32, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+
+    // Crib body (wooden box)
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.roundRect(cribX - 28, cribY - 12, 56, 34, 3);
+    ctx.fill();
+    // Crib inner (darker)
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(cribX - 24, cribY - 8, 48, 26);
+
+    // Pillow (small, left side of crib interior)
+    ctx.fillStyle = '#fef3c7';
+    ctx.beginPath();
+    ctx.ellipse(cribX - 12, cribY + 4 + breathe, 9, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Baby Kit body (tiny sleeping kitty)
+    const bx = cribX, by = cribY + breathe;
+    // Body
+    ctx.fillStyle = kitFurColor;
+    ctx.beginPath();
+    ctx.ellipse(bx + 2, by + 6, 12, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Head
+    ctx.beginPath();
+    ctx.arc(bx - 10, by + 2, 8, 0, Math.PI * 2);
+    ctx.fill();
+    // Ears (tiny triangles)
+    ctx.beginPath();
+    ctx.moveTo(bx - 16, by - 4); ctx.lineTo(bx - 13, by - 10); ctx.lineTo(bx - 10, by - 4);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(bx - 10, by - 4); ctx.lineTo(bx - 7, by - 10); ctx.lineTo(bx - 4, by - 4);
+    ctx.fill();
+    // Inner ears (lighter tint of kitFurColor)
+    const earR = parseInt(kitFurColor.slice(1, 3), 16);
+    const earG = parseInt(kitFurColor.slice(3, 5), 16);
+    const earB = parseInt(kitFurColor.slice(5, 7), 16);
+    ctx.fillStyle = `rgb(${Math.round((earR + 255) / 2)}, ${Math.round((earG + 255) / 2)}, ${Math.round((earB + 255) / 2)})`;
+    ctx.beginPath();
+    ctx.moveTo(bx - 15, by - 4); ctx.lineTo(bx - 13, by - 8); ctx.lineTo(bx - 11, by - 4);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(bx - 9, by - 4); ctx.lineTo(bx - 7, by - 8); ctx.lineTo(bx - 5, by - 4);
+    ctx.fill();
+    // Tiny horn
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.moveTo(bx - 10, by - 6); ctx.lineTo(bx - 8, by - 15); ctx.lineTo(bx - 6, by - 6);
+    ctx.fill();
+    // Closed eyes (curved lines)
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(bx - 13, by + 1, 2.5, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(bx - 7, by + 1, 2.5, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.stroke();
+    // Tiny smile
+    ctx.beginPath();
+    ctx.arc(bx - 10, by + 3, 2, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.stroke();
+
+    // Crib side rails (front posts) — drawn before blanket so blanket drapes over
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(cribX - 28, cribY - 20, 4, 42);
+    ctx.fillRect(cribX + 24, cribY - 20, 4, 42);
+    // Rail top bar
+    ctx.fillRect(cribX - 28, cribY - 22, 56, 4);
+
+    // Blanket draped over crib edge and baby
+    ctx.fillStyle = 'rgba(196, 181, 253, 0.7)'; // soft lavender
+    ctx.beginPath();
+    ctx.moveTo(cribX - 24, cribY - 8);
+    ctx.quadraticCurveTo(cribX - 5, cribY + 2, cribX + 8, cribY - 2);
+    ctx.lineTo(cribX + 8, cribY + 16);
+    ctx.quadraticCurveTo(cribX - 5, cribY + 12, cribX - 24, cribY + 16);
+    ctx.closePath();
+    ctx.fill();
+
+    // Floating "zzz" animation (note: font is reset by name label below)
+    const zTime = gameTime / 600;
+    for (let zi = 0; zi < 3; zi++) {
+      const zPhase = (zTime + zi * 0.35) % 1.0;
+      const zx = cribX + 18 + zi * 6 + Math.sin(gameTime / 400 + zi) * 3;
+      const zy = cribY - 20 - zPhase * 35;
+      const zAlpha = 1 - zPhase;
+      ctx.globalAlpha = zAlpha * 0.6;
+      ctx.fillStyle = '#e0e7ff';
+      ctx.font = (9 + zi * 2) + 'px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('z', zx, zy);
+    }
+    ctx.globalAlpha = 1;
+
+    // Name label below crib
+    ctx.fillStyle = '#fde68a'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(kitName, cribX, cribY + 46);
+
+    // Discovery heart effect — pulsing pink heart fades over first 2 seconds
+    if (chaletBabyDiscoverTimer > 0) {
+      const elapsed = gameTime - chaletBabyDiscoverTimer;
+      if (elapsed < 2000) {
+        const heartAlpha = 1 - elapsed / 2000;
+        const heartScale = 0.8 + Math.sin(gameTime / 150) * 0.2;
+        const heartY = cribY - 28 - elapsed * 0.015;
+        ctx.save();
+        ctx.globalAlpha = heartAlpha;
+        ctx.fillStyle = '#f9a8d4';
+        ctx.translate(cribX, heartY);
+        ctx.scale(heartScale, heartScale);
+        ctx.beginPath();
+        ctx.moveTo(0, -3);
+        ctx.bezierCurveTo(-5, -8, -10, -3, 0, 5);
+        ctx.moveTo(0, -3);
+        ctx.bezierCurveTo(5, -8, 10, -3, 0, 5);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    ctx.textAlign = 'left';
+  }
 }
 
 function drawSurfingScene(cam, W, H) {
@@ -3999,5 +4134,287 @@ function drawFountainWishesInterior(cam, W, H) {
     ctx.fillText('Press Enter to continue', cx, cy + 85);
   }
 
+  ctx.textAlign = 'left';
+}
+
+// ── Cupcake Bakery Interior ──
+function drawCupcakeBakeryInterior(cam, W, H) {
+  const cx = cam + W / 2;
+  const cy = H / 2;
+  const cb = cupcakeBakery;
+
+  // Background — warm bakery
+  ctx.fillStyle = '#fce7f3';
+  ctx.fillRect(cx - 240, cy - 150, 480, 320);
+  // Floor (checkerboard)
+  ctx.fillStyle = '#fde68a';
+  ctx.fillRect(cx - 240, cy + 30, 480, 140);
+  for (let gx = 0; gx < 12; gx++) {
+    for (let gy = 0; gy < 4; gy++) {
+      if ((gx + gy) % 2 === 0) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(cx - 240 + gx * 40, cy + 30 + gy * 35, 40, 35);
+      }
+    }
+  }
+
+  // Title
+  ctx.fillStyle = '#ec4899';
+  ctx.font = 'bold 18px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('Cupcake Bakery', cx, cy - 125);
+
+  if (cb.phase === 0) {
+    // Pick flavor
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 14px system-ui';
+    ctx.fillText('Choose your flavor:', cx, cy - 80);
+
+    const flavors = [
+      { name: 'Chocolate', color: '#5c2d0e', key: '1' },
+      { name: 'Vanilla', color: '#fde68a', key: '2' },
+      { name: 'Strawberry', color: '#f472b6', key: '3' },
+    ];
+    for (let i = 0; i < 3; i++) {
+      const fx = cx - 100 + i * 100;
+      // Cupcake preview
+      ctx.fillStyle = flavors[i].color;
+      ctx.beginPath();
+      ctx.arc(fx, cy - 30, 20, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#d4a574';
+      ctx.fillRect(fx - 15, cy - 30, 30, 20);
+      // Label
+      ctx.fillStyle = '#1f2937';
+      ctx.font = '12px system-ui';
+      ctx.fillText(flavors[i].key + ': ' + flavors[i].name, fx, cy + 5);
+    }
+  } else if (cb.phase === 1) {
+    // Mix batter
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 14px system-ui';
+    ctx.fillText('Mix the batter! Press SPACE repeatedly!', cx, cy - 80);
+    ctx.font = '12px system-ui';
+    ctx.fillText('Flavor: ' + cb.flavor, cx, cy - 60);
+
+    // Bowl
+    ctx.fillStyle = '#d1d5db';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 40, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Batter filling
+    const fillH = (cb.mixProgress / 100) * 20;
+    ctx.fillStyle = cb.flavor === 'chocolate' ? '#5c2d0e' : cb.flavor === 'strawberry' ? '#f472b6' : '#fde68a';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 5, 35, Math.max(5, fillH), 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Progress bar
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(cx - 60, cy + 50, 120, 12);
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(cx - 60, cy + 50, 120 * (cb.mixProgress / 100), 12);
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px system-ui';
+    ctx.fillText(Math.floor(cb.mixProgress) + '%', cx, cy + 60);
+  } else if (cb.phase === 2) {
+    // Decorate
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 14px system-ui';
+    ctx.fillText('Decorate your cupcake! (' + cb.decorations.length + '/3)', cx, cy - 80);
+
+    // Show cupcake
+    const flavorColor = cb.flavor === 'chocolate' ? '#5c2d0e' : cb.flavor === 'strawberry' ? '#f472b6' : '#fde68a';
+    ctx.fillStyle = flavorColor;
+    ctx.beginPath();
+    ctx.arc(cx, cy - 20, 30, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#d4a574';
+    ctx.fillRect(cx - 22, cy - 20, 44, 25);
+
+    // Show decorations on cupcake
+    const decoColors = { sprinkles: '#f43f5e', star: '#fbbf24', cherry: '#ef4444', heart: '#ec4899' };
+    for (let i = 0; i < cb.decorations.length; i++) {
+      const d = cb.decorations[i];
+      const dx = cx - 15 + i * 15;
+      ctx.fillStyle = decoColors[d] || '#fff';
+      ctx.beginPath();
+      ctx.arc(dx, cy - 35, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Options
+    ctx.font = '12px system-ui';
+    ctx.fillStyle = '#1f2937';
+    ctx.fillText('1: Sprinkles  2: Star  3: Cherry  4: Heart', cx, cy + 30);
+    ctx.fillText('Press Enter when done decorating', cx, cy + 50);
+  } else if (cb.phase === 3) {
+    // Oven
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 14px system-ui';
+    ctx.fillText('Baking... Pull out at the right time!', cx, cy - 80);
+
+    // Oven
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(cx - 50, cy - 40, 100, 80);
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(cx - 45, cy - 35, 90, 70);
+    // Oven window
+    const heat = Math.min(cb.ovenTimer / 3500, 1);
+    const ovenR = Math.floor(200 + heat * 55);
+    const ovenG = Math.floor(120 - heat * 80);
+    ctx.fillStyle = `rgb(${ovenR}, ${Math.max(0, ovenG)}, 20)`;
+    ctx.fillRect(cx - 35, cy - 25, 70, 40);
+
+    // Timer bar
+    const pct = Math.min(cb.ovenTimer / 5000, 1);
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(cx - 60, cy + 50, 120, 12);
+    const barColor = cb.ovenTimer < 2000 ? '#fbbf24' : cb.ovenTimer < 3500 ? '#22c55e' : '#ef4444';
+    ctx.fillStyle = barColor;
+    ctx.fillRect(cx - 60, cy + 50, 120 * pct, 12);
+
+    ctx.fillStyle = '#1f2937';
+    ctx.font = '12px system-ui';
+    if (cb.ovenTimer < 2000) ctx.fillText('Not ready yet...', cx, cy + 80);
+    else if (cb.ovenTimer < 3500) ctx.fillText('Perfect! Press SPACE to pull out!', cx, cy + 80);
+    else ctx.fillText('Hurry! It\'s burning!', cx, cy + 80);
+  } else if (cb.phase === 4) {
+    // Done
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 16px system-ui';
+    ctx.fillText('Cupcake complete! +' + cb.score + ' pts', cx, cy - 60);
+    ctx.font = '12px system-ui';
+    ctx.fillText('Cupcakes baked: ' + cupcakesBaked, cx, cy - 30);
+    ctx.fillText('Space = Bake Another | Enter = Exit', cx, cy + 60);
+
+    // Show finished cupcake
+    const flavorColor = cb.flavor === 'chocolate' ? '#5c2d0e' : cb.flavor === 'strawberry' ? '#f472b6' : '#fde68a';
+    ctx.fillStyle = flavorColor;
+    ctx.beginPath();
+    ctx.arc(cx, cy + 5, 30, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#d4a574';
+    ctx.fillRect(cx - 22, cy + 5, 44, 25);
+    // Frosting
+    ctx.fillStyle = '#f9a8d4';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 10, 25, Math.PI, 0);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '10px system-ui';
+  ctx.fillText('Escape to exit', cx, cy + 140);
+  ctx.textAlign = 'left';
+}
+
+// ── Dance Party Interior ──
+function drawDancePartyInterior(cam, W, H) {
+  const cx = cam + W / 2;
+  const cy = H / 2;
+  const dp = danceParty;
+  const t = gameTime;
+
+  // Dark background with pulsing colored lights
+  ctx.fillStyle = '#1f0530';
+  ctx.fillRect(cx - 280, cy - 170, 560, 360);
+
+  // Pulsing floor lights
+  const colors = ['#f472b6', '#38bdf8', '#fbbf24', '#4ade80', '#a78bfa', '#f43f5e'];
+  for (let i = 0; i < 6; i++) {
+    const pulse = Math.sin(t / 200 + i * 1.5) * 0.3 + 0.5;
+    ctx.fillStyle = colors[i];
+    ctx.globalAlpha = pulse * 0.3;
+    ctx.fillRect(cx - 280 + i * 93, cy + 60, 93, 130);
+  }
+  ctx.globalAlpha = 1;
+
+  // Disco ball
+  const discoBob = Math.sin(t / 400) * 3;
+  ctx.fillStyle = '#e2e8f0';
+  ctx.beginPath();
+  ctx.arc(cx, cy - 130 + discoBob, 18, 0, Math.PI * 2);
+  ctx.fill();
+  // Disco reflections
+  for (let i = 0; i < 8; i++) {
+    const angle = t / 150 + i * Math.PI / 4;
+    const dist = 30 + Math.sin(t / 300 + i) * 10;
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(angle) * dist, cy - 100 + Math.sin(angle) * dist * 0.5, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Title
+  ctx.fillStyle = '#e879f9';
+  ctx.font = 'bold 20px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('Dance Party!', cx, cy - 140);
+
+  // 3 NPC dancers at bottom
+  const dancerColors = ['#f472b6', '#38bdf8', '#fbbf24'];
+  for (let i = 0; i < 3; i++) {
+    const dx = cx - 80 + i * 80;
+    const bounce = Math.sin(t / 200 + i * 2.5) * 5;
+    drawKitty(dx, cy + 80 + bounce, dancerColors[i], (i % 2) * 2 - 1, Math.floor(t / 200) % 4, 'bow');
+  }
+
+  if (dp.complete) {
+    // Celebration
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 22px system-ui';
+    ctx.fillText('Dance Complete!', cx, cy - 30);
+    ctx.font = 'bold 16px system-ui';
+    ctx.fillText('Score: ' + dp.score, cx, cy);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '12px system-ui';
+    ctx.fillText('Press Enter to exit', cx, cy + 30);
+  } else if (dp.showingPattern) {
+    // Show pattern
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 14px system-ui';
+    ctx.fillText('Watch the pattern! Round ' + (dp.round + 1), cx, cy - 80);
+
+    // Show arrows
+    const arrowSymbols = { ArrowUp: '\u2191', ArrowDown: '\u2193', ArrowLeft: '\u2190', ArrowRight: '\u2192' };
+    for (let i = 0; i < dp.pattern.length; i++) {
+      const ax = cx - (dp.pattern.length * 20) / 2 + i * 25;
+      ctx.fillStyle = i === dp.showIndex ? '#fbbf24' : '#4b5563';
+      ctx.font = 'bold 20px system-ui';
+      ctx.fillText(arrowSymbols[dp.pattern[i]] || '?', ax, cy);
+    }
+  } else {
+    // Player input phase
+    ctx.fillStyle = '#e879f9';
+    ctx.font = 'bold 14px system-ui';
+    ctx.fillText('Your turn! Round ' + (dp.round + 1) + ' - Step ' + (dp.step + 1) + '/' + dp.pattern.length, cx, cy - 80);
+
+    // Arrow prompt
+    const arrowSymbols = { ArrowUp: '\u2191', ArrowDown: '\u2193', ArrowLeft: '\u2190', ArrowRight: '\u2192' };
+    if (dp.step < dp.pattern.length) {
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 28px system-ui';
+      ctx.fillText(arrowSymbols[dp.pattern[dp.step]] || '?', cx, cy + 10);
+    }
+
+    // Score
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '12px system-ui';
+    ctx.fillText('Score: ' + dp.score, cx, cy + 40);
+
+    // Feedback
+    if (dp.feedbackTimer > 0) {
+      ctx.fillStyle = dp.feedback === 'Perfect!' ? '#22c55e' : '#ef4444';
+      ctx.font = 'bold 16px system-ui';
+      ctx.fillText(dp.feedback, cx, cy - 50);
+    }
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '10px system-ui';
+  ctx.fillText('Escape to exit', cx, cy + 155);
   ctx.textAlign = 'left';
 }
