@@ -651,9 +651,292 @@ function drawPantheonInterior(cam, W, H) {
   }
   ctx.fillStyle = '#fff'; ctx.font = 'bold 18px system-ui'; ctx.textAlign = 'center';
   ctx.fillText('The Pantheon', cx, cy - 130);
-  ctx.font = '13px system-ui'; ctx.fillStyle = 'rgba(100,100,100,0.8)';
-  ctx.fillText('Press Enter to leave', cx, cy + 145);
+  if (!scrollActive) {
+    ctx.font = '13px system-ui'; ctx.fillStyle = 'rgba(100,100,100,0.8)';
+    if (scrollAllDone) {
+      ctx.fillText('All scrolls transcribed! Press Enter to leave', cx, cy + 145);
+    } else {
+      ctx.fillText('Press T to transcribe scrolls | Enter to leave', cx, cy + 145);
+    }
+  }
   drawKitty(cx, cy + 60, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
+
+  // ── Scroll transcription overlay ──
+  if (scrollActive) {
+    const sw = Math.min(W * 0.8, 500); // scroll width
+    const sh = 200;
+    const sx = cx - sw / 2;
+    const sy = cy - 80;
+
+    // Parchment background with aged edges
+    ctx.save();
+    // Outer darker edge (aged look)
+    ctx.fillStyle = '#c4a96a';
+    ctx.beginPath();
+    ctx.roundRect(sx - 4, sy - 4, sw + 8, sh + 8, 8);
+    ctx.fill();
+    // Inner parchment
+    const parchGrad = ctx.createRadialGradient(cx, sy + sh / 2, 20, cx, sy + sh / 2, sw * 0.6);
+    parchGrad.addColorStop(0, '#fdf6e3'); // cream center
+    parchGrad.addColorStop(1, '#f0e4c8'); // slightly darker edges
+    ctx.fillStyle = parchGrad;
+    ctx.beginPath();
+    ctx.roundRect(sx, sy, sw, sh, 6);
+    ctx.fill();
+    // Subtle border
+    ctx.strokeStyle = '#a08050';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(sx, sy, sw, sh, 6);
+    ctx.stroke();
+
+    // Scroll roll decorations (top and bottom)
+    ctx.fillStyle = '#b8944a';
+    ctx.fillRect(sx - 6, sy - 2, sw + 12, 8);
+    ctx.fillRect(sx - 6, sy + sh - 6, sw + 12, 8);
+    // Roll end circles
+    ctx.fillStyle = '#a08040';
+    ctx.beginPath(); ctx.arc(sx - 6, sy + 2, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx + sw + 6, sy + 2, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx - 6, sy + sh - 2, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx + sw + 6, sy + sh - 2, 6, 0, Math.PI * 2); ctx.fill();
+
+    // Header: scroll number
+    ctx.fillStyle = '#5c3a1e';
+    ctx.font = 'bold 14px Georgia, "Times New Roman", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Scroll ' + (scrollRound + 1) + ' of 5', cx, sy + 28);
+
+    if (!scrollComplete) {
+      // Draw the scroll text character by character
+      ctx.font = '20px Georgia, "Times New Roman", serif';
+      ctx.textAlign = 'left';
+      const textY = sy + 70;
+      // Measure to center the text
+      const fullWidth = ctx.measureText(scrollText).width;
+      let textX = cx - fullWidth / 2;
+
+      for (let i = 0; i < scrollText.length; i++) {
+        const ch = scrollText[i];
+        const charW = ctx.measureText(ch).width;
+        if (i < scrollTyped) {
+          // Already typed — green
+          ctx.fillStyle = '#16a34a';
+        } else if (i === scrollTyped) {
+          // Current cursor position — show blinking cursor
+          if (scrollFlashRed > 0) {
+            ctx.fillStyle = '#dc2626'; // red flash on error
+          } else {
+            ctx.fillStyle = '#1e293b'; // dark for current
+          }
+          // Blinking underline cursor
+          if (Math.floor(Date.now() / 400) % 2 === 0) {
+            ctx.fillRect(textX, textY + 4, charW, 2);
+          }
+        } else {
+          // Not yet typed — gray
+          ctx.fillStyle = '#9ca3af';
+        }
+        ctx.fillText(ch, textX, textY);
+        textX += charW;
+      }
+
+      // Accuracy display
+      const totalTyped = scrollTyped + scrollErrors;
+      const accuracy = totalTyped > 0 ? Math.round((scrollTyped / totalTyped) * 100) : 100;
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#78716c';
+      ctx.fillText('Accuracy: ' + accuracy + '%  |  Errors: ' + scrollErrors, cx, sy + sh - 20);
+
+      // Hint
+      ctx.font = '11px system-ui';
+      ctx.fillStyle = '#a08050';
+      ctx.fillText('Type each character to transcribe the scroll', cx, sy + sh - 6);
+    } else {
+      // Completed — show the text in green and the fun fact
+      ctx.font = '20px Georgia, "Times New Roman", serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#16a34a';
+      ctx.fillText(scrollText, cx, sy + 65);
+
+      // Checkmark
+      ctx.font = 'bold 24px system-ui';
+      ctx.fillText('\u2713', cx, sy + 95);
+
+      // Accuracy
+      const totalTyped = scrollText.length + scrollErrors;
+      const accuracy = totalTyped > 0 ? Math.round((scrollText.length / totalTyped) * 100) : 100;
+      ctx.font = '13px system-ui';
+      ctx.fillStyle = '#5c3a1e';
+      ctx.fillText('Accuracy: ' + accuracy + '% | +' + POINTS.SCROLL + ' points', cx, sy + 115);
+
+      // Fun fact
+      ctx.font = 'italic 13px Georgia, "Times New Roman", serif';
+      ctx.fillStyle = '#78716c';
+      const fact = SCROLL_TEXTS[scrollRound].fact;
+      ctx.fillText(fact, cx, sy + 140);
+
+      // Continue prompt
+      ctx.font = '11px system-ui';
+      ctx.fillStyle = '#a08050';
+      const continueText = scrollRound < SCROLL_TEXTS.length - 1 ? 'Next scroll coming...' : 'Final scroll complete!';
+      ctx.fillText(continueText, cx, sy + sh - 10);
+    }
+    ctx.restore();
+  }
+
+  // ── Pantheon Architecture Puzzle ──
+  if (pantheonPuzzle.active) {
+    // Draw puzzle overlay — cross-section of the Pantheon dome
+    // Background overlay
+    ctx.fillStyle = 'rgba(30,20,10,0.85)';
+    ctx.fillRect(cam + 20, 20, W - 40, H - 40);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#fde68a';
+    ctx.font = 'bold 16px system-ui';
+    ctx.fillText('Pantheon Architecture Puzzle', cx, 50);
+
+    // Dome cross-section dimensions
+    const domeX = cx;
+    const domeBottom = cy + 50;
+    const bandHeight = 36;
+    const domeW = 240; // full width at base
+
+    // Piece colors (placed)
+    const pieceColors = ['#78716c', '#a8a29e', '#d6d3d1', '#e7e5e4', '#87ceeb'];
+    // Piece outline colors (unplaced)
+    const outlineColor = 'rgba(200,180,140,0.4)';
+
+    for (let i = 0; i < 5; i++) {
+      const y = domeBottom - (i + 1) * bandHeight;
+      const isPlaced = i < pantheonPuzzle.placed;
+      const isAnimating = i === pantheonPuzzle.placed - 1 && pantheonPuzzle.animating;
+
+      // Each band gets narrower as we go up (dome shape)
+      let bw;
+      if (i === 0) bw = domeW;          // Foundation — full width
+      else if (i === 1) bw = domeW - 20; // Walls
+      else if (i === 2) bw = domeW - 60; // Lower dome
+      else if (i === 3) bw = domeW - 110; // Upper dome
+      else bw = 54;                       // Oculus — small circle
+
+      if (i === 4) {
+        // Oculus — draw as circle at top
+        if (isPlaced) {
+          let drawY = y + bandHeight / 2;
+          if (isAnimating) {
+            const t = pantheonPuzzle.animProgress;
+            drawY = drawY - 60 * (1 - t); // slide down from above
+          }
+          ctx.fillStyle = pieceColors[i];
+          ctx.beginPath(); ctx.arc(domeX, drawY, 27, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#fde68a';
+          ctx.globalAlpha = 0.3;
+          ctx.beginPath(); ctx.arc(domeX, drawY, 27, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = '#1e293b';
+          ctx.font = 'bold 10px system-ui';
+          ctx.fillText('OCULUS', domeX, drawY + 4);
+        } else {
+          ctx.strokeStyle = outlineColor;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath(); ctx.arc(domeX, y + bandHeight / 2, 27, 0, Math.PI * 2); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(200,180,140,0.3)';
+          ctx.font = '9px system-ui';
+          ctx.fillText('5: Oculus', domeX, y + bandHeight / 2 + 4);
+        }
+      } else {
+        // Rectangular/trapezoidal bands
+        const nextBw = (i === 0) ? domeW - 20 : (i === 1) ? domeW - 60 : (i === 2) ? domeW - 110 : 54;
+        if (isPlaced) {
+          let drawY = y;
+          if (isAnimating) {
+            const t = pantheonPuzzle.animProgress;
+            drawY = drawY - 60 * (1 - t);
+          }
+          // Draw as trapezoid
+          ctx.fillStyle = pieceColors[i];
+          ctx.beginPath();
+          ctx.moveTo(domeX - bw / 2, drawY + bandHeight);
+          ctx.lineTo(domeX + bw / 2, drawY + bandHeight);
+          ctx.lineTo(domeX + nextBw / 2, drawY);
+          ctx.lineTo(domeX - nextBw / 2, drawY);
+          ctx.closePath();
+          ctx.fill();
+          // Label
+          ctx.fillStyle = '#1e293b';
+          ctx.font = 'bold 10px system-ui';
+          ctx.fillText(PANTHEON_PIECES[i].name.toUpperCase(), domeX, drawY + bandHeight / 2 + 4);
+        } else {
+          // Dotted outline
+          ctx.strokeStyle = outlineColor;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(domeX - bw / 2, y + bandHeight);
+          ctx.lineTo(domeX + bw / 2, y + bandHeight);
+          ctx.lineTo(domeX + nextBw / 2, y);
+          ctx.lineTo(domeX - nextBw / 2, y);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.setLineDash([]);
+          // Hint label
+          ctx.fillStyle = 'rgba(200,180,140,0.3)';
+          ctx.font = '9px system-ui';
+          ctx.fillText((i + 1) + ': ' + PANTHEON_PIECES[i].name, domeX, y + bandHeight / 2 + 4);
+        }
+      }
+    }
+
+    // Draw ground line
+    ctx.strokeStyle = '#a8a29e';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - domeW / 2 - 20, domeBottom);
+    ctx.lineTo(cx + domeW / 2 + 20, domeBottom);
+    ctx.stroke();
+
+    // Feedback text
+    if (pantheonPuzzle.feedback) {
+      ctx.fillStyle = '#fde68a';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'center';
+      // Word-wrap the fact text
+      const words = pantheonPuzzle.feedback.split(' ');
+      let lines = [];
+      let line = '';
+      for (const w of words) {
+        if ((line + ' ' + w).length > 50) { lines.push(line); line = w; }
+        else { line = line ? line + ' ' + w : w; }
+      }
+      if (line) lines.push(line);
+      for (let li = 0; li < lines.length; li++) {
+        ctx.fillText(lines[li], cx, domeBottom + 30 + li * 16);
+      }
+    }
+
+    // Instructions
+    ctx.fillStyle = '#d6d3d1';
+    ctx.font = '11px system-ui';
+    if (pantheonPuzzle.complete) {
+      ctx.fillText('Complete! You rebuilt the Pantheon dome!', cx, H - 50);
+    } else {
+      ctx.fillText('Press 1-5 to place pieces (bottom to top)', cx, H - 50);
+    }
+    ctx.fillStyle = 'rgba(100,100,100,0.8)';
+    ctx.font = '11px system-ui';
+    ctx.fillText('Press Enter to leave', cx, H - 30);
+  } else {
+    // Normal Pantheon interior — show puzzle prompt
+    ctx.font = '13px system-ui'; ctx.fillStyle = 'rgba(100,100,100,0.8)';
+    ctx.fillText('Press A to start Architecture Puzzle', cx, cy + 130);
+    ctx.fillText('Press Enter to leave', cx, cy + 145);
+    drawKitty(cx, cy + 60, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
+  }
 }
 
 function drawSwimmingScene(cam, W, H) {
@@ -1910,32 +2193,147 @@ function drawFaoSchwarzInterior(cam, W, H) {
 function drawEmpireStateInterior(cam, W, H) {
   const cx = cam + W / 2;
   if (!empireAtTop) {
-    ctx.fillStyle = '#78716c'; ctx.fillRect(cam, 0, W, H);
-    ctx.fillStyle = '#fbbf24'; ctx.fillRect(cx - 60, H * 0.3, 120, 160);
-    ctx.strokeStyle = '#92400e'; ctx.lineWidth = 3; ctx.strokeRect(cx - 60, H * 0.3, 120, 160);
-    ctx.fillStyle = '#1e1b4b'; ctx.fillRect(cx - 30, H * 0.2, 60, 30);
-    ctx.fillStyle = '#ef4444'; ctx.font = 'bold 20px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(Math.round(empireElevator), cx, H * 0.2 + 22);
-    ctx.fillStyle = '#374151'; ctx.fillRect(cam + 30, H * 0.4, 20, H * 0.4);
-    ctx.fillStyle = '#fbbf24'; ctx.fillRect(cam + 30, H * 0.4 + H * 0.4 * (1 - empireElevator / 100), 20, H * 0.4 * (empireElevator / 100));
-    drawKitty(cx, H * 0.58, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
-  } else {
-    ctx.fillStyle = '#60a5fa'; ctx.fillRect(cam, 0, W, H);
-    for (let i = 0; i < 30; i++) {
-      const bx = cam + (i * 137 + 20) % W;
-      const bh = 40 + (i * 89) % 80;
-      ctx.fillStyle = ['#64748b','#475569','#94a3b8','#334155'][i % 4];
-      ctx.fillRect(bx, H - bh, 25, bh);
-      ctx.fillStyle = '#fef08a';
-      for (let wy = H - bh + 5; wy < H - 5; wy += 12) {
-        ctx.fillRect(bx + 5, wy, 5, 5); ctx.fillRect(bx + 15, wy, 5, 5);
+    // Elevator shaft — dark walls with moving floor indicator lights
+    ctx.fillStyle = '#52525b';
+    ctx.fillRect(cam, 0, W, H);
+    // Shaft wall panels
+    ctx.fillStyle = '#3f3f46';
+    ctx.fillRect(cam, 0, 30, H);
+    ctx.fillRect(cam + W - 30, 0, 30, H);
+    // Moving floor lights (scroll up as elevator rises)
+    ctx.fillStyle = '#fbbf2440';
+    for (let i = 0; i < 20; i++) {
+      const ly = ((i * H / 10) - empireElevator * 5) % H;
+      if (ly > 0) {
+        ctx.fillRect(cam + 8, ly, 14, 3);
+        ctx.fillRect(cam + W - 22, ly, 14, 3);
       }
     }
+    // Elevator car — brass and mahogany style
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(cx - 80, H * 0.25, 160, 200);
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(cx - 75, H * 0.27, 150, 190);
+    // Wood paneling
+    ctx.fillStyle = '#a0845a';
+    ctx.fillRect(cx - 70, H * 0.3, 140, 10);
+    ctx.fillRect(cx - 70, H * 0.55, 140, 10);
+    // Mirror on back wall
+    ctx.fillStyle = '#bfdbfe';
+    ctx.fillRect(cx - 40, H * 0.32, 80, 60);
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+    ctx.strokeRect(cx - 40, H * 0.32, 80, 60);
+    // Floor indicator display
+    ctx.fillStyle = '#1e1b4b';
+    ctx.fillRect(cx - 25, H * 0.22, 50, 25);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 18px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('F' + Math.round(empireElevator), cx, H * 0.22 + 18);
+    // Progress bar on side
+    ctx.fillStyle = '#374151';
+    ctx.fillRect(cam + 45, H * 0.3, 15, H * 0.45);
+    ctx.fillStyle = '#fbbf24';
+    const barFill = H * 0.45 * (empireElevator / 100);
+    ctx.fillRect(cam + 45, H * 0.3 + H * 0.45 - barFill, 15, barFill);
+    // Elevator floor
+    ctx.fillStyle = '#78716c';
+    ctx.fillRect(cx - 75, H * 0.68, 150, 8);
+    // Player standing in elevator
+    drawKitty(cx, H * 0.65, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
+    // Elevator doors (top)
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(cx - 80, H * 0.25, 8, 200);
+    ctx.fillRect(cx + 72, H * 0.25, 8, 200);
+  } else {
+    // Observation deck — sky above, city far below
+    // Sky gradient
+    const skyGrad = ctx.createLinearGradient(cam, 0, cam, H * 0.55);
+    skyGrad.addColorStop(0, '#3b82f6');
+    skyGrad.addColorStop(1, '#93c5fd');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(cam, 0, W, H * 0.55);
+    // Clouds (we're above some of them!)
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    for (let i = 0; i < 6; i++) {
+      const cloudX = cam + (i * 170 + 30 + Math.sin(gameTime / 3000 + i) * 20) % W;
+      const cloudY = H * 0.35 + i * 15;
+      ctx.beginPath();
+      ctx.ellipse(cloudX, cloudY, 40, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cloudX - 20, cloudY + 5, 25, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // City skyline far below — tiny buildings
+    for (let i = 0; i < 50; i++) {
+      const bx = cam + (i * 97 + 10) % W;
+      const bh = 15 + (i * 53) % 40;
+      ctx.fillStyle = ['#64748b','#475569','#94a3b8','#334155','#6b7280'][i % 5];
+      ctx.fillRect(bx, H * 0.55 + 50 - bh, 12, bh);
+      // Tiny windows
+      ctx.fillStyle = '#fef08a';
+      for (let wy = H * 0.55 + 50 - bh + 3; wy < H * 0.55 + 48; wy += 6) {
+        ctx.fillRect(bx + 2, wy, 3, 2);
+        ctx.fillRect(bx + 7, wy, 3, 2);
+      }
+    }
+    // Central Park (green rectangle in the distance)
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(cam + W * 0.35, H * 0.52, W * 0.15, 8);
+    // Rivers on sides
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillRect(cam, H * 0.54, W * 0.08, 6);
+    ctx.fillRect(cam + W * 0.92, H * 0.54, W * 0.08, 6);
+
+    // Observation deck floor and walls
+    ctx.fillStyle = '#78716c';
+    ctx.fillRect(cam, H * 0.6, W, H * 0.4);
+    // Deck surface
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(cam, H * 0.6, W, 6);
+    // Tile pattern on floor
+    ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 0.5;
+    for (let tx = cam; tx < cam + W; tx += 25) {
+      ctx.beginPath(); ctx.moveTo(tx, H * 0.65); ctx.lineTo(tx, H); ctx.stroke();
+    }
+    for (let ty = H * 0.65; ty < H; ty += 25) {
+      ctx.beginPath(); ctx.moveTo(cam, ty); ctx.lineTo(cam + W, ty); ctx.stroke();
+    }
+
+    // Safety fence/railing with mesh
     ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(cam, H * 0.7); ctx.lineTo(cam + W, H * 0.7); ctx.stroke();
-    drawKitty(cx, H * 0.67, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 20px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('102nd Floor — Top of New York!', cx, 40);
+    ctx.beginPath(); ctx.moveTo(cam, H * 0.55); ctx.lineTo(cam + W, H * 0.55); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cam, H * 0.6); ctx.lineTo(cam + W, H * 0.6); ctx.stroke();
+    // Vertical fence bars
+    ctx.lineWidth = 1.5;
+    for (let fx = cam; fx < cam + W; fx += 20) {
+      ctx.beginPath(); ctx.moveTo(fx, H * 0.55); ctx.lineTo(fx, H * 0.6); ctx.stroke();
+    }
+    // Mesh pattern
+    ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 0.5;
+    for (let fx = cam; fx < cam + W; fx += 8) {
+      ctx.beginPath(); ctx.moveTo(fx, H * 0.55); ctx.lineTo(fx + 4, H * 0.6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fx + 4, H * 0.55); ctx.lineTo(fx, H * 0.6); ctx.stroke();
+    }
+
+    // Coin-operated telescope
+    const telX = cam + W * 0.8;
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(telX - 2, H * 0.62, 4, 20);
+    ctx.fillStyle = '#6b7280';
+    ctx.beginPath(); ctx.ellipse(telX, H * 0.62, 8, 5, -0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(telX - 1, H * 0.82, 6, 6);
+
+    // Player on the deck
+    drawKitty(cx, H * 0.78, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
+
+    // Title
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 18px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('102nd Floor — Top of the Empire State Building!', cx, 35);
+    ctx.fillStyle = '#bfdbfe'; ctx.font = '12px system-ui';
+    ctx.fillText('1,454 feet above the streets of Manhattan', cx, 52);
   }
   ctx.textAlign = 'left';
 }
@@ -2007,6 +2405,187 @@ function drawGrandCentralInterior(cam, W, H) {
   ctx.textAlign = 'left';
 }
 
+// ── Grand Central Telegram Office ──
+function drawTelegramOffice(cam, W, H) {
+  const cx = cam + W / 2;
+
+  // Warm wood-paneled office background
+  ctx.fillStyle = '#78350f'; ctx.fillRect(cam, 0, W, H);
+  // Wainscoting / lighter upper wall
+  ctx.fillStyle = '#a16207'; ctx.fillRect(cam, 0, W, H * 0.55);
+  // Decorative trim line
+  ctx.fillStyle = '#fbbf24'; ctx.fillRect(cam, H * 0.54, W, 3);
+
+  // Floor — dark hardwood
+  ctx.fillStyle = '#5c2d0e'; ctx.fillRect(cam, H * 0.75, W, H * 0.25);
+  // Floor boards
+  ctx.strokeStyle = '#4a2508'; ctx.lineWidth = 1;
+  for (let i = 0; i < 8; i++) {
+    const bx = cam + i * (W / 8);
+    ctx.beginPath(); ctx.moveTo(bx, H * 0.75); ctx.lineTo(bx, H); ctx.stroke();
+  }
+
+  // Wooden desk
+  ctx.fillStyle = '#92400e';
+  ctx.fillRect(cx - 120, H * 0.6, 240, 20);
+  // Desk legs
+  ctx.fillRect(cx - 115, H * 0.62, 8, 50);
+  ctx.fillRect(cx + 107, H * 0.62, 8, 50);
+  // Desk surface highlight
+  ctx.fillStyle = '#a8590b';
+  ctx.fillRect(cx - 118, H * 0.6, 236, 4);
+
+  // Telegraph machine on desk
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(cx - 30, H * 0.52, 60, 30); // base
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(cx - 25, H * 0.48, 50, 20); // body
+  // Brass key lever
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillRect(cx - 15, H * 0.56, 30, 6);
+  ctx.beginPath(); ctx.arc(cx + 18, H * 0.56 + 3, 5, 0, Math.PI * 2); ctx.fill();
+  // Brass knobs
+  ctx.beginPath(); ctx.arc(cx - 10, H * 0.50, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + 10, H * 0.50, 3, 0, Math.PI * 2); ctx.fill();
+  // Wire from telegraph
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx + 25, H * 0.50);
+  ctx.quadraticCurveTo(cx + 80, H * 0.35, cx + 100, H * 0.1); ctx.stroke();
+
+  // Paper tape roll
+  ctx.fillStyle = '#fef3c7';
+  ctx.fillRect(cx - 60, H * 0.55, 25, 25);
+  ctx.fillStyle = '#92400e';
+  ctx.beginPath(); ctx.arc(cx - 47, H * 0.55 + 12, 5, 0, Math.PI * 2); ctx.fill();
+
+  // Title
+  ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 18px system-ui'; ctx.textAlign = 'center';
+  ctx.fillText('Telegram Office', cx, H * 0.08);
+
+  // Difficulty indicator
+  const levels = ['Easy', 'Medium', 'Hard'];
+  const levelColors = ['#4ade80', '#fbbf24', '#f87171'];
+  ctx.font = '13px system-ui';
+  ctx.fillStyle = levelColors[telegramLevel];
+  ctx.fillText('Difficulty: ' + levels[telegramLevel], cx, H * 0.13);
+
+  if (telegramActive || telegramComplete) {
+    // Paper / telegram display area
+    const paperX = cx - W * 0.38;
+    const paperW = W * 0.76;
+    const paperY = H * 0.16;
+    const paperH = H * 0.32;
+
+    // Paper background
+    ctx.fillStyle = '#fefce8';
+    ctx.fillRect(paperX, paperY, paperW, paperH);
+    ctx.strokeStyle = '#d4a574'; ctx.lineWidth = 2;
+    ctx.strokeRect(paperX, paperY, paperW, paperH);
+
+    // Dotted lines on paper
+    ctx.strokeStyle = '#e5d5b0'; ctx.lineWidth = 0.5;
+    ctx.setLineDash([4, 4]);
+    for (let ly = paperY + 30; ly < paperY + paperH - 10; ly += 22) {
+      ctx.beginPath(); ctx.moveTo(paperX + 15, ly); ctx.lineTo(paperX + paperW - 15, ly); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // "TELEGRAM" header on paper
+    ctx.fillStyle = '#78350f'; ctx.font = 'bold 14px "Courier New", monospace'; ctx.textAlign = 'center';
+    ctx.fillText('=== TELEGRAM ===', cx, paperY + 18);
+
+    // Target text (what player needs to type)
+    const fontSize = Math.min(16, Math.round(W * 0.025));
+    ctx.font = fontSize + 'px "Courier New", monospace';
+    const maxCharsPerLine = Math.floor((paperW - 30) / (fontSize * 0.6));
+    const lines = [];
+    for (let i = 0; i < telegramText.length; i += maxCharsPerLine) {
+      lines.push(telegramText.substring(i, i + maxCharsPerLine));
+    }
+
+    // Draw each character with coloring
+    let charIdx = 0;
+    const lineHeight = 22;
+    const startY = paperY + 38;
+    const errorFlashActive = (performance.now() - telegramErrorFlash) < 300;
+
+    for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+      const line = lines[lineNum];
+      const lineX = paperX + 20;
+      const lineY = startY + lineNum * lineHeight;
+
+      for (let c = 0; c < line.length; c++) {
+        const ch = line[c];
+        const x = lineX + c * (fontSize * 0.6);
+
+        if (charIdx < telegramTyped.length) {
+          // Already typed — green
+          ctx.fillStyle = '#16a34a';
+          ctx.fillText(ch, x, lineY);
+        } else if (charIdx === telegramTyped.length) {
+          // Current character — cursor
+          // Blinking cursor background
+          const blink = Math.sin(performance.now() / 300) > 0;
+          if (blink) {
+            ctx.fillStyle = errorFlashActive ? 'rgba(239,68,68,0.3)' : 'rgba(59,130,246,0.3)';
+            ctx.fillRect(x - 1, lineY - fontSize + 2, fontSize * 0.6 + 2, fontSize + 2);
+          }
+          ctx.fillStyle = errorFlashActive ? '#ef4444' : '#1e40af';
+          ctx.font = 'bold ' + fontSize + 'px "Courier New", monospace';
+          ctx.fillText(ch, x, lineY);
+          ctx.font = fontSize + 'px "Courier New", monospace';
+        } else {
+          // Not yet reached — gray
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillText(ch, x, lineY);
+        }
+        charIdx++;
+      }
+    }
+
+    // Stats below paper
+    if (telegramActive) {
+      const elapsed = (performance.now() - telegramStartTime) / 1000;
+      const words = telegramTyped.split(' ').filter(w => w).length || 0;
+      const wpm = elapsed > 1 ? Math.round((words / elapsed) * 60) : 0;
+      const typed = telegramTyped.length;
+      const accuracy = typed > 0 ? Math.round(((typed - telegramErrors) / typed) * 100) : 100;
+
+      ctx.font = '13px system-ui';
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillText('WPM: ' + wpm + '  |  Accuracy: ' + accuracy + '%  |  Errors: ' + telegramErrors, cx, paperY + paperH + 18);
+    }
+
+    // Completion overlay
+    if (telegramComplete) {
+      const elapsed = (performance.now() - telegramStartTime) / 1000;
+      const words = telegramText.split(' ').length;
+      const wpm = Math.round((words / elapsed) * 60);
+      const accuracy = Math.round(((telegramText.length - telegramErrors) / telegramText.length) * 100);
+
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(paperX, paperY + paperH + 5, paperW, 40);
+      ctx.fillStyle = '#4ade80'; ctx.font = 'bold 15px system-ui';
+      ctx.fillText('Telegram Sent!  WPM: ' + wpm + '  Accuracy: ' + accuracy + '%', cx, paperY + paperH + 28);
+    }
+  } else {
+    // Idle — instruction on paper
+    ctx.fillStyle = '#fefce8';
+    const idlePX = cx - 100, idlePY = H * 0.20, idlePW = 200, idlePH = 80;
+    ctx.fillRect(idlePX, idlePY, idlePW, idlePH);
+    ctx.strokeStyle = '#d4a574'; ctx.lineWidth = 1; ctx.strokeRect(idlePX, idlePY, idlePW, idlePH);
+    ctx.fillStyle = '#78350f'; ctx.font = '13px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Press Enter to', cx, idlePY + 28);
+    ctx.fillText('send a telegram!', cx, idlePY + 48);
+    ctx.font = '11px system-ui'; ctx.fillStyle = '#94a3b8';
+    ctx.fillText('Left/Right to change difficulty', cx, idlePY + 66);
+  }
+
+  // Draw player
+  drawKitty(cx, H * 0.82, player.color, 1, player.walkFrame, 'horn', playerEyeColor, playerHornColors);
+  ctx.textAlign = 'left';
+}
+
 // ── The Metropolitan Museum of Art ──
 function drawMetMuseumInterior(cam, W, H) {
   const cx = cam + W / 2;
@@ -2062,6 +2641,103 @@ function drawMetMuseumInterior(cam, W, H) {
   ctx.fillText((metPaintingIndex + 1) + ' of ' + MET_PAINTINGS.length, cx, H * 0.72);
   // Player viewing
   drawKitty(cx, H * 0.85, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
+  ctx.textAlign = 'left';
+}
+
+// ── Art Description Overlay (Met Museum) ──
+function drawArtDescOverlay(W, H) {
+  const cx = W / 2;
+  const cardW = W * 0.7, cardH = H * 0.55;
+  const cardX = cx - cardW / 2, cardY = H * 0.18;
+
+  // Dimmed backdrop
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Card background — cream/parchment
+  ctx.fillStyle = '#fef3c7';
+  ctx.fillRect(cardX, cardY, cardW, cardH);
+  ctx.strokeStyle = '#92400e'; ctx.lineWidth = 3;
+  ctx.strokeRect(cardX, cardY, cardW, cardH);
+
+  // Inner border
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1;
+  ctx.strokeRect(cardX + 6, cardY + 6, cardW - 12, cardH - 12);
+
+  ctx.textAlign = 'center';
+
+  // Painting title
+  const p = MET_PAINTINGS[artDescPaintingIdx];
+  ctx.fillStyle = '#1e1b4b'; ctx.font = 'bold 16px system-ui';
+  ctx.fillText('"' + p.title + '"', cx, cardY + 30);
+
+  // Prompt
+  ctx.fillStyle = '#78716c'; ctx.font = 'italic 13px system-ui';
+  ctx.fillText('Describe this painting in your own words!', cx, cardY + 52);
+
+  // Lined writing area
+  const areaX = cardX + 20, areaY = cardY + 66;
+  const areaW = cardW - 40, areaH = cardH - 110;
+  ctx.fillStyle = '#fff'; ctx.fillRect(areaX, areaY, areaW, areaH);
+  ctx.strokeStyle = '#d6d3d1'; ctx.lineWidth = 1;
+  ctx.strokeRect(areaX, areaY, areaW, areaH);
+
+  // Horizontal ruled lines
+  ctx.strokeStyle = '#e7e5e4';
+  const lineSpacing = 22;
+  for (let ly = areaY + lineSpacing; ly < areaY + areaH - 5; ly += lineSpacing) {
+    ctx.beginPath(); ctx.moveTo(areaX + 5, ly); ctx.lineTo(areaX + areaW - 5, ly); ctx.stroke();
+  }
+
+  // Typed text with word wrapping
+  ctx.fillStyle = '#1e1b4b'; ctx.font = '14px system-ui'; ctx.textAlign = 'left';
+  const maxLineW = areaW - 20;
+  const words = artDescText.split(' ');
+  let lines = [];
+  let currentLine = '';
+  for (const word of words) {
+    const test = currentLine ? currentLine + ' ' + word : word;
+    if (ctx.measureText(test).width > maxLineW && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = test;
+    }
+  }
+  lines.push(currentLine);
+
+  for (let i = 0; i < lines.length && i < 4; i++) {
+    ctx.fillText(lines[i], areaX + 10, areaY + 18 + i * lineSpacing);
+  }
+
+  // Blinking cursor
+  const cursorLine = Math.min(lines.length - 1, 3);
+  const cursorText = lines[cursorLine] || '';
+  const cursorX = areaX + 10 + ctx.measureText(cursorText).width + 2;
+  const cursorY = areaY + 6 + cursorLine * lineSpacing;
+  if (Math.floor(gameTime / 400) % 2 === 0) {
+    ctx.fillStyle = '#1e1b4b';
+    ctx.fillRect(cursorX, cursorY, 2, 16);
+  }
+
+  // Character count
+  ctx.textAlign = 'right'; ctx.font = '11px system-ui';
+  ctx.fillStyle = artDescText.length >= 90 ? '#dc2626' : '#94a3b8';
+  ctx.fillText(artDescText.length + '/100', areaX + areaW - 5, areaY + areaH + 14);
+
+  // Submit / cancel hints
+  ctx.textAlign = 'center'; ctx.font = '13px system-ui';
+  ctx.fillStyle = '#78716c';
+  ctx.fillText('Enter: Submit | Esc: Cancel', cx, cardY + cardH - 10);
+
+  // Show previously saved description count for this painting
+  const key = 'painting_' + artDescPaintingIdx;
+  const saved = artDescriptions[key] || [];
+  if (saved.length > 0) {
+    ctx.fillStyle = '#a78bfa'; ctx.font = 'italic 11px system-ui';
+    ctx.fillText('You\'ve written ' + saved.length + ' description' + (saved.length > 1 ? 's' : '') + ' for this painting', cx, cardY + cardH + 8);
+  }
+
   ctx.textAlign = 'left';
 }
 
@@ -2518,6 +3194,275 @@ function drawNasaMuseumInterior(cam, W, H) {
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 14px system-ui';
   ctx.fillText('Kennedy Space Center — Press Enter to leave', cx, H * 0.73);
+
+  ctx.textAlign = 'left';
+}
+
+// ── Mission Control — Command Typing Minigame ──
+function drawMissionControlInterior(cam, W, H) {
+  const cx = cam + W / 2;
+  const mc = missionControl;
+  const t = gameTime;
+
+  // Dark room background
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(cam, 0, W, H);
+
+  // Subtle grid floor
+  ctx.strokeStyle = 'rgba(34, 197, 94, 0.05)';
+  ctx.lineWidth = 1;
+  for (let gx = cam; gx < cam + W; gx += 40) {
+    ctx.beginPath(); ctx.moveTo(gx, H * 0.75); ctx.lineTo(gx, H); ctx.stroke();
+  }
+  for (let gy = H * 0.75; gy < H; gy += 20) {
+    ctx.beginPath(); ctx.moveTo(cam, gy); ctx.lineTo(cam + W, gy); ctx.stroke();
+  }
+
+  // Console desk
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(cam + W * 0.05, H * 0.68, W * 0.9, H * 0.08);
+  // Desk edge highlight
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(cam + W * 0.05, H * 0.68, W * 0.9, 3);
+
+  // Side monitors (ambient screens)
+  const sideMonitors = [
+    { x: cam + W * 0.08, y: H * 0.12, w: W * 0.15, h: H * 0.18, label: 'TELEMETRY' },
+    { x: cam + W * 0.77, y: H * 0.12, w: W * 0.15, h: H * 0.18, label: 'TRACKING' },
+    { x: cam + W * 0.08, y: H * 0.35, w: W * 0.12, h: H * 0.14, label: 'COMMS' },
+    { x: cam + W * 0.80, y: H * 0.35, w: W * 0.12, h: H * 0.14, label: 'VITALS' },
+  ];
+  for (const mon of sideMonitors) {
+    // Monitor frame
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(mon.x - 3, mon.y - 3, mon.w + 6, mon.h + 6);
+    // Screen
+    ctx.fillStyle = '#0a1a0a';
+    ctx.fillRect(mon.x, mon.y, mon.w, mon.h);
+    // Scrolling data lines
+    ctx.fillStyle = '#15803d';
+    ctx.font = '8px monospace';
+    for (let l = 0; l < 6; l++) {
+      const dataY = mon.y + 12 + l * 10;
+      if (dataY < mon.y + mon.h - 4) {
+        const scrollOff = ((t / 50 + l * 17) % 30) | 0;
+        const dataStr = (scrollOff + l * 1234).toString(16).toUpperCase().padStart(8, '0');
+        ctx.fillText(dataStr, mon.x + 4, dataY);
+      }
+    }
+    // Label
+    ctx.fillStyle = '#22c55e';
+    ctx.font = 'bold 8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(mon.label, mon.x + mon.w / 2, mon.y - 6);
+  }
+  ctx.textAlign = 'left';
+
+  // ── Main screen (center) ──
+  const mainX = cam + W * 0.25;
+  const mainY = H * 0.1;
+  const mainW = W * 0.5;
+  const mainH = H * 0.52;
+
+  // Monitor frame
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(mainX - 5, mainY - 5, mainW + 10, mainH + 10);
+  // Screen background
+  ctx.fillStyle = '#0a1a0a';
+  ctx.fillRect(mainX, mainY, mainW, mainH);
+  // Scanline effect
+  ctx.fillStyle = 'rgba(0, 255, 0, 0.02)';
+  for (let sl = 0; sl < mainH; sl += 3) {
+    ctx.fillRect(mainX, mainY + sl, mainW, 1);
+  }
+
+  ctx.textAlign = 'center';
+
+  if (mc.complete) {
+    // ── Success: Rocket launch animation ──
+    ctx.fillStyle = '#22c55e';
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText('LAUNCH SUCCESSFUL', cx, mainY + 40);
+
+    // Rocket
+    const rocketX = cx;
+    const rocketBaseY = mainY + mainH - 30 - mc.rocketY;
+
+    if (rocketBaseY > mainY - 40) {
+      // Rocket body
+      ctx.fillStyle = '#f1f5f9';
+      ctx.beginPath();
+      ctx.moveTo(rocketX - 10, rocketBaseY);
+      ctx.lineTo(rocketX - 8, rocketBaseY - 40);
+      ctx.lineTo(rocketX, rocketBaseY - 55);
+      ctx.lineTo(rocketX + 8, rocketBaseY - 40);
+      ctx.lineTo(rocketX + 10, rocketBaseY);
+      ctx.closePath();
+      ctx.fill();
+      // Nose cone
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(rocketX - 5, rocketBaseY - 40);
+      ctx.lineTo(rocketX, rocketBaseY - 55);
+      ctx.lineTo(rocketX + 5, rocketBaseY - 40);
+      ctx.closePath();
+      ctx.fill();
+      // Fins
+      ctx.fillStyle = '#3b82f6';
+      ctx.beginPath();
+      ctx.moveTo(rocketX - 10, rocketBaseY);
+      ctx.lineTo(rocketX - 18, rocketBaseY + 10);
+      ctx.lineTo(rocketX - 10, rocketBaseY - 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(rocketX + 10, rocketBaseY);
+      ctx.lineTo(rocketX + 18, rocketBaseY + 10);
+      ctx.lineTo(rocketX + 10, rocketBaseY - 10);
+      ctx.closePath();
+      ctx.fill();
+      // Flame
+      const flameH = 15 + Math.sin(t / 30) * 8;
+      const flameGrad = ctx.createLinearGradient(rocketX, rocketBaseY, rocketX, rocketBaseY + flameH);
+      flameGrad.addColorStop(0, '#fbbf24');
+      flameGrad.addColorStop(0.5, '#f97316');
+      flameGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+      ctx.fillStyle = flameGrad;
+      ctx.beginPath();
+      ctx.moveTo(rocketX - 8, rocketBaseY);
+      ctx.lineTo(rocketX, rocketBaseY + flameH);
+      ctx.lineTo(rocketX + 8, rocketBaseY);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Score
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 18px monospace';
+    ctx.fillText('+250 MISSION COMPLETE!', cx, mainY + mainH - 15);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px monospace';
+    ctx.fillText('Press Enter to exit', cx, mainY + mainH + 25);
+
+  } else if (mc.failed) {
+    // ── Failure screen ──
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText('TIME EXPIRED', cx, mainY + mainH / 2 - 20);
+    ctx.fillStyle = '#fca5a5';
+    ctx.font = '14px monospace';
+    ctx.fillText('Commands completed: ' + mc.round + '/5', cx, mainY + mainH / 2 + 10);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '14px monospace';
+    ctx.fillText('Press Enter to exit', cx, mainY + mainH / 2 + 40);
+
+  } else {
+    // ── Active typing screen ──
+    const currentCmd = MISSION_COMMANDS[mc.round];
+
+    // Header
+    ctx.fillStyle = '#22c55e';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText('NASA MISSION CONTROL', cx, mainY + 20);
+
+    // Round indicator
+    ctx.fillStyle = '#60a5fa';
+    ctx.font = 'bold 14px monospace';
+    ctx.fillText('Command ' + (mc.round + 1) + '/5', cx, mainY + 42);
+
+    // Timer
+    const timeSeconds = Math.ceil(mc.timeLeft / 1000);
+    const timerColor = timeSeconds <= 10 ? '#ef4444' : timeSeconds <= 20 ? '#fbbf24' : '#22c55e';
+    ctx.fillStyle = timerColor;
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText('T-' + timeSeconds + 's', cx, mainY + 70);
+
+    // Instruction
+    ctx.fillStyle = '#475569';
+    ctx.font = '11px monospace';
+    ctx.fillText('Type the command below:', cx, mainY + 95);
+
+    // Command to type (large, prominent)
+    ctx.font = 'bold 22px monospace';
+    const cmdY = mainY + 135;
+
+    // Measure text width for centering character-by-character
+    const charW = ctx.measureText('M').width; // monospace
+    const cmdStartX = cx - (currentCmd.length * charW) / 2;
+
+    for (let i = 0; i < currentCmd.length; i++) {
+      const charX = cmdStartX + i * charW;
+      if (i < mc.typed.length) {
+        // Typed correctly
+        ctx.fillStyle = '#22c55e';
+        ctx.textAlign = 'left';
+        ctx.fillText(currentCmd[i], charX, cmdY);
+      } else if (i === mc.typed.length) {
+        // Cursor position — blinking
+        const blink = Math.sin(t / 100) > 0;
+        if (blink) {
+          ctx.fillStyle = '#22c55e';
+          ctx.fillRect(charX, cmdY + 3, charW - 2, 3);
+        }
+        ctx.fillStyle = '#4ade80';
+        ctx.textAlign = 'left';
+        ctx.fillText(currentCmd[i], charX, cmdY);
+      } else {
+        // Not yet typed
+        ctx.fillStyle = '#374151';
+        ctx.textAlign = 'left';
+        ctx.fillText(currentCmd[i], charX, cmdY);
+      }
+    }
+
+    // Player's typed text below
+    ctx.fillStyle = '#166534';
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('> ' + mc.typed + '_', cx, cmdY + 35);
+
+    // Error flash
+    if (mc.errors > 0 && mc.errors > (mc._lastDrawnErrors || 0)) {
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+      ctx.fillRect(mainX, mainY, mainW, mainH);
+    }
+    mc._lastDrawnErrors = mc.errors;
+
+    // Progress bar
+    const progY = mainY + mainH - 35;
+    const progW = mainW * 0.6;
+    const progX = cx - progW / 2;
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(progX, progY, progW, 10);
+    const progFill = (mc.round + mc.typed.length / currentCmd.length) / MISSION_COMMANDS.length;
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(progX, progY, progW * progFill, 10);
+    // Progress labels
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '9px monospace';
+    ctx.fillText('Progress', cx, progY - 4);
+
+    // Errors count
+    if (mc.errors > 0) {
+      ctx.fillStyle = '#ef4444';
+      ctx.font = '10px monospace';
+      ctx.fillText('Errors: ' + mc.errors, cx, progY + 25);
+    }
+  }
+
+  // Player at console
+  drawKitty(cx, H * 0.85, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
+
+  // Console keyboard in front of player
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(cx - 25, H * 0.78, 50, 8);
+  // Key highlights when typing
+  if (!mc.complete && !mc.failed && mc.typed.length > 0) {
+    const flashIntensity = Math.max(0, 1 - (t % 200) / 200);
+    ctx.fillStyle = 'rgba(34, 197, 94, ' + (flashIntensity * 0.5) + ')';
+    ctx.fillRect(cx - 23, H * 0.78 + 1, 46, 6);
+  }
 
   ctx.textAlign = 'left';
 }
