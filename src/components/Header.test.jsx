@@ -1,10 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider } from '../context/ThemeContext'
 import Header from './Header'
 
+// Header uses router hooks (useLocation), so wrap in a router.
 function renderWithTheme(component) {
-  return render(<ThemeProvider>{component}</ThemeProvider>)
+  return render(
+    <MemoryRouter>
+      <ThemeProvider>{component}</ThemeProvider>
+    </MemoryRouter>
+  )
 }
 
 describe('Header', () => {
