@@ -124,6 +124,75 @@
   background: rgba(192, 132, 252, 0.15);
 }
 
+/* Games dropdown */
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-dropdown-caret {
+  font-size: 0.7rem;
+  line-height: 1;
+  transition: transform 0.2s;
+}
+
+.nav-dropdown-toggle[aria-expanded="true"] .nav-dropdown-caret {
+  transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  min-width: 12rem;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: #fdf4ff;
+  border: 1px solid rgba(147, 51, 234, 0.15);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(124, 34, 206, 0.18);
+  z-index: 200;
+}
+
+.nav-dropdown-item {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #7c22ce;
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 7px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-dropdown-item:hover {
+  background: rgba(124, 34, 206, 0.1);
+}
+
+[data-theme="dark"] .nav-dropdown-menu {
+  background: #16213e;
+  border-color: rgba(192, 132, 252, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .nav-dropdown-item {
+  color: #c084fc;
+}
+
+[data-theme="dark"] .nav-dropdown-item:hover {
+  background: rgba(192, 132, 252, 0.15);
+}
+
 /* Dark mode styles */
 [data-theme="dark"] .header {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);

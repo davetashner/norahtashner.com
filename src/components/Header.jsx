@@ -1,8 +1,44 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import './Header.css';
 
+const GAMES = [
+  { to: '/game', label: 'Unikittyville' },
+  { to: '/vacation', label: 'England Vacation' },
+];
+
 function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const location = useLocation();
+
+  // Close the menu when navigating to a new route.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  // Close the menu on outside click or Escape.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    function handlePointerDown(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setMenuOpen(false);
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [menuOpen]);
+
   return (
     <header className="header">
       <div className="header-content">
@@ -35,8 +71,29 @@ function Header() {
           </span>
         </Link>
         <nav className="header-nav">
-          <Link to="/game" className="nav-link">Game</Link>
-          <Link to="/vacation" className="nav-link">Vacation</Link>
+          <div className="nav-dropdown" ref={menuRef}>
+            <button
+              type="button"
+              className="nav-link nav-dropdown-toggle"
+              aria-haspopup="true"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              Games
+              <span className="nav-dropdown-caret" aria-hidden="true">▾</span>
+            </button>
+            {menuOpen && (
+              <ul className="nav-dropdown-menu" role="menu">
+                {GAMES.map((game) => (
+                  <li key={game.to} role="none">
+                    <Link to={game.to} className="nav-dropdown-item" role="menuitem">
+                      {game.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <ThemeToggle />
         </nav>
       </div>
