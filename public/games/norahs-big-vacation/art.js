@@ -88,45 +88,68 @@
       + '</g>';
   }
 
-  // ── Full scene (pods are added later by game.js) ────────────────
-  function scene() {
-    return '<svg viewBox="0 0 ' + VIEW_W + ' ' + VIEW_H + '" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">'
-      + defs()
-      // sky
-      + '<rect id="sky" x="0" y="0" width="400" height="560" fill="url(#skyGrad)"/>'
-      + '<circle id="sunGlow" cx="330" cy="150" r="120" fill="url(#sunGrad)" opacity="0.9"/>'
-      + '<g id="stars" opacity="0">' + stars() + '</g>'
-      // far skyline across the river
-      + skyline()
-      // Parliament + Big Ben (Big Ben is a tappable sight)
-      + parliament()
-      // the River Thames
-      + '<rect x="0" y="452" width="400" height="120" fill="url(#riverGrad)"/>'
-      + '<g id="riverShine" opacity="0.5">'
-      + '<ellipse cx="120" cy="500" rx="70" ry="5" fill="#fff" opacity="0.25"/>'
-      + '<ellipse cx="300" cy="530" rx="90" ry="6" fill="#fff" opacity="0.2"/>'
-      + '</g>'
-      // bridge with a tappable red bus
-      + bridge()
-      // a tappable boat on the river
-      + boat()
-      // County Hall hotel (with the hidden Camile in a window)
-      + hotel()
-      // the London Eye wheel
-      + wheel()
-      // foreground embankment
-      + '<rect x="0" y="560" width="400" height="140" fill="#3a4a63"/>'
-      + '<rect x="0" y="560" width="400" height="10" fill="#5a6c88"/>'
-      + '<g id="railings" stroke="#7c8cab" stroke-width="3">'
-      + railings()
-      + '</g>'
-      // people standing on the embankment (hidden once they board)
-      + '<g id="groundPeople">'
-      + '<g transform="translate(96,612)">' + mommo() + '</g>'
-      + '<g transform="translate(150,610) scale(0.95)">' + norah() + '</g>'
-      + '<g transform="translate(186,620) scale(0.7)">' + camile() + '</g>'
-      + '</g>'
-      + '</svg>';
+  // Invisible tappable region over a painted feature.
+  function hotspotRect(id, x, y, w, h) {
+    return '<rect id="' + id + '" class="hotspot-rect" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '"/>';
+  }
+  // Pulsing gold ring marking where to tap (hidden until its phase).
+  function marker(id, cx, cy, r) {
+    return '<circle id="' + id + '" class="sight-marker pod-glow" cx="' + cx + '" cy="' + cy + '" r="' + r + '" style="display:none"/>';
+  }
+
+  // ── Painted character sprites (sliced from the lineup sheet) ──
+  // Pixel dims preserve relative scale; SPRITE_SCALE maps px -> viewBox units.
+  var SPRITE = 'assets/images/sprites/';
+  var DIMS = {
+    norah: [204, 628], camile: [225, 479], mommo: [258, 814],
+    daddo: [277, 919], penny: [185, 429], obi: [278, 378]
+  };
+  var SPRITE_SCALE = 0.196; // tune overall character size on screen
+  // Place a sprite by its FEET point (feetX, feetY) in viewBox coords.
+  function sprite(name, feetX, feetY, scaleMul) {
+    var d = DIMS[name]; if (!d) return '';
+    var s = SPRITE_SCALE * (scaleMul || 1);
+    var w = d[0] * s, h = d[1] * s;
+    return '<image href="' + SPRITE + 'char-' + name + '.png" x="' + (feetX - w / 2).toFixed(1)
+      + '" y="' + (feetY - h).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1)
+      + '" preserveAspectRatio="xMidYMax meet"/>';
+  }
+
+  // ── Generic chapter OVERLAY, built from chapter data ──
+  // Drawn on top of the painted background. Coordinates are in the 400×700
+  // viewBox, which shares the background's 4:7 ratio. ch = chapter config:
+  //   { ride, items:[{icon,x,y}], camile:{x,y}, chars:[{name,x,y,scale}] }
+  function scene(ch) {
+    ch = ch || {};
+    var s = '<svg viewBox="0 0 ' + VIEW_W + ' ' + VIEW_H + '" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">';
+
+    // optional "ride" tap target (London Eye)
+    if (ch.ride) s += hotspotRect('ride-wheel', 110, 150, 150, 245) + marker('mark-ride', 185, 262, 70);
+
+    // characters along the bottom
+    s += '<g id="chars">';
+    (ch.chars || []).forEach(function (c) { s += sprite(c.name, c.x, c.y != null ? c.y : 668, c.scale); });
+    s += '</g>';
+
+    // collectible items (emoji tokens with a pulsing ring)
+    s += '<g id="items">';
+    (ch.items || []).forEach(function (it, i) {
+      s += '<g class="item hotspot" id="item-' + i + '">'
+        + '<circle class="item-ring pod-glow" cx="' + it.x + '" cy="' + it.y + '" r="26"/>'
+        + '<text x="' + it.x + '" y="' + (it.y + 13) + '" text-anchor="middle" font-size="36">' + it.icon + '</text>'
+        + '<circle class="item-hit" cx="' + it.x + '" cy="' + it.y + '" r="30"/>'
+        + '</g>';
+    });
+    s += '</g>';
+
+    // hidden Camile (outer g positions; inner is transform-free for the pop)
+    if (ch.camile) {
+      s += '<g transform="translate(' + ch.camile.x + ',' + ch.camile.y + ') scale(0.95)">'
+        + '<g id="hiddenCamile" class="hotspot">' + camileBadge() + '</g></g>';
+    }
+
+    s += '</svg>';
+    return s;
   }
 
   function defs() {
@@ -232,8 +255,10 @@
     }
     // a soft blue wash like the photo's uplighting
     s += '<rect x="250" y="372" width="150" height="100" fill="#5fa8e6" opacity="0.12"/>';
-    // hidden Camile badge tucked into one window
-    s += '<g id="hiddenCamile" class="hotspot" transform="translate(360,425) scale(0.85)">' + camileBadge() + '</g>';
+    // hidden Camile badge tucked into one window.
+    // Outer <g> positions; inner #hiddenCamile is transform-free so it can take
+    // the 'spotted' pop animation without losing its placement.
+    s += '<g transform="translate(360,425) scale(0.85)"><g id="hiddenCamile" class="hotspot">' + camileBadge() + '</g></g>';
     s += '</g>';
     return s;
   }
@@ -275,9 +300,9 @@
   // One gondola pod. cx,cy = center; highlight = our pod.
   function podSVG(cx, cy, highlight, withPeople) {
     var s = '<g class="pod" transform="translate(' + cx + ',' + cy + ')">';
-    if (highlight) s += '<circle cx="0" cy="0" r="26" fill="url(#podGlow)"/>';
-    s += '<ellipse cx="0" cy="0" rx="15" ry="9" fill="' + (highlight ? '#eaf6ff' : '#cfe2f0') + '" stroke="#9fc4dd" stroke-width="1.5"/>';
-    s += '<ellipse cx="0" cy="-1" rx="11" ry="6" fill="#bfe6ff" opacity="0.9"/>';
+    if (highlight) s += '<circle class="pod-glow" cx="0" cy="0" r="34" fill="url(#podGlow)"/>';
+    s += '<ellipse cx="0" cy="0" rx="15" ry="9" fill="' + (highlight ? '#ffe7a6' : '#cfe2f0') + '" stroke="' + (highlight ? '#ffb938' : '#9fc4dd') + '" stroke-width="' + (highlight ? 2.5 : 1.5) + '"/>';
+    s += '<ellipse cx="0" cy="-1" rx="11" ry="6" fill="' + (highlight ? '#fff3cf' : '#bfe6ff') + '" opacity="0.9"/>';
     if (withPeople) {
       s += '<g id="podPeople" style="display:none">'
         + '<g transform="translate(-5,4) scale(0.34)">' + mommo() + '</g>'
@@ -285,6 +310,9 @@
         + '<g transform="translate(9,4) scale(0.26)">' + camile() + '</g>'
         + '</g>';
     }
+    // bobbing finger hint (opacity-animated; never uses transform so the pod's
+    // translate is preserved). Hidden once aboard.
+    if (highlight) s += '<text id="podHint" class="pod-glow" x="0" y="38" text-anchor="middle" font-size="24">👆</text>';
     s += '</g>';
     return s;
   }

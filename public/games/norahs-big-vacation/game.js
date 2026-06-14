@@ -1,32 +1,102 @@
 /* game.js — Norah's Big Vacation
-   Vertical slice: Chapter 5 — The London Eye.
-   Tap-only, fully offline. Architected so more chapters slot in later. */
+   A 12-chapter, tap-only, fully-offline explore-and-collect storybook.
+   Each chapter = painted background + characters + tap-to-collect items +
+   a hidden Camile + a passport stamp, then on to the next chapter. */
 (function () {
   'use strict';
 
-  var art = window.NVart, audio = window.NVaudio;
+  var art = window.NVart, audio = window.NVaudio, assets = window.NVassets || {};
+  var byId = function (id) { return document.getElementById(id); };
 
-  // ── All 12 chapters (only 'londoneye' is playable in this slice) ──
+  // ── Chapter data (all 12). bg/music come from assets.js by id. ──
+  // items: emoji tokens to tap (x,y in 400×700). camile: hidden badge spot.
+  // chars: sprites along the bottom (feet at y, default 668).
   var CHAPTERS = [
-    { id: 'pups',      name: 'Goodbye Pups',   glyph: '🐾' },
-    { id: 'airport',   name: 'To the Airport', glyph: '🚗' },
-    { id: 'nyc',       name: 'Fly to NYC',     glyph: '✈️' },
-    { id: 'overnight', name: 'Night Flight',   glyph: '🌙' },
-    { id: 'londoneye', name: 'London Eye',     glyph: '🎡' },
-    { id: 'train',     name: "Daddo's Train",  glyph: '🚆' },
-    { id: 'london',    name: 'London & Mommo', glyph: '🚌' },
-    { id: 'castle',    name: 'Leeds Castle',   glyph: '👑' },
-    { id: 'chunnel',   name: 'The Chunnel',    glyph: '🚄' },
-    { id: 'eiffel',    name: 'Eiffel Tower',   glyph: '🗼' },
-    { id: 'treats',    name: 'Croissants',     glyph: '🥐' },
-    { id: 'home',      name: 'Fly Home',       glyph: '🏠' }
-  ];
+    { id: 'pups', name: 'Goodbye Pups', glyph: '🐾',
+      intro: "Time for the big trip! First, give <b>Penny</b> and <b>Obi</b> lots of love. 🐾",
+      task: 'paw prints', icon: '🐾',
+      items: [{ icon: '🐾', x: 70, y: 170 }, { icon: '🐾', x: 300, y: 150 }, { icon: '🐾', x: 120, y: 300 }, { icon: '🐾', x: 330, y: 320 }],
+      camile: { x: 210, y: 250 },
+      chars: [{ name: 'norah', x: 120 }, { name: 'penny', x: 215, y: 676 }, { name: 'obi', x: 300, y: 676 }] },
 
-  var SIGHTS = [
-    { id: 'sight-bigben', label: 'Big Ben', icon: '🕰️' },
-    { id: 'sight-bus',    label: 'Red bus', icon: '🚌' },
-    { id: 'sight-boat',   label: 'River boat', icon: '⛵' }
+    { id: 'airport', name: 'To the Airport', glyph: '🚗',
+      intro: "We made it to the airport with Camile! Find our <b>suitcases</b>. 🧳",
+      task: 'suitcases', icon: '🧳',
+      items: [{ icon: '🧳', x: 80, y: 150 }, { icon: '🧳', x: 300, y: 160 }, { icon: '🧳', x: 60, y: 300 }, { icon: '🧳', x: 320, y: 300 }],
+      camile: { x: 200, y: 230 },
+      chars: [{ name: 'mommo', x: 90 }, { name: 'norah', x: 150 }, { name: 'daddo', x: 215 }] },
+
+    { id: 'nyc', name: 'Fly to New York', glyph: '✈️',
+      intro: "Up, up and away to New York! ✈️ Pop the fluffy <b>clouds</b>.",
+      task: 'clouds', icon: '☁️',
+      items: [{ icon: '☁️', x: 70, y: 130 }, { icon: '☁️', x: 200, y: 110 }, { icon: '☁️', x: 330, y: 150 }, { icon: '☁️', x: 120, y: 260 }, { icon: '☁️', x: 300, y: 280 }],
+      camile: { x: 150, y: 200 },
+      chars: [{ name: 'norah', x: 175 }, { name: 'camile', x: 225 }] },
+
+    { id: 'overnight', name: 'Night Flight', glyph: '🌙',
+      intro: "A long sleepy flight to London. 🌙 Count the twinkly <b>stars</b>.",
+      task: 'stars', icon: '⭐',
+      items: [{ icon: '⭐', x: 60, y: 120 }, { icon: '⭐', x: 150, y: 100 }, { icon: '⭐', x: 250, y: 130 }, { icon: '⭐', x: 330, y: 180 }, { icon: '⭐', x: 100, y: 250 }, { icon: '⭐', x: 285, y: 260 }],
+      camile: { x: 200, y: 330 },
+      chars: [{ name: 'norah', x: 175 }, { name: 'camile', x: 228 }] },
+
+    { id: 'londoneye', name: 'The London Eye', glyph: '🎡', ride: true,
+      intro: "Our hotel is right by the giant <b>London Eye!</b> 🎡 Tap it to ride up high!",
+      task: 'London sights', icon: '🎡',
+      items: [{ icon: '🕰️', x: 76, y: 425 }, { icon: '🏨', x: 344, y: 432 }, { icon: '⛵', x: 60, y: 485 }],
+      camile: { x: 348, y: 300 },
+      chars: [{ name: 'mommo', x: 96 }, { name: 'norah', x: 152 }, { name: 'camile', x: 202 }] },
+
+    { id: 'train', name: "Daddo's Train", glyph: '🚆',
+      intro: "Daddo has to take the train to work for a few days. 🚆 Blow him <b>goodbye kisses!</b>",
+      task: 'kisses', icon: '💛',
+      items: [{ icon: '💛', x: 80, y: 150 }, { icon: '💛', x: 300, y: 150 }, { icon: '💛', x: 130, y: 290 }, { icon: '💛', x: 320, y: 300 }],
+      camile: { x: 200, y: 230 },
+      chars: [{ name: 'daddo', x: 85 }, { name: 'norah', x: 255 }, { name: 'mommo', x: 315 }] },
+
+    { id: 'london', name: 'London & Mommo', glyph: '🚌',
+      intro: "Just Norah and Mommo now, exploring London! Find the <b>red buses</b>. 🚌",
+      task: 'red buses', icon: '🚌',
+      items: [{ icon: '🚌', x: 70, y: 140 }, { icon: '🚌', x: 310, y: 150 }, { icon: '🚌', x: 110, y: 290 }, { icon: '🚌', x: 330, y: 300 }],
+      camile: { x: 200, y: 220 },
+      chars: [{ name: 'mommo', x: 150 }, { name: 'norah', x: 215 }] },
+
+    { id: 'castle', name: 'Leeds Castle', glyph: '👑',
+      intro: "A sleepover in a real castle on a lake! 👑 Count the <b>swans</b> on the moat.",
+      task: 'swans', icon: '🦢',
+      items: [{ icon: '🦢', x: 70, y: 170 }, { icon: '🦢', x: 200, y: 150 }, { icon: '🦢', x: 330, y: 175 }, { icon: '🦢', x: 120, y: 300 }, { icon: '🦢', x: 300, y: 300 }],
+      camile: { x: 200, y: 240 },
+      chars: [{ name: 'norah', x: 150 }, { name: 'mommo', x: 220 }] },
+
+    { id: 'chunnel', name: 'The Chunnel', glyph: '🚄',
+      intro: "Zoom under the sea to France on the Chunnel train! 🚄 Tap the <b>tunnel lights</b>.",
+      task: 'tunnel lights', icon: '💡',
+      items: [{ icon: '💡', x: 60, y: 150 }, { icon: '💡', x: 160, y: 120 }, { icon: '💡', x: 260, y: 140 }, { icon: '💡', x: 330, y: 200 }, { icon: '💡', x: 120, y: 280 }],
+      camile: { x: 300, y: 300 },
+      chars: [{ name: 'norah', x: 170 }, { name: 'mommo', x: 235 }, { name: 'camile', x: 288 }] },
+
+    { id: 'eiffel', name: 'Eiffel Tower', glyph: '🗼',
+      intro: "Bonjour, Paris! 🗼 Make the <b>Eiffel Tower sparkle</b> — tap the sparkles!",
+      task: 'sparkles', icon: '✨',
+      items: [{ icon: '✨', x: 60, y: 120 }, { icon: '✨', x: 150, y: 100 }, { icon: '✨', x: 250, y: 110 }, { icon: '✨', x: 330, y: 160 }, { icon: '✨', x: 100, y: 250 }, { icon: '✨', x: 290, y: 250 }],
+      camile: { x: 200, y: 200 },
+      chars: [{ name: 'mommo', x: 110 }, { name: 'norah', x: 175 }, { name: 'camile', x: 225 }] },
+
+    { id: 'treats', name: 'Croissants', glyph: '🥐',
+      intro: "A Paris treat! 🥐 Collect the <b>croissants and macarons</b>.",
+      task: 'treats', icon: '🥐',
+      items: [{ icon: '🥐', x: 70, y: 140 }, { icon: '🧁', x: 170, y: 130 }, { icon: '🥐', x: 280, y: 150 }, { icon: '🧁', x: 330, y: 220 }, { icon: '🥐', x: 110, y: 300 }, { icon: '🧁', x: 300, y: 300 }],
+      camile: { x: 210, y: 230 },
+      chars: [{ name: 'norah', x: 150 }, { name: 'mommo', x: 225 }] },
+
+    { id: 'home', name: 'Fly Home', glyph: '🏠',
+      intro: "The long way home to Penny and Obi! 🏠 Give them <b>welcome-home cuddles!</b>",
+      task: 'cuddles', icon: '🐾',
+      items: [{ icon: '🐾', x: 70, y: 170 }, { icon: '🐾', x: 300, y: 150 }, { icon: '🐾', x: 120, y: 300 }, { icon: '🐾', x: 330, y: 320 }],
+      camile: { x: 200, y: 240 },
+      chars: [{ name: 'norah', x: 120 }, { name: 'penny', x: 215, y: 676 }, { name: 'obi', x: 300, y: 676 }] }
   ];
+  var idx = function (id) { for (var i = 0; i < CHAPTERS.length; i++) if (CHAPTERS[i].id === id) return i; return -1; };
 
   // ── Persisted progress ──
   var save = { stamps: {}, camiles: {} };
@@ -34,276 +104,185 @@
     var raw = localStorage.getItem('nv_save');
     if (raw) save = JSON.parse(raw);
     save.stamps = save.stamps || {}; save.camiles = save.camiles || {};
-  } catch (e) { /* fresh start */ }
-  function persist() { try { localStorage.setItem('nv_save', JSON.stringify(save)); } catch (e) { /* ignore */ } }
+  } catch (e) { /* fresh */ }
+  function persist() { try { localStorage.setItem('nv_save', JSON.stringify(save)); } catch (e) {} }
 
-  // ── DOM refs ──
-  var stage = document.getElementById('stage');
-  var narration = document.getElementById('narration');
-  var actionBtn = document.getElementById('actionBtn');
-  var sightsBox = document.getElementById('sights');
-  var progressPill = document.getElementById('progressPill');
-  var app = document.getElementById('app');
+  // ── DOM ──
+  var stage = byId('stage'), sceneEl = byId('scene'), narration = byId('narration');
+  var actionBtn = byId('actionBtn'), sightsBox = byId('sights'), progressPill = byId('progressPill'), app = byId('app');
 
-  // ── Chapter state ──
-  var phase = 'intro';            // intro -> board -> spin -> spot -> done
-  var pods = [], ourPod = null, podPeople = null, spokes = null;
-  var rot = 0, targetRot = 0;
-  var SPIN_TOTAL = -Math.PI;      // half turn lifts the bottom pod to the top
-  var TAPS = 5, tapDelta = SPIN_TOTAL / TAPS;
-  var spotted = {};
-  var camileFound = !!save.camiles.londoneye;
+  // ── Per-chapter state ──
+  var cur = 0;            // current chapter index
+  var ch = null;          // current chapter config
+  var phase = 'intro';    // intro -> (ride) -> collect -> done
+  var collected = 0, total = 0, camileFound = false;
 
   // ── Helpers ──
-  function say(text) { narration.style.display = ''; narration.innerHTML = text; }
+  function say(t) { narration.style.display = ''; narration.innerHTML = t; }
   function hideSay() { narration.style.display = 'none'; }
-
+  function show(id) { var el = byId(id); if (el) el.style.display = ''; }
+  function hide(id) { var el = byId(id); if (el) el.style.display = 'none'; }
   function setAction(label, fn) {
     if (!label) { actionBtn.style.display = 'none'; actionBtn.onclick = null; return; }
-    actionBtn.style.display = '';
-    actionBtn.textContent = label;
+    actionBtn.style.display = ''; actionBtn.textContent = label;
     actionBtn.onclick = function () { audio.unlock(); audio.play('tap'); fn(); };
   }
-
   function toast(el, text, color) {
     var r = el.getBoundingClientRect(), a = app.getBoundingClientRect();
-    var t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = text;
+    var t = document.createElement('div'); t.className = 'toast'; t.textContent = text;
     t.style.color = color || '#fff';
-    t.style.left = (r.left - a.left + r.width / 2 - 20) + 'px';
+    t.style.left = (r.left - a.left + r.width / 2 - 24) + 'px';
     t.style.top = (r.top - a.top - 6) + 'px';
-    app.appendChild(t);
-    setTimeout(function () { t.remove(); }, 1000);
+    app.appendChild(t); setTimeout(function () { t.remove(); }, 1000);
   }
-
   function updateProgress() {
-    var n = 0; for (var k in spotted) if (spotted[k]) n++;
-    var parts = ['Sights ' + n + '/' + SIGHTS.length];
-    parts.push(camileFound ? 'Camile ✓' : 'Camile …');
-    progressPill.textContent = parts.join('  •  ');
+    progressPill.textContent = 'Ch ' + (cur + 1) + '/' + CHAPTERS.length
+      + '  •  ' + collected + '/' + total + ' ' + ch.icon
+      + '  •  ' + (camileFound ? 'Camile ✓' : 'Camile …');
   }
 
-  // ── Wheel animation ──
-  function podAngle(i) { return Math.PI / 2 + (i / art.POD_COUNT) * Math.PI * 2 + rot; }
-
-  function layoutPods() {
-    var W = art.WHEEL;
-    for (var i = 0; i < pods.length; i++) {
-      var a = podAngle(i);
-      var x = W.cx + W.r * Math.cos(a), y = W.cy + W.r * Math.sin(a);
-      pods[i].setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')');
-    }
-    if (spokes) spokes.setAttribute('transform', 'rotate(' + (rot * 180 / Math.PI).toFixed(1) + ' ' + W.cx + ' ' + W.cy + ')');
-  }
-
-  function applyRise() {
-    var f = Math.min(1, Math.max(0, rot / SPIN_TOTAL)); // 0 at bottom -> 1 at top
-    var starsEl = document.getElementById('stars');
-    var sunEl = document.getElementById('sunGlow');
-    if (starsEl) starsEl.setAttribute('opacity', (f * 0.9).toFixed(2));
-    if (sunEl) sunEl.setAttribute('opacity', (0.9 * (1 - f)).toFixed(2));
-  }
-
-  function tick() {
-    rot += (targetRot - rot) * 0.12;
-    layoutPods();
-    applyRise();
-    // arrival at the top
-    if (phase === 'spin' && Math.abs(targetRot - SPIN_TOTAL) < 0.001 && Math.abs(rot - SPIN_TOTAL) < 0.02) {
-      rot = SPIN_TOTAL; layoutPods(); applyRise();
-      enterSpot();
-    }
-    requestAnimationFrame(tick);
-  }
-
-  // ── Phases ──
-  function enterIntro() {
+  // ── Load a chapter ──
+  function loadChapter(i) {
+    cur = Math.max(0, Math.min(CHAPTERS.length - 1, i));
+    ch = CHAPTERS[cur];
     phase = 'intro';
-    say("Our hotel is right next to the giant <b>London Eye!</b> 🎡<br>Let's ride it with Camile!");
-    setAction("Let's go!", enterBoard);
+    collected = 0; total = (ch.items || []).length;
+    camileFound = !!save.camiles[ch.id];
+    sceneEl.style.transform = 'scale(1)';
+    sightsBox.style.display = 'none';
+
+    stage.innerHTML = art.scene(ch);
+
+    var A = assets[ch.id] || {};
+    byId('bg').style.backgroundImage = A.bg ? 'url("' + A.bg + '")' : 'none';
+    audio.setMusic(A.music || null);
+
+    wireHiddenCamile();
+    updateProgress();
+
+    say('<b>Chapter ' + (cur + 1) + ': ' + ch.name + '</b> ' + ch.glyph + '<br>' + ch.intro);
+    setAction("Let's go!", ch.ride ? doRide : beginCollect);
   }
 
-  function enterBoard() {
-    phase = 'board';
-    say("Tap the <b>glowing pod</b> to climb aboard!");
+  // ── Optional "ride" beat (London Eye) ──
+  function doRide() {
+    phase = 'ride';
+    show('mark-ride');
+    say("Tap the giant <b>London Eye</b> to ride up high! 🎡");
     setAction(null);
-    ourPod.classList.add('hotspot', 'pulse');
-    ourPod.style.cursor = 'pointer';
-    ourPod.onclick = function () {
-      audio.play('collect');
-      ourPod.classList.remove('pulse');
-      ourPod.onclick = null;
-      // hide the people on the ground, show them inside the pod
-      var gp = document.getElementById('groundPeople');
-      if (gp) gp.style.display = 'none';
-      if (podPeople) podPeople.style.display = '';
-      enterSpin();
+    var wheel = byId('ride-wheel');
+    wheel.onclick = function () {
+      if (phase !== 'ride') return;
+      wheel.onclick = null; hide('mark-ride'); audio.play('collect');
+      say("Wheee! Up we go! 🎡☁️"); audio.play('spin');
+      sceneEl.style.transformOrigin = '46% 36%';
+      sceneEl.style.transform = 'scale(1.85)';
+      setTimeout(function () { sceneEl.style.transform = 'scale(1)'; }, 1300);
+      setTimeout(function () { hide('ride-wheel'); beginCollect(); }, 2300);
     };
   }
 
-  var spinTaps = 0;
-  function enterSpin() {
-    phase = 'spin';
-    spinTaps = 0;
-    say("All aboard! 🎡 <b>Tap the wheel</b> to ride up high!");
-    var wheelEl = document.getElementById('wheel');
-    wheelEl.classList.add('hotspot');
-    wheelEl.style.cursor = 'pointer';
-    wheelEl.onclick = function () {
-      if (phase !== 'spin') return;
-      audio.play('spin');
-      spinTaps++;
-      targetRot = Math.max(SPIN_TOTAL, targetRot + tapDelta);
-      if (spinTaps < TAPS) say("Up we go! 🎡 Keep tapping… (" + spinTaps + "/" + TAPS + ")");
-      else say("Almost at the top! ☁️");
-    };
-  }
-
-  function enterSpot() {
-    if (phase === 'spot') return;
-    phase = 'spot';
-    var wheelEl = document.getElementById('wheel');
-    if (wheelEl) { wheelEl.onclick = null; wheelEl.style.cursor = ''; }
-    say("Wow, look how high! 🌆<br><b>Tap the London sights</b> you can see!");
-    buildSightsList();
-    // make each sight tappable
-    SIGHTS.forEach(function (s) {
-      var el = document.getElementById(s.id);
+  // ── Collect loop ──
+  function beginCollect() {
+    phase = 'collect';
+    say('Tap the <b>' + total + ' ' + ch.task + '</b>! 🔎 (and find the hidden Camile)');
+    (ch.items || []).forEach(function (it, i) {
+      var el = byId('item-' + i);
       if (!el) return;
-      el.classList.add('pulse');
       el.onclick = function () {
-        if (spotted[s.id]) return;
-        spotted[s.id] = true;
-        el.classList.remove('pulse');
-        el.classList.add('spotted');
-        audio.play('collect');
-        toast(el, s.icon + ' ' + s.label + '!', '#fff');
-        markSight(s.id);
-        updateProgress();
-        checkComplete();
+        if (el.classList.contains('collected')) return;
+        el.classList.add('collected');
+        collected++; audio.play('collect');
+        toast(el, '+1', '#fff');
+        updateProgress(); checkComplete();
       };
     });
     updateProgress();
   }
 
-  function buildSightsList() {
-    sightsBox.style.display = '';
-    sightsBox.innerHTML = '';
-    SIGHTS.forEach(function (s) {
-      var d = document.createElement('div');
-      d.className = 'sight-item' + (spotted[s.id] ? ' done' : '');
-      d.id = 'li-' + s.id;
-      d.innerHTML = '<span class="tick">' + (spotted[s.id] ? '✓' : '') + '</span><span>' + s.icon + ' ' + s.label + '</span>';
-      sightsBox.appendChild(d);
-    });
-  }
-  function markSight(id) {
-    var li = document.getElementById('li-' + id);
-    if (li) { li.classList.add('done'); li.querySelector('.tick').textContent = '✓'; }
-  }
-
-  function checkComplete() {
-    var all = SIGHTS.every(function (s) { return spotted[s.id]; });
-    if (all && phase !== 'done') {
-      phase = 'done';
-      if (camileFound) say("You spotted everything! 🎉");
-      else say("Great spotting! 🎉 Pssst… can you still find the <b>hidden Camile</b>? 🔎");
-      setTimeout(completeChapter, camileFound ? 700 : 250);
-      if (!camileFound) setAction('Finish chapter', completeChapter);
-    }
-  }
-
-  // ── Hidden Camile (findable any time) ──
   function wireHiddenCamile() {
-    var hc = document.getElementById('hiddenCamile');
+    var hc = byId('hiddenCamile');
     if (!hc) return;
-    if (camileFound) { hc.style.display = ''; hc.classList.add('spotted'); }
+    if (camileFound) hc.classList.add('spotted');
     hc.onclick = function () {
       if (camileFound) return;
-      camileFound = true;
-      save.camiles.londoneye = true; persist();
-      hc.classList.add('spotted');
-      audio.play('found');
-      toast(hc, '✨ Found Camile!', '#ffd25a');
-      updateProgress();
-      if (phase === 'done') { setAction(null); completeChapter(); }
+      camileFound = true; save.camiles[ch.id] = true; persist();
+      hc.classList.add('spotted'); audio.play('found');
+      toast(hc, '✨ Camile!', '#ffd25a');
+      updateProgress(); checkComplete();
     };
   }
 
+  function checkComplete() {
+    if (phase === 'done') return;
+    if (collected >= total && camileFound) {
+      phase = 'done';
+      say('You found everything! 🎉');
+      setTimeout(completeChapter, 650);
+    } else if (collected >= total && !camileFound) {
+      say('Nice! Now find the <b>hidden Camile</b> 🔎');
+    }
+  }
+
   function completeChapter() {
-    setAction(null);
-    hideSay();
-    sightsBox.style.display = 'none';
-    save.stamps.londoneye = true; persist();
+    setAction(null); hideSay();
+    save.stamps[ch.id] = true; persist();
     audio.play('stamp');
     setTimeout(function () { audio.play('win'); }, 250);
     showCelebrate();
   }
 
-  // ── Passport overlay ──
+  // ── Passport ──
   function renderPassport() {
-    var grid = document.getElementById('stampGrid');
-    grid.innerHTML = '';
-    CHAPTERS.forEach(function (c) {
+    var grid = byId('stampGrid'); grid.innerHTML = '';
+    CHAPTERS.forEach(function (c, i) {
       var earned = !!save.stamps[c.id];
       var slot = document.createElement('div');
       slot.className = 'stamp-slot' + (earned ? ' earned' : '');
       slot.innerHTML = '<div class="glyph">' + c.glyph + '</div><div>' + c.name + '</div>';
+      slot.title = 'Play: ' + c.name;
+      slot.onclick = function () { audio.play('tap'); closePassport(); loadChapter(i); };
       grid.appendChild(slot);
     });
   }
-  function openPassport() { renderPassport(); document.getElementById('passport').style.display = 'flex'; }
-  function closePassport() { document.getElementById('passport').style.display = 'none'; }
+  function openPassport() { renderPassport(); byId('passport').style.display = 'flex'; }
+  function closePassport() { byId('passport').style.display = 'none'; }
 
-  // ── Celebration overlay ──
+  // ── Celebration ──
   function showCelebrate() {
-    document.getElementById('celebrateStamp').textContent = '🎡';
-    document.getElementById('celebrateTitle').textContent = 'London Eye — Done!';
-    var extra = camileFound ? ' and found the hidden Camile' : '';
-    document.getElementById('celebrateText').innerHTML =
-      'Norah rode the London Eye, spotted Big Ben, a red bus and a river boat' + extra + '. 🎉<br>You earned the <b>Ferris-wheel stamp!</b>';
-    var nextBtn = document.getElementById('celebrateNext');
-    nextBtn.textContent = 'More chapters soon…';
-    nextBtn.onclick = function () { audio.play('tap'); openPassport(); document.getElementById('celebrate').style.display = 'none'; };
-    document.getElementById('celebrate').style.display = 'flex';
+    var last = cur === CHAPTERS.length - 1;
+    byId('celebrateStamp').textContent = ch.glyph;
+    byId('celebrateTitle').textContent = last ? 'You did it! 🎉' : (ch.name + ' — Done!');
+    var done = 0; CHAPTERS.forEach(function (c) { if (save.stamps[c.id]) done++; });
+    byId('celebrateText').innerHTML = last
+      ? "Norah finished her whole big vacation and earned <b>all " + CHAPTERS.length + " stamps!</b> 🏆 Welcome home!"
+      : "You earned the <b>" + ch.name + " stamp!</b> 🎉 (" + done + '/' + CHAPTERS.length + ' stamps)';
+    var nextBtn = byId('celebrateNext');
+    if (last) {
+      nextBtn.textContent = 'See my Passport';
+      nextBtn.onclick = function () { audio.play('tap'); byId('celebrate').style.display = 'none'; openPassport(); };
+    } else {
+      nextBtn.textContent = 'Next: ' + CHAPTERS[cur + 1].name + ' →';
+      nextBtn.onclick = function () { audio.play('tap'); byId('celebrate').style.display = 'none'; loadChapter(cur + 1); };
+    }
+    byId('celebrate').style.display = 'flex';
   }
 
-  // ── Mute button ──
-  function refreshMute() { document.getElementById('muteBtn').textContent = audio.isMuted() ? '🔇' : '🔊'; }
+  // ── Mute ──
+  function refreshMute() { byId('muteBtn').textContent = audio.isMuted() ? '🔇' : '🔊'; }
 
   // ── Boot ──
   function boot() {
-    stage.innerHTML = art.scene();
-
-    // build pods
-    var layer = document.getElementById('podsLayer');
-    var podStr = '';
-    for (var i = 0; i < art.POD_COUNT; i++) {
-      var isOurs = (i === art.OUR_POD);
-      podStr += art.podSVG(0, 0, isOurs, isOurs);
-    }
-    layer.innerHTML = podStr;
-    pods = Array.prototype.slice.call(layer.querySelectorAll('.pod'));
-    ourPod = pods[art.OUR_POD];
-    podPeople = document.getElementById('podPeople');
-    spokes = document.getElementById('spokes');
-    layoutPods();
-    applyRise();
-
-    wireHiddenCamile();
-    updateProgress();
-
-    // top bar buttons
-    document.getElementById('passportBtn').onclick = function () { audio.unlock(); audio.play('tap'); openPassport(); };
-    document.getElementById('closePassport').onclick = function () { audio.play('tap'); closePassport(); };
-    document.getElementById('celebratePassport').onclick = function () { audio.play('tap'); document.getElementById('celebrate').style.display = 'none'; openPassport(); };
-    document.getElementById('muteBtn').onclick = function () { audio.toggleMute(); refreshMute(); };
+    byId('passportBtn').onclick = function () { audio.unlock(); audio.play('tap'); openPassport(); };
+    byId('closePassport').onclick = function () { audio.play('tap'); closePassport(); };
+    byId('celebratePassport').onclick = function () { audio.play('tap'); byId('celebrate').style.display = 'none'; openPassport(); };
+    byId('muteBtn').onclick = function () { audio.toggleMute(); refreshMute(); };
     refreshMute();
 
-    // if already completed before, let them replay but show stamp earned in passport
-    enterIntro();
-    requestAnimationFrame(tick);
+    // resume at the first chapter without a stamp
+    var start = 0;
+    for (var i = 0; i < CHAPTERS.length; i++) { if (!save.stamps[CHAPTERS[i].id]) { start = i; break; } }
+    loadChapter(start);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
