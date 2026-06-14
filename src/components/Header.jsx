@@ -36,6 +36,7 @@ function Header() {
         </Link>
         <nav className="header-nav">
           <Link to="/game" className="nav-link">Game</Link>
+          <Link to="/vacation" className="nav-link">Vacation</Link>
           <ThemeToggle />
         </nav>
       </div>

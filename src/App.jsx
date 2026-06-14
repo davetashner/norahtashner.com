@@ -6,6 +6,7 @@ import Episodes from './components/Episodes'
 import About from './components/About'
 import Footer from './components/Footer'
 import GamePage from './pages/GamePage'
+import VacationGamePage from './pages/VacationGamePage'
 
 function HomePage() {
   return (
@@ -30,6 +31,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/game" element={<GamePage />} />
+              <Route path="/vacation" element={<VacationGamePage />} />
             </Routes>
           </main>
           <Footer />
