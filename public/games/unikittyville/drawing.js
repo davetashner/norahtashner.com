@@ -1107,12 +1107,9 @@ function drawAchievementPopup(W, H) {
   ctx.fillText(achievementPopup.name, bx + iconSize + 28, by + bannerH * 0.72);
 }
 
-function drawQuizOverlay(W, H) {
-  // Semi-transparent backdrop
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  ctx.fillRect(0, 0, W, H);
-
-  // Pre-compute question lines for dynamic box height
+// Shared quiz overlay layout — the tap handler in ui.js uses the same
+// numbers, so hitboxes always line up with the drawn answer buttons.
+function getQuizOverlayLayout(W, H) {
   const boxW = Math.min(W * 0.85, 420);
   ctx.font = '14px "Segoe UI", system-ui, sans-serif';
   const maxTextW = boxW - 40;
@@ -1130,6 +1127,16 @@ function drawQuizOverlay(W, H) {
   const boxH = 36 + qLines.length * 18 + 12 + 3 * (btnH + 4) + 24;
   const bx = (W - boxW) / 2;
   const by = (H - boxH) / 2 - 10;
+  const answerY = by + 52 + qLines.length * 18 + 12;
+  return { boxW, boxH, bx, by, qLines, btnH, btnW: boxW - 40, answerY };
+}
+
+function drawQuizOverlay(W, H) {
+  // Semi-transparent backdrop
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.fillRect(0, 0, W, H);
+
+  const { boxW, boxH, bx, by, qLines, btnH, btnW, answerY } = getQuizOverlayLayout(W, H);
 
   // Box background
   ctx.fillStyle = 'rgba(30, 27, 75, 0.95)';
@@ -1151,8 +1158,6 @@ function drawQuizOverlay(W, H) {
   }
 
   // Answer choices as tappable button-like rows
-  const answerY = by + 52 + qLines.length * 18 + 12;
-  const btnW = boxW - 40;
   const colors = ['#f472b6', '#38bdf8', '#4ade80'];
   const bgColors = ['rgba(244,114,182,0.15)', 'rgba(56,189,248,0.15)', 'rgba(74,222,128,0.15)'];
   for (let i = 0; i < quizAnswers.length; i++) {
@@ -9853,9 +9858,10 @@ function drawCapeLaunchScene(cam, W, H) {
   ctx.fillStyle = '#0f172a';
   ctx.fillRect(cam, 0, W, H);
 
-  // Stars
+  // Stars — deterministic slow twinkle (per-frame random strobes the screen)
   for (let i = 0; i < 50; i++) {
-    ctx.fillStyle = 'rgba(255,255,255,' + (0.3 + Math.random() * 0.7) + ')';
+    const tw = 0.3 + 0.35 * (1 + Math.sin(gameTime / 600 + i * 1.7));
+    ctx.fillStyle = 'rgba(255,255,255,' + tw.toFixed(3) + ')';
     ctx.beginPath();
     ctx.arc(cam + (i * 97 + 30) % W, (i * 61 + 15) % H, 1, 0, Math.PI * 2);
     ctx.fill();

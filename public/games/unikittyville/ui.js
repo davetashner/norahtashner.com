@@ -364,7 +364,9 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (!e.repeat) keys[e.code] = true;
-  if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown') e.preventDefault();
+  // Don't block spaces/arrows while typing in a real text field (name input)
+  const inTextField = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
+  if (!inTextField && (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown')) e.preventDefault();
 
   // Postcard writer — capture typing when open in write mode
   if (postcardOpen && postcardMode === 'write' && !postcardJustSent && !e.repeat) {
@@ -626,9 +628,11 @@ window.addEventListener('keydown', e => {
     const target = WHALE_TRANSMISSIONS[wt.currentIndex].text;
     if (e.key === 'Backspace') {
       e.preventDefault();
+      keys[e.code] = false;
       wt.typed = wt.typed.slice(0, -1);
     } else if (e.key.length === 1 && wt.typed.length < target.length) {
       e.preventDefault();
+      keys[e.code] = false; // block global hotkeys (W/T/N/B) while typing
       const expected = target[wt.typed.length];
       if (e.key === expected) {
         wt.typed += e.key;
@@ -692,13 +696,18 @@ window.addEventListener('keyup', e => { keys[e.code] = false; });
   bindTouch('touch-dpad-right', 'ArrowRight', 'ArrowRight');
   bindTouch('touch-dpad-down', 'ArrowDown', 'ArrowDown');
   bindTouch('touch-jump', 'Space', 'Space');
+  // Remember which key was pressed at touchstart: setAction can reassign
+  // currentActionKey while the button is held, and releasing the NEW key
+  // would leave the original one stuck down forever.
+  let heldActionKey = null;
+  let heldAction2Key = null;
   bindTouch('touch-action',
-    function() { if (currentActionKey) keys[currentActionKey] = true; },
-    function() { if (currentActionKey) keys[currentActionKey] = false; }
+    function() { heldActionKey = currentActionKey; if (heldActionKey) keys[heldActionKey] = true; },
+    function() { if (heldActionKey) keys[heldActionKey] = false; heldActionKey = null; }
   );
   bindTouch('touch-action2',
-    function() { if (currentAction2Key) keys[currentAction2Key] = true; },
-    function() { if (currentAction2Key) keys[currentAction2Key] = false; }
+    function() { heldAction2Key = currentAction2Key; if (heldAction2Key) keys[heldAction2Key] = true; },
+    function() { if (heldAction2Key) keys[heldAction2Key] = false; heldAction2Key = null; }
   );
 })();
 
@@ -730,15 +739,8 @@ canvas.addEventListener('click', function(e) {
   const tx = (e.clientX - rect.left) * scaleX;
   const ty = (e.clientY - rect.top) * scaleY;
   const W = canvas.width, H = canvas.height;
-  // Match button layout from drawQuizOverlay
-  const boxW = Math.min(W * 0.85, 420);
-  const bx = (W - boxW) / 2;
-  const boxH = 180;
-  const by = (H - boxH) / 2 - 20;
-  // answerY uses 2 lines as estimate (question text wrap); buttons start ~76px from box top
-  const answerY = by + 76;
-  const btnH = 26;
-  const btnW = boxW - 40;
+  // Same layout math as drawQuizOverlay, so hitboxes match the drawn buttons
+  const { bx, answerY, btnH, btnW } = getQuizOverlayLayout(W, H);
   for (let i = 0; i < 3; i++) {
     const btnY = answerY + i * (btnH + 4);
     if (tx > bx + 20 && tx < bx + 20 + btnW && ty > btnY && ty < btnY + btnH) {
@@ -872,7 +874,7 @@ function buildLearningDashboard() {
   // ── 3. Achievements Earned ──
   const savedAch = loadJSON('unikittyville_achievements', {});
   const earnedCount = Object.keys(savedAch).length;
-  const totalAch = 8; // matches achievements array length
+  const totalAch = (typeof achievements !== 'undefined') ? achievements.length : 13;
   const achHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
     '<div style="font-size:2.5rem;color:#fbbf24;">' + earnedCount + '/' + totalAch + '</div>' +
     '<div style="color:rgba(255,255,255,0.8);font-size:0.9rem;">achievements earned</div>' +
@@ -991,7 +993,12 @@ updateDifficultyUI();
 // ── Start ──
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('nameInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') startGame();
+  if (e.key === 'Enter') {
+    // Keep this Enter away from the window keydown handler, otherwise the
+    // first update() frame treats it as "skip tour guide"
+    e.stopPropagation();
+    startGame();
+  }
 });
 
 function startGame() {
@@ -1062,10 +1069,18 @@ function setAction(key, label, key2, label2) {
 
 function updatePrompt(near) {
   const el = document.getElementById('prompt');
-  // Hide prompt during hot dog math overlay (UI is drawn on canvas)
+  // Hot dog math overlay draws its own UI on canvas, but touch players
+  // still need an on-screen way out (coins are keyboard-only)
   if (hotdogMath.active) {
     el.style.display = 'none';
-    setAction(null, '');
+    setAction('Escape', 'Exit');
+    return;
+  }
+  // Market haggling: answers are typed digits (keyboard-only), so give
+  // touch players an Exit button instead of trapping them in the scene
+  if (currentScene === Scene.MARKET && marketActive) {
+    el.style.display = 'none';
+    setAction('Escape', 'Exit');
     return;
   }
   // Quiz mode overrides all other prompts
@@ -1740,7 +1755,7 @@ function updatePrompt(near) {
   } else if (currentLevel === 11 && fuelCalcActive) {
     el.textContent = 'Type your answer and press Enter (Esc to exit)';
     el.style.display = 'block';
-    setAction('Enter', 'Submit');
+    setAction('Enter', 'Submit', 'Escape', 'Exit');
   } else if (currentLevel === 11 && quizzesEnabled && Math.abs(player.x - ROCKET_POS.x) < BUILDING_RANGE && !capeFueled) {
     el.textContent = 'Press P to calculate rocket fuel!';
     el.style.display = 'block';
