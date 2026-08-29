@@ -225,7 +225,13 @@ function saveMissionLog() {
 const TIME_CAPSULE_RANGE = 80;        // proximity to discover
 const TIME_CAPSULE_GLOW_RANGE = 200;  // visible glow radius
 const TIME_CAPSULE_POINTS = 75;
-let capsulesFound = new Set(JSON.parse(localStorage.getItem('unikittyville_capsules') || '[]'));
+// A corrupt or blocked localStorage must never crash the whole game at load
+function loadStoredJSON(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+  catch (e) { return fallback; }
+}
+
+let capsulesFound = new Set(loadStoredJSON('unikittyville_capsules', []));
 let capsuleCardState = null;  // { level, name, year, fact, timer } or null
 let capsuleGalleryOpen = false;
 
@@ -234,7 +240,7 @@ function saveCapsules() {
 }
 
 // ── Fact Notebook ──
-let factNotebook = JSON.parse(localStorage.getItem('factNotebook') || '[]');
+let factNotebook = loadStoredJSON('factNotebook', []);
 let notebookOpen = false;
 let notebookCategory = 'All';
 let notebookScroll = 0;
@@ -262,7 +268,7 @@ function addFactToNotebook(text, level) {
   const category = categorizeFact(text);
   const levelName = levelRegistry[level] ? levelRegistry[level].name : ('Level ' + level);
   factNotebook.push({ text, level, levelName, category });
-  localStorage.setItem('factNotebook', JSON.stringify(factNotebook));
+  try { localStorage.setItem('factNotebook', JSON.stringify(factNotebook)); } catch (e) { /* storage unavailable */ }
 }
 
 // ── State ──
@@ -381,8 +387,10 @@ let metPaintingIndex = 0;
 let artDescActive = false;
 let artDescText = '';
 let artDescPaintingIdx = -1;
-let artDescriptions = JSON.parse(localStorage.getItem('unikittyville_artDescriptions') || '{}');
-function saveArtDescriptions() { localStorage.setItem('unikittyville_artDescriptions', JSON.stringify(artDescriptions)); }
+let artDescriptions = loadStoredJSON('unikittyville_artDescriptions', {});
+function saveArtDescriptions() {
+  try { localStorage.setItem('unikittyville_artDescriptions', JSON.stringify(artDescriptions)); } catch (e) { /* storage unavailable */ }
+}
 const MET_PAINTINGS = [
   { title: 'Meadow at Sunrise', artist: 'Claude Meownet', level: 'Meadow', color: '#86efac', draw: 'meadow' },
   { title: 'Starry Sled Night', artist: 'Vincent van Paw', level: 'Sledding', color: '#1e3a5f', draw: 'sled' },
@@ -1402,6 +1410,14 @@ function crossfadeToLevel(level) {
 }
 
 function crossfadeToMusic(newId) {
+  // Force-complete any in-progress fade first, otherwise its "in" track is
+  // never adopted as currentMusicId and keeps playing forever underneath
+  if (musicFade) {
+    if (musicFade.out) { musicFade.out.pause(); musicFade.out.currentTime = 0; }
+    currentMusicId = musicFade.inId;
+    if (!muted) musicFade.inEl.volume = getMusicVolume();
+    musicFade = null;
+  }
   if (!newId || newId === currentMusicId) return;
   const outEl = currentMusicId ? document.getElementById(currentMusicId) : null;
   const inEl = document.getElementById(newId);
@@ -1610,10 +1626,16 @@ function completeTransition() {
       if (s.type === 'shell') s.collected = false;
     }
   }
+  // Reset sledding collectibles when re-entering level 2
+  if (levelTransition.toLevel === 2) {
+    snowballCount = 0;
+    for (const sb of level2Sled.snowballs) sb.collected = false;
+  }
   // Reset Alps diamond count + collected flags when re-entering level 7
   if (levelTransition.toLevel === 7) {
     diamondCount = 0;
     for (const d of level5.diamonds) d.collected = false;
+    for (const tree of level5.trees) tree.hit = false;
   }
   // Reset Campground state when re-entering level 8
   if (levelTransition.toLevel === 8) {
@@ -2757,7 +2779,7 @@ function update(dt) {
     const mc = missionControl;
     if (mc.complete || mc.failed) {
       // Show result then exit
-      mc.showResult += 16;
+      mc.showResult += dt;
       if (mc.complete) {
         mc.rocketY += 3; // animate rocket going up
       }
@@ -2768,7 +2790,7 @@ function update(dt) {
       }
     } else {
       // Count down timer
-      mc.timeLeft -= 16;
+      mc.timeLeft -= dt;
       if (mc.timeLeft <= 0) {
         mc.timeLeft = 0;
         mc.failed = true;
@@ -4629,7 +4651,7 @@ function update(dt) {
     const wt = whaleTranscription;
     if (wt.active) {
       // Count down timer
-      wt.timeLeft -= 16;
+      wt.timeLeft -= dt;
       if (wt.timeLeft <= 0) {
         // Expired — auto-dismiss
         wt.expired.add(wt.currentIndex);
@@ -4711,11 +4733,18 @@ function update(dt) {
       }
     }
 
+    // Touch players can't type digits — the on-screen Exit button feeds
+    // keys['Escape'], which the keydown handler never sees
+    if (fuelCalcActive && keys['Escape']) {
+      keys['Escape'] = false;
+      fuelCalcActive = false;
+    }
+
     // Fuel calculator logic
     if (fuelCalcActive) {
       // Feedback timer
       if (fuelCalcFeedbackTimer > 0) {
-        fuelCalcFeedbackTimer -= 16;
+        fuelCalcFeedbackTimer -= dt;
         if (fuelCalcFeedbackTimer <= 0) {
           fuelCalcFeedback = '';
           if (fuelCalcCorrect >= 3) {
@@ -4741,7 +4770,7 @@ function update(dt) {
 
   // Cape Canaveral Launch minigame
   if (currentScene === Scene.CAPE_LAUNCH) {
-    capeCountdown -= 16; // ~dt
+    capeCountdown -= dt;
     if (keys['Space']) {
       capeLaunchPower = Math.min(1, capeLaunchPower + 0.015);
     } else {
@@ -4768,7 +4797,7 @@ function update(dt) {
   // ── Space Flight interactions (level 12) ──
   if (currentLevel === 12) {
     // Invulnerability timer
-    if (spaceInvulnTimer > 0) spaceInvulnTimer -= 16;
+    if (spaceInvulnTimer > 0) spaceInvulnTimer -= dt;
 
     // Asteroid collision
     for (const ast of level12Space.asteroids) {
@@ -5634,7 +5663,7 @@ function update(dt) {
     if (recipeModeActive) {
       // Recipe Mode logic
       if (recipeComplete) {
-        recipeCompleteTimer += 16;
+        recipeCompleteTimer += dt;
         recipeBlendAnim += 0.3;
         if (recipeCompleteTimer >= 2000) {
           // Move to next round or finish
@@ -5717,7 +5746,7 @@ function update(dt) {
         smoothieProgress = 0;
       }
       if (smoothieBlending) {
-        smoothieProgress += 16;
+        smoothieProgress += dt;
         if (smoothieProgress >= 2000) {
           smoothieBlending = false;
           smoothieCount++;
@@ -5738,7 +5767,7 @@ function update(dt) {
 
   // Gelato Shop minigame
   if (currentScene === Scene.GELATO_SHOP) {
-    if (gelatoMsgTimer > 0) gelatoMsgTimer -= 16;
+    if (gelatoMsgTimer > 0) gelatoMsgTimer -= dt;
 
     const maxScoops = gelatoOrder && gelatoOrder.thirds ? 3 : 4;
 
@@ -5881,7 +5910,7 @@ function update(dt) {
       p.x += p.vx;
       p.y += p.vy;
       p.vy += 0.15;
-      p.life -= 16;
+      p.life -= dt;
       if (p.life <= 0) wishSplashParticles.splice(i, 1);
     }
 
@@ -6053,7 +6082,7 @@ function update(dt) {
 
     if (am.celebrateTimer > 0) {
       // Celebration phase after completing all 4 steps
-      am.celebrateTimer -= 16;
+      am.celebrateTimer -= dt;
       if (am.celebrateTimer <= 0) {
         currentScene = null;
         am.active = false;
@@ -6062,7 +6091,7 @@ function update(dt) {
     } else if (am.step === 0) {
       // Step 1: "First Step" — boot descends, press Space at the right moment
       am.bootY += 0.8; // boot descends slowly
-      am.stepTimer += 16;
+      am.stepTimer += dt;
       // Sweet spot: bootY between 70 and 90 (near the ground)
       if (keys['Space']) {
         keys['Space'] = false;
@@ -6100,7 +6129,7 @@ function update(dt) {
       }
     } else if (am.step === 2) {
       // Step 3: "Collect Moon Rocks" — move left/right to collect 5 rocks in 15s
-      am.stepTimer -= 16;
+      am.stepTimer -= dt;
       if (keys['ArrowLeft']) am.rockPlayerX = Math.max(-180, am.rockPlayerX - 4);
       if (keys['ArrowRight']) am.rockPlayerX = Math.min(180, am.rockPlayerX + 4);
       // Check collection
