@@ -46,6 +46,7 @@ const POINTS = {
   CAMP_SHOWER: 20, TREE_HIT: 10, SNOWMAN_HIT: 10,
   YARN_BONUS: 100, LEPRECHAUN_GOLD: 50,
   FRUIT: 10, ELEPHANT_BOOST: 15, RHINO_HIT: 15,
+  PARIS_FOOD: 15, PARIS_PICNIC: 50, PARIS_SELFIE: 25,
   SAFARI_PHOTO: 30, SAFARI_PHOTO_DUP: 5, SAFARI_COLLECTION: 100,
   CHEETAH_RIDE: 50, GIRAFFE_LIFT: 10, JOURNAL_BONUS: 20,
   TRAIN_PUZZLE: 25, TRAIN_PUZZLE_BONUS: 100,
@@ -68,6 +69,7 @@ const POINTS = {
   COASTER_RIDE: 40, COASTER_FIRST_BONUS: 20, COASTER_SCREAM: 5,
   WATER_GUN_FIRST: 50, WATER_GUN_SECOND: 25, WATER_GUN_THIRD: 10,
   BIPLANE_RIDE: 35, BIPLANE_WAVE: 3,
+  FERRIS_RIDE: 35, FERRIS_WAVE: 3,
   DANCE_SHOW: 60, DANCE_SHOW_CHEER: 8, DANCE_SHOW_PERFECT_AUDIENCE: 20,
   DOLPHIN_HIGH_FIVE: 50,
 };
@@ -444,6 +446,23 @@ const PANTHEON_PIECES = [
   { name: 'Oculus', fact: "The oculus (eye) at the top is 27 feet wide \u2014 the only source of light!" },
 ];
 const FIAT_POS = { x: 4500 };
+const TGV_POS = { x: 4150 }; // Rome train station -> Paris
+
+// ── Paris State (level 16) ──
+const FROMAGERIE_POS = { x: 800 };
+const MARCHE_POS = { x: 1600 };
+const BOULANGERIE_POS = { x: 2400 };
+const CAFE_POS = { x: 3200 };
+const PICNIC_POS = { x: 4000 };
+const EIFFEL_POS = { x: 4650 };
+const PARIS_AIRPORT_POS = { x: 5050 };
+let parisPicnic = { cheese: false, fruit: false, baguette: false, espresso: false, laidOut: false, selfies: 0 };
+let parisSelfieFlash = 0;   // ms remaining of camera flash
+let eiffelViewOpen = false; // top-of-tower panorama overlay
+function parisPicnicItems() {
+  return (parisPicnic.cheese ? 1 : 0) + (parisPicnic.fruit ? 1 : 0) +
+         (parisPicnic.baguette ? 1 : 0) + (parisPicnic.espresso ? 1 : 0);
+}
 // Scroll transcription minigame (Pantheon)
 const SCROLL_TEXTS = [
   { text: 'All roads lead to Rome', fact: 'The Roman road network stretched over 250,000 miles!' },
@@ -900,6 +919,12 @@ let waterGunRace = {
 let biplaneRide = {
   active: false, timer: 0, waves: 0,
   rideAngle: 0, complete: false,
+};
+
+// Ferris wheel ride
+let ferrisRide = {
+  active: false, timer: 0, waves: 0,
+  angle: Math.PI / 2, complete: false, // angle starts at the bottom gondola
 };
 
 // Dance show
@@ -1527,6 +1552,12 @@ function completeTransition() {
   lightShowActive = false;
   activeSpeechBubbles = [];
   quizActive = false;
+  eiffelViewOpen = false;
+  parisSelfieFlash = 0;
+  // Reset Paris picnic when re-entering level 16
+  if (levelTransition.toLevel === 16) {
+    parisPicnic = { cheese: false, fruit: false, baguette: false, espresso: false, laidOut: false, selfies: 0 };
+  }
   quizResultTimer = 0;
   pizzaMaking.stage = 'idle';
   pizzaMaking.progress = 0;
@@ -1763,6 +1794,10 @@ function completeTransition() {
     biplaneRide = {
       active: false, timer: 0, waves: 0,
       rideAngle: 0, complete: false,
+    };
+    ferrisRide = {
+      active: false, timer: 0, waves: 0,
+      angle: Math.PI / 2, complete: false,
     };
     parkDanceShow = {
       active: false, step: 0, stepTimer: 0,
@@ -2059,6 +2094,7 @@ const hud = {
   gem: document.getElementById('hudGem'),
   cotton: document.getElementById('hudCotton'),
   iceCream: document.getElementById('hudIceCream'),
+  picnic: document.getElementById('hudPicnic'),
   controls: document.getElementById('controls'),
 };
 const hudItems = document.querySelectorAll('.hud-item');
@@ -2186,6 +2222,16 @@ function update(dt) {
       notebookScroll = 0;
     }
     return; // freeze the game while notebook is open
+  }
+
+  // Eiffel Tower view overlay — Enter/Escape to climb back down
+  if (eiffelViewOpen) {
+    if (keys['Enter'] || keys['Escape']) {
+      keys['Enter'] = false;
+      keys['Escape'] = false;
+      eiffelViewOpen = false;
+    }
+    return; // freeze while enjoying the view
   }
 
   if (currentScene === Scene.CAMP_CAMPER) {
@@ -3617,6 +3663,7 @@ function update(dt) {
   let nearGelato = false;
   let nearPantheonDoor = false;
   let nearFiat = false;
+  let nearTGV = false;
   if (currentLevel === 4) {
     // Fountain — coin toss minigame or swimming
     if (Math.abs(player.x - FOUNTAIN_POS.x) < 45) {
@@ -3685,7 +3732,105 @@ function update(dt) {
         switchToLevel(5);
       }
     }
+    // TGV train → Paris
+    if (Math.abs(player.x - TGV_POS.x) < 45) {
+      nearTGV = true;
+      if (keys['Enter'] && currentScene !== Scene.PANTHEON) {
+        keys['Enter'] = false;
+        switchToLevel(16);
+      }
+    }
   }
+
+  // Paris interactions (level 16)
+  let nearFromagerie = false, nearMarche = false, nearBoulangerie = false, nearCafe = false;
+  let nearPicnicSpot = false, nearEiffel = false, nearParisAirport = false;
+  if (currentLevel === 16) {
+    // Cheese shop
+    if (Math.abs(player.x - FROMAGERIE_POS.x) < BUILDING_RANGE) {
+      nearFromagerie = true;
+      if (!parisPicnic.cheese && keys['KeyC']) {
+        keys['KeyC'] = false;
+        parisPicnic.cheese = true;
+        score += POINTS.PARIS_FOOD;
+        addPopup(player.x, player.y - 40, '+' + POINTS.PARIS_FOOD + ' Brie & Camembert!', '#fbbf24');
+        playChaChing();
+      }
+    }
+    // Fruit market
+    if (Math.abs(player.x - MARCHE_POS.x) < BUILDING_RANGE) {
+      nearMarche = true;
+      if (!parisPicnic.fruit && keys['KeyF']) {
+        keys['KeyF'] = false;
+        parisPicnic.fruit = true;
+        score += POINTS.PARIS_FOOD;
+        addPopup(player.x, player.y - 40, '+' + POINTS.PARIS_FOOD + ' Fresh fruit!', '#4ade80');
+        playChaChing();
+      }
+    }
+    // Boulangerie
+    if (Math.abs(player.x - BOULANGERIE_POS.x) < BUILDING_RANGE) {
+      nearBoulangerie = true;
+      if (!parisPicnic.baguette && keys['KeyB']) {
+        keys['KeyB'] = false;
+        parisPicnic.baguette = true;
+        score += POINTS.PARIS_FOOD;
+        addPopup(player.x, player.y - 40, '+' + POINTS.PARIS_FOOD + ' Warm baguette!', '#fb923c');
+        playChaChing();
+      }
+    }
+    // Cafe
+    if (Math.abs(player.x - CAFE_POS.x) < BUILDING_RANGE) {
+      nearCafe = true;
+      if (!parisPicnic.espresso && keys['KeyE']) {
+        keys['KeyE'] = false;
+        parisPicnic.espresso = true;
+        score += POINTS.PARIS_FOOD;
+        addPopup(player.x, player.y - 40, '+' + POINTS.PARIS_FOOD + ' Espresso to go!', '#a78bfa');
+        playChaChing();
+      }
+    }
+    // Champ de Mars picnic spot
+    if (Math.abs(player.x - PICNIC_POS.x) < 70) {
+      nearPicnicSpot = true;
+      if (!parisPicnic.laidOut && parisPicnicItems() === 4 && keys['KeyP']) {
+        keys['KeyP'] = false;
+        parisPicnic.laidOut = true;
+        score += POINTS.PARIS_PICNIC;
+        addPopup(player.x, player.y - 60, '+' + POINTS.PARIS_PICNIC + ' Picnic time!', '#f472b6');
+        playChaChing();
+      }
+      if (parisPicnic.laidOut && keys['KeyS']) {
+        keys['KeyS'] = false;
+        parisPicnic.selfies++;
+        parisSelfieFlash = 400;
+        if (parisPicnic.selfies <= 3) {
+          score += POINTS.PARIS_SELFIE;
+          addPopup(player.x, player.y - 60, '+' + POINTS.PARIS_SELFIE + ' Eiffel selfie!', '#38bdf8');
+          playChaChing();
+        } else {
+          addPopup(player.x, player.y - 60, 'Say fromage!', '#38bdf8');
+        }
+      }
+    }
+    // Eiffel Tower — ride to the top
+    if (Math.abs(player.x - EIFFEL_POS.x) < BUILDING_RANGE) {
+      nearEiffel = true;
+      if (keys['Enter']) {
+        keys['Enter'] = false;
+        eiffelViewOpen = true;
+      }
+    }
+    // Airport → Hawaii (continue the world tour)
+    if (Math.abs(player.x - PARIS_AIRPORT_POS.x) < 45) {
+      nearParisAirport = true;
+      if (keys['Enter']) {
+        keys['Enter'] = false;
+        switchToLevel(5);
+      }
+    }
+  }
+  if (parisSelfieFlash > 0) parisSelfieFlash -= dt;
 
   // Hawaii interactions (level 4)
   let nearTiki = false;
@@ -5319,6 +5464,47 @@ function update(dt) {
       }
     }
 
+    // Ferris wheel ride entry — board the gondola at the bottom of the wheel
+    if (Math.abs(player.x - FERRIS_WHEEL_POS.x) < BUILDING_RANGE && keys['Enter'] && currentScene === null && !ferrisRide.active && !ferrisRide.complete && !biplaneRide.active && !coasterRide.active) {
+      keys['Enter'] = false;
+      ferrisRide.active = true;
+      ferrisRide.timer = 0;
+      ferrisRide.waves = 0;
+      ferrisRide.angle = Math.PI / 2; // start at the bottom gondola
+    }
+
+    if (ferrisRide.active) {
+      ferrisRide.timer += dt;
+      // One revolution every 6s; the ride lasts two full turns (~12s)
+      ferrisRide.angle += (2 * Math.PI / 6000) * dt;
+      // Space to wave at the crowd below (bonus, like the bi-plane)
+      if (keys['Space'] && ferrisRide.waves < 3) {
+        keys['Space'] = false;
+        ferrisRide.waves++;
+        score += POINTS.FERRIS_WAVE;
+        addPopup(player.x, player.y - 30, '+' + POINTS.FERRIS_WAVE + ' Wave!', '#fbbf24');
+      }
+      if (ferrisRide.timer > 12000) {
+        ferrisRide.active = false;
+        ferrisRide.complete = true;
+        score += POINTS.FERRIS_RIDE;
+        addPopup(FERRIS_WHEEL_POS.x, GROUND_Y - 60, '+' + POINTS.FERRIS_RIDE + ' Ferris Wheel!', '#fbbf24');
+        playChaChing();
+        player.x = FERRIS_WHEEL_POS.x;
+        player.y = GROUND_Y;
+        player.onGround = true;
+        player.vy = 0;
+      } else {
+        // Lock the kitty to gondola 0 as it rides around the wheel
+        const cx = FERRIS_WHEEL_POS.cx;
+        const cy = GROUND_Y - 120;
+        player.x = cx + Math.cos(ferrisRide.angle) * FERRIS_WHEEL_POS.radius;
+        player.y = cy + Math.sin(ferrisRide.angle) * FERRIS_WHEEL_POS.radius;
+        player.vy = 0;
+        player.onGround = false;
+      }
+    }
+
     // Dance show entry
     if (Math.abs(player.x - PARK_DANCE_STAGE_POS.x) < BUILDING_RANGE && keys['Enter'] && currentScene === null && !parkDanceShow.complete) {
       keys['Enter'] = false;
@@ -6634,6 +6820,7 @@ function update(dt) {
   if (hud.gem) hud.gem.textContent = candyGemCount;
   if (hud.cotton) hud.cotton.textContent = cottonCandyCount + '/8';
   if (hud.iceCream) hud.iceCream.textContent = iceCreamCount + '/10';
+  if (hud.picnic) hud.picnic.textContent = parisPicnicItems() + '/4';
 
   // Postcard toggle — W key when outdoors and W wasn't consumed by a level-specific action
   // (pool fill on level 8, Grand Central whisper, etc. already consumed KeyW above)
@@ -6667,7 +6854,9 @@ function update(dt) {
     nearSailboat, nearDiveSpot, nearBaobab, nearCheetah, nearSafariJeep,
     nearWateringHole, nearElephant, nearMarket, nearHospital,
     nearFao, nearEmpire, nearThirtyRock, nearGrandCentral, nearMet,
-    nearBugNet, nearTimeCapsule
+    nearBugNet, nearTimeCapsule,
+    nearTGV, nearFromagerie, nearMarche, nearBoulangerie, nearCafe,
+    nearPicnicSpot, nearEiffel, nearParisAirport
   });
 }
 
