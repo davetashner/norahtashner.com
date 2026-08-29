@@ -7,6 +7,16 @@ function setGameDifficulty(diff) {
   try { localStorage.setItem('unikittyville_difficulty', diff); } catch (e) { /* storage unavailable */ }
 }
 
+// ── Quiz toggle ──
+// When off: the train signal puzzle (2→3) and rocket fuel calculator (11→12)
+// no longer block level progression, and random NPC pop quizzes are suppressed.
+let quizzesEnabled = localStorage.getItem('unikittyville_quizzes') !== 'off';
+
+function setQuizzesEnabled(on) {
+  quizzesEnabled = on;
+  try { localStorage.setItem('unikittyville_quizzes', on ? 'on' : 'off'); } catch (e) { /* storage unavailable */ }
+}
+
 function getDifficultyMultiplier() {
   switch (gameDifficulty) {
     case 'easy':   return { timeLimit: 1.5, hintLevel: 2, pointBonus: 0.5 };
@@ -1233,7 +1243,19 @@ function stopLoopSfx(id) {
 // ── Volume control ──
 let masterVolume = 0.4; // 0..1
 let muted = false;
+try {
+  const savedVol = parseFloat(localStorage.getItem('unikittyville_volume'));
+  if (!isNaN(savedVol)) masterVolume = Math.min(1, Math.max(0, savedVol));
+  muted = localStorage.getItem('unikittyville_muted') === '1';
+} catch (e) { /* storage unavailable — keep defaults */ }
 let sliderHideTimer = null;
+
+function saveVolumeSettings() {
+  try {
+    localStorage.setItem('unikittyville_volume', String(masterVolume));
+    localStorage.setItem('unikittyville_muted', muted ? '1' : '0');
+  } catch (e) { /* storage unavailable */ }
+}
 
 function getMusicVolume() { return muted ? 0 : masterVolume; }
 const sfxRatio = 1.25; // sfx slightly louder than music
@@ -1244,6 +1266,10 @@ const volBtn = document.getElementById('volumeBtn');
 const sliderEl = document.getElementById('volumeSlider');
 const sliderWrap = document.getElementById('volumeSliderWrap');
 let volSliderOpen = false;
+
+// Reflect persisted volume/mute in the UI on load
+sliderEl.value = Math.round(masterVolume * 100);
+volBtn.innerHTML = (muted || masterVolume === 0) ? '&#128263;' : '&#128264;';
 
 if (isMobile) {
   // On mobile: tap speaker icon to toggle slider visibility (no hover)
@@ -1321,6 +1347,7 @@ function showSlider() {
 }
 
 function applyVolume() {
+  saveVolumeSettings();
   const mv = getMusicVolume();
   if (currentMusicId) {
     const el = document.getElementById(currentMusicId);
@@ -1406,6 +1433,11 @@ function updateMusicFade(dt) {
 // Character customization — set by character creator
 let playerEyeColor = '#1e1b4b';
 let playerHornColors = ['#fbbf24', '#f472b6', '#a78bfa'];
+let playerOutfit = 'none'; // 'none' | 'bow' | 'scarf' | 'glasses' | 'flower' | 'cape' | 'crown'
+
+// Pause menu (DOM overlay in index.html, wired in ui.js)
+let pauseMenuOpen = false;
+let gameStarted = false;
 
 // Player
 const player = {
@@ -2051,6 +2083,9 @@ function update(dt) {
     }
     return;
   }
+
+  // Pause menu (DOM overlay) — freeze the world while open
+  if (pauseMenuOpen) return;
 
   // Postcard "just sent" timer
   if (postcardJustSent) {
@@ -4694,8 +4729,8 @@ function update(dt) {
       }
     }
 
-    // Board rocket
-    if (capeFueled && capeSpaceSuit && Math.abs(player.x - ROCKET_POS.x) < BUILDING_RANGE && keys['Enter'] && !capeLaunching) {
+    // Board rocket (fueling quiz not required when quizzes are off)
+    if ((capeFueled || !quizzesEnabled) && capeSpaceSuit && Math.abs(player.x - ROCKET_POS.x) < BUILDING_RANGE && keys['Enter'] && !capeLaunching) {
       keys['Enter'] = false;
       capeLaunching = true;
       currentScene = Scene.CAPE_LAUNCH;
@@ -6298,11 +6333,17 @@ function update(dt) {
       player.vx = 0;
       if (!trainPuzzleActive && !trainPuzzleComplete && keys['Enter']) {
         keys['Enter'] = false;
-        trainPuzzleActive = true;
-        trainPuzzleRound = 0;
-        trainPuzzleFeedback = '';
-        trainPuzzleFeedbackTimer = 0;
-        trainPuzzleScore = 0;
+        if (quizzesEnabled) {
+          trainPuzzleActive = true;
+          trainPuzzleRound = 0;
+          trainPuzzleFeedback = '';
+          trainPuzzleFeedbackTimer = 0;
+          trainPuzzleScore = 0;
+        } else {
+          // Quizzes are off — board the train right away
+          trainPuzzleComplete = true;
+          switchToLevel(3);
+        }
       }
     }
 
@@ -6446,7 +6487,7 @@ function update(dt) {
       // Chance to trigger a quiz after dialogue ends
       if (!quizActive && quizResultTimer <= 0) {
         const quizzes = npcQuizzes[currentLevel];
-        if (quizzes && quizzes.length > 0 && Math.random() < QUIZ_CHANCE) {
+        if (quizzesEnabled && quizzes && quizzes.length > 0 && Math.random() < QUIZ_CHANCE) {
           const q = quizzes[Math.floor(Math.random() * quizzes.length)];
           quizActive = true;
           quizQuestion = q.question;

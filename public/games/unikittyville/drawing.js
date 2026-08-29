@@ -3149,7 +3149,7 @@ function drawPlayerAndUI() {
   // When riding dragon, kitty is drawn on the dragon's back in the dragon section
   const sledOffset = (currentLevel === 2 && sledding) ? 5 : 0;
   if (!ridingDragon && !hammockNapping) {
-    drawKitty(player.x, player.y - (ridingCheetah ? 15 : sledOffset), player.color, player.facing, player.walkFrame, 'horn', playerEyeColor, playerHornColors);
+    drawKitty(player.x, player.y - (ridingCheetah ? 15 : sledOffset), player.color, player.facing, player.walkFrame, 'horn', playerEyeColor, playerHornColors, playerOutfit);
   }
 
   // Space suit overlay (Cape Canaveral through Moon levels)
@@ -6378,12 +6378,88 @@ function drawChalet(x) {
   ctx.fillText('FINISH', x, gy - 105);
 }
 
-function drawKitty(x, y, color, facing, walkFrame, accessory, eyeColor, hornColors) {
+// Shared accessory/outfit shapes, drawn in kitty-local coordinates.
+// Used for NPC accessories and for the player's chosen outfit (pause menu).
+function drawKittyAccessory(c, acc, bounce) {
+  if (acc === 'bow') {
+    c.fillStyle = '#f43f5e';
+    c.beginPath();
+    c.arc(8, -42 + bounce, 4, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath();
+    c.arc(12, -42 + bounce, 3, 0, Math.PI * 2);
+    c.fill();
+  } else if (acc === 'scarf') {
+    c.fillStyle = '#2563eb';
+    c.fillRect(-10, -18 + bounce, 20, 5);
+    c.fillRect(8, -18 + bounce, 4, 12);
+  } else if (acc === 'glasses') {
+    c.strokeStyle = '#1e1b4b';
+    c.lineWidth = 1.5;
+    c.beginPath();
+    c.arc(-5, -32 + bounce, 6, 0, Math.PI * 2);
+    c.stroke();
+    c.beginPath();
+    c.arc(5, -32 + bounce, 6, 0, Math.PI * 2);
+    c.stroke();
+    c.beginPath();
+    c.moveTo(1, -32 + bounce);
+    c.lineTo(-1, -32 + bounce);
+    c.stroke();
+  } else if (acc === 'flower') {
+    c.fillStyle = '#fbbf24';
+    c.beginPath();
+    c.arc(8, -44 + bounce, 3, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#f472b6';
+    for (let a = 0; a < 5; a++) {
+      const fa = (a / 5) * Math.PI * 2;
+      c.beginPath();
+      c.arc(8 + Math.cos(fa) * 4, -44 + bounce + Math.sin(fa) * 4, 2.5, 0, Math.PI * 2);
+      c.fill();
+    }
+  } else if (acc === 'crown') {
+    // Little gold crown perched beside the horn
+    c.fillStyle = '#fbbf24';
+    c.beginPath();
+    c.moveTo(4, -42 + bounce);
+    c.lineTo(4, -47 + bounce);
+    c.lineTo(6.5, -44 + bounce);
+    c.lineTo(9, -49 + bounce);
+    c.lineTo(11.5, -44 + bounce);
+    c.lineTo(14, -47 + bounce);
+    c.lineTo(14, -42 + bounce);
+    c.closePath();
+    c.fill();
+    c.fillStyle = '#f43f5e';
+    c.beginPath();
+    c.arc(9, -44 + bounce, 1.2, 0, Math.PI * 2);
+    c.fill();
+  }
+}
+
+// Superhero cape — drawn BEFORE the body so it flows out behind the kitty.
+function drawKittyCape(c, bounce) {
+  const sway = Math.sin(gameTime / 250) * 3;
+  c.fillStyle = '#dc2626';
+  c.beginPath();
+  c.moveTo(-2, -26 + bounce);           // shoulder
+  c.quadraticCurveTo(-20, -18 + bounce, -26 + sway, 2 + bounce); // flowing back edge
+  c.lineTo(-12, 0 + bounce);
+  c.quadraticCurveTo(-8, -12 + bounce, -2, -26 + bounce);
+  c.closePath();
+  c.fill();
+}
+
+function drawKitty(x, y, color, facing, walkFrame, accessory, eyeColor, hornColors, outfit) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(facing, 1);
 
   const bounce = walkFrame % 2 === 1 ? -2 : 0;
+
+  // Cape outfit goes behind the body
+  if (outfit === 'cape') drawKittyCape(ctx, bounce);
 
   // Body
   ctx.fillStyle = color;
@@ -6516,43 +6592,11 @@ function drawKitty(x, y, color, facing, walkFrame, accessory, eyeColor, hornColo
   }
 
   // NPC accessories
-  if (accessory === 'bow') {
-    ctx.fillStyle = '#f43f5e';
-    ctx.beginPath();
-    ctx.arc(8, -42 + bounce, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(12, -42 + bounce, 3, 0, Math.PI * 2);
-    ctx.fill();
-  } else if (accessory === 'scarf') {
-    ctx.fillStyle = '#2563eb';
-    ctx.fillRect(-10, -18 + bounce, 20, 5);
-    ctx.fillRect(8, -18 + bounce, 4, 12);
-  } else if (accessory === 'glasses') {
-    ctx.strokeStyle = '#1e1b4b';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(-5, -32 + bounce, 6, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(5, -32 + bounce, 6, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(1, -32 + bounce);
-    ctx.lineTo(-1, -32 + bounce);
-    ctx.stroke();
-  } else if (accessory === 'flower') {
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath();
-    ctx.arc(8, -44 + bounce, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#f472b6';
-    for (let a = 0; a < 5; a++) {
-      const fa = (a / 5) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.arc(8 + Math.cos(fa) * 4, -44 + bounce + Math.sin(fa) * 4, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  drawKittyAccessory(ctx, accessory, bounce);
+
+  // Player outfit (cape already drawn behind the body above)
+  if (outfit && outfit !== 'none' && outfit !== 'cape' && outfit !== accessory) {
+    drawKittyAccessory(ctx, outfit, bounce);
   }
 
   ctx.restore();
@@ -6893,7 +6937,7 @@ function drawSailingScene(cam, W, H) {
   ctx.beginPath(); ctx.moveTo(0, -80); ctx.lineTo(15, -75); ctx.lineTo(0, -70); ctx.closePath(); ctx.fill();
   ctx.restore();
   // Draw Sparkle on the boat
-  drawKitty(cx, cy + 5 + bob, player.color, player.facing, player.walkFrame, 'horn', playerEyeColor, playerHornColors);
+  drawKitty(cx, cy + 5 + bob, player.color, player.facing, player.walkFrame, 'horn', playerEyeColor, playerHornColors, playerOutfit);
   // Dolphin in background
   const dx = cx - 200 + Math.sin(gameTime / 2000) * 150;
   const dy = cy + 60 + Math.sin(gameTime / 600 + 1) * 15;
@@ -7065,7 +7109,7 @@ function drawScubaDivingScene(cam, W, H) {
     const by2 = py - 30 - b * 10 + Math.sin(gameTime / 300 + b * 2) * 2;
     ctx.beginPath(); ctx.arc(bx2, by2, 2 + b * 0.5, 0, Math.PI * 2); ctx.fill();
   }
-  drawKitty(px, py, player.color, player.facing, player.walkFrame, 'horn', playerEyeColor, playerHornColors);
+  drawKitty(px, py, player.color, player.facing, player.walkFrame, 'horn', playerEyeColor, playerHornColors, playerOutfit);
   // Scuba mask on Sparkle
   ctx.save(); ctx.translate(px, py); ctx.scale(player.facing, 1);
   ctx.strokeStyle = '#0ea5e9'; ctx.lineWidth = 2;
@@ -8689,7 +8733,7 @@ function drawWateringHoleScene(cam, W, H) {
   }
 
   // Player splashing
-  drawKitty(cx, cy + 45, player.color, player.facing, player.walkFrame, 'horn', playerEyeColor, playerHornColors);
+  drawKitty(cx, cy + 45, player.color, player.facing, player.walkFrame, 'horn', playerEyeColor, playerHornColors, playerOutfit);
   // Splash effects
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
   for (let i = 0; i < 3; i++) {
@@ -8894,7 +8938,7 @@ function drawMarketInterior(cam, W, H) {
   ctx.textAlign = 'left';
 
   // Draw player at bottom
-  drawKitty(cx, H * 0.72, player.color, player.facing, 0, 'horn', playerEyeColor, playerHornColors);
+  drawKitty(cx, H * 0.72, player.color, player.facing, 0, 'horn', playerEyeColor, playerHornColors, playerOutfit);
 }
 
 function drawCheetahSpeech(x, gy) {
@@ -9358,7 +9402,7 @@ function drawFlightWorld(W, H, cam, cycle, isNight) {
   ctx.stroke();
 
   // Player cat in cockpit (tiny)
-  drawKitty(px + 8, py + 2, player.color || '#86efac', 1, 0, 'horn', playerEyeColor, playerHornColors);
+  drawKitty(px + 8, py + 2, player.color || '#86efac', 1, 0, 'horn', playerEyeColor, playerHornColors, playerOutfit);
 
   // HUD: show "Enter" prompt near Florida
   if (player.x > ww - 500) {
@@ -10772,7 +10816,7 @@ function drawTopGolfInterior(cam, W, H) {
   // Player (unikitty) standing at the tee
   const kittyX = cx - 160;
   const kittyY = cy + 50;
-  drawKitty(kittyX, kittyY, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
+  drawKitty(kittyX, kittyY, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors, playerOutfit);
 
   // Golf club in paws
   ctx.save();
@@ -12065,7 +12109,7 @@ function drawCandyKingdomWorld(W, H, cam, cycle, isNight) {
     ctx.quadraticCurveTo(dragonX - 50, dragonY + 15, dragonX - 40, dragonY - 5);
     ctx.stroke();
     // Draw kitty riding on dragon's back
-    drawKitty(dragonX, dragonY - 18, player.color, player.facing, 0, 'horn', playerEyeColor, playerHornColors);
+    drawKitty(dragonX, dragonY - 18, player.color, player.facing, 0, 'horn', playerEyeColor, playerHornColors, playerOutfit);
   }
 
   // Portal back to Moon
@@ -12383,7 +12427,7 @@ function drawAmusementParkWorld(W, H, cam, cycle, isNight) {
     if (cr.phase === 'loop' && cr.angle > Math.PI) {
       ctx.scale(1, -1); // upside down
     }
-    drawKitty(0, -15, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors);
+    drawKitty(0, -15, player.color, 1, 0, 'horn', playerEyeColor, playerHornColors, playerOutfit);
     ctx.restore();
     ctx.restore();
   }
@@ -12976,7 +13020,7 @@ function drawParkDanceShowScene(cam, W, H) {
     ctx.arc(0, -35, 25, 0, Math.PI * 2);
     ctx.fill();
   }
-  drawKitty(0, 0, player.color, 1, ds.step % 2, 'horn', playerEyeColor, playerHornColors);
+  drawKitty(0, 0, player.color, 1, ds.step % 2, 'horn', playerEyeColor, playerHornColors, playerOutfit);
   ctx.restore();
 
   // Cheers counter
