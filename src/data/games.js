@@ -32,7 +32,7 @@ export const GAMES = [
     to: '/nugs-pond',
     title: "Nug's Pond",
     menuLabel: "Nug's Pond",
-    tagline: 'Adding & taking away with Nug the frog',
+    tagline: 'Adding & subtracting with Nug the frog',
     description:
       'Four math games with number sizes from 0–5 up to 0–100. Earn stars to unlock hats and 48 animal stickers.',
     tags: ['Math', 'Made for iPad'],

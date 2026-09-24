@@ -6,7 +6,7 @@ function NugsPondPage() {
   return (
     <section className="nug-page">
       <h1 className="nug-title">Nug&apos;s Pond</h1>
-      <p className="nug-subtitle">Adding &amp; taking away with Nug the frog 🐸➕➖</p>
+      <p className="nug-subtitle">Adding &amp; subtracting with Nug the frog 🐸➕➖</p>
       <div className="nug-container">
         <iframe
           src={GAME_SRC}
