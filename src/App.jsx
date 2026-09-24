@@ -7,6 +7,7 @@ import About from './components/About'
 import Footer from './components/Footer'
 import GamePage from './pages/GamePage'
 import VacationGamePage from './pages/VacationGamePage'
+import NugsPondPage from './pages/NugsPondPage'
 
 function HomePage() {
   return (
@@ -32,6 +33,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/game" element={<GamePage />} />
               <Route path="/vacation" element={<VacationGamePage />} />
+              <Route path="/nugs-pond" element={<NugsPondPage />} />
             </Routes>
           </main>
           <Footer />

@@ -6,6 +6,7 @@ import './Header.css';
 const GAMES = [
   { to: '/game', label: 'Unikittyville' },
   { to: '/vacation', label: 'England Vacation' },
+  { to: '/nugs-pond', label: "Nug's Pond" },
 ];
 
 function Header() {

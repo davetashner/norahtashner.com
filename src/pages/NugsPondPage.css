@@ -1,0 +1,102 @@
+.nug-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.nug-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #4faf3a, #1b8c8c, #38bdf8);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.25rem;
+}
+
+.nug-subtitle {
+  font-size: 1.1rem;
+  color: var(--color-text-secondary, #6b7280);
+  margin-bottom: 1.5rem;
+}
+
+/* Landscape, tablet-shaped frame (the game is built for iPad). */
+.nug-container {
+  position: relative;
+  width: 100%;
+  height: min(82vh, 780px);
+  min-height: 560px;
+  margin: 0 auto;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(27, 140, 140, 0.25);
+  border: 3px solid rgba(27, 140, 140, 0.25);
+  background: #ddf3e6;
+}
+
+.nug-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.nug-fullscreen {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.nug-fullscreen a {
+  color: #1b8c8c;
+  font-weight: 600;
+}
+
+.nug-howto {
+  margin-top: 1.25rem;
+  padding: 1rem 1.5rem;
+  background: rgba(27, 140, 140, 0.06);
+  border-radius: 12px;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.nug-howto h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text, #1a1a2e);
+  margin-bottom: 0.5rem;
+}
+
+.nug-howto p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+[data-theme='dark'] .nug-container {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border-color: rgba(79, 175, 58, 0.35);
+}
+
+[data-theme='dark'] .nug-fullscreen a {
+  color: #7ccb55;
+}
+
+[data-theme='dark'] .nug-howto {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 640px) {
+  .nug-title {
+    font-size: 1.75rem;
+  }
+  .nug-page {
+    padding: 1rem;
+  }
+  .nug-container {
+    height: min(80vh, 740px);
+    min-height: 0;
+  }
+}
