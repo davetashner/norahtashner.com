@@ -179,6 +179,17 @@
   background: rgba(124, 34, 206, 0.1);
 }
 
+/* "All games" sits above the individual games, set off by a divider. */
+li:has(> .nav-dropdown-all) {
+  margin-bottom: 0.3rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(147, 51, 234, 0.15);
+}
+
+[data-theme="dark"] li:has(> .nav-dropdown-all) {
+  border-bottom-color: rgba(192, 132, 252, 0.2);
+}
+
 [data-theme="dark"] .nav-dropdown-menu {
   background: #16213e;
   border-color: rgba(192, 132, 252, 0.2);

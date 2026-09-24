@@ -8,6 +8,7 @@ import Footer from './components/Footer'
 import GamePage from './pages/GamePage'
 import VacationGamePage from './pages/VacationGamePage'
 import NugsPondPage from './pages/NugsPondPage'
+import GamesPage from './pages/GamesPage'
 
 function HomePage() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <main id="main-content">
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/games" element={<GamesPage />} />
               <Route path="/game" element={<GamePage />} />
               <Route path="/vacation" element={<VacationGamePage />} />
               <Route path="/nugs-pond" element={<NugsPondPage />} />

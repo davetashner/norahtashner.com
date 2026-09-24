@@ -1,13 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
+import { GAMES } from '../data/games';
 import './Header.css';
-
-const GAMES = [
-  { to: '/game', label: 'Unikittyville' },
-  { to: '/vacation', label: 'England Vacation' },
-  { to: '/nugs-pond', label: "Nug's Pond" },
-];
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -85,10 +80,15 @@ function Header() {
             </button>
             {menuOpen && (
               <ul className="nav-dropdown-menu" role="menu">
+                <li role="none">
+                  <Link to="/games" className="nav-dropdown-item nav-dropdown-all" role="menuitem">
+                    All games
+                  </Link>
+                </li>
                 {GAMES.map((game) => (
                   <li key={game.to} role="none">
                     <Link to={game.to} className="nav-dropdown-item" role="menuitem">
-                      {game.label}
+                      {game.menuLabel}
                     </Link>
                   </li>
                 ))}
