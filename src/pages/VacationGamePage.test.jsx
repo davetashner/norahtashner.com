@@ -22,6 +22,6 @@ describe('VacationGamePage', () => {
 
   it('includes how-to-play instructions', () => {
     render(<VacationGamePage />)
-    expect(screen.getByText(/tap where you want/i)).toBeInTheDocument()
+    expect(screen.getByText(/every stop on the trip has its own mini-game/i)).toBeInTheDocument()
   })
 })
