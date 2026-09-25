@@ -144,6 +144,9 @@ docs/Spotify*
 # Podcast audio files (uploaded to S3, not stored in git)
 *.mp3
 *.m4a
+# ...but game music ships with its game (small, looping tracks the games need offline)
+!public/games/*/assets/music/*.mp3
+!public/games/*/assets/music/*.m4a
 *.wav
 *.flac
 *.aac

@@ -19,13 +19,13 @@ export const GAMES = [
     to: '/vacation',
     title: "Norah's Big Vacation",
     menuLabel: 'England Vacation',
-    tagline: '12 chapters · England & France',
+    tagline: '12 chapters, 12 mini-games · England & France',
     description:
-      'Walk Norah and Camile through the big family trip, collecting treasures and passport stamps from London to Paris.',
+      'Pack with the pups, ride the London Eye, zoom under the sea to France and make the Eiffel Tower sparkle, earning passport stamps along the way.',
     tags: ['Story', 'Tap to play'],
     image: '/games/previews/norahs-big-vacation.jpg',
-    imageAlt: "Chapter 1 of Norah's Big Vacation: a house on a sunny day with paw prints to collect",
-    imagePosition: 'center 40%',
+    imageAlt: "The London Eye chapter of Norah's Big Vacation: snap a photo when the glowing pod reaches the top",
+    imagePosition: 'center 38%',
   },
   {
     id: 'nugs-pond',
