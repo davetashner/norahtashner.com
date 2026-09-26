@@ -58,7 +58,7 @@ const generateRss = () => {
       <title>${escapeXml(ep.title)}</title>
       <description><![CDATA[${ep.description}]]></description>
       <pubDate>${formatRssDate(ep.publishDate)}</pubDate>
-      <enclosure url="${ep.audioUrl}" length="0" type="audio/mpeg"/>
+      <enclosure url="${ep.audioUrl}" length="${ep.fileSizeBytes || 0}" type="audio/mpeg"/>
       <guid isPermaLink="false">${podcast.website}/episode/${ep.episodeNumber}</guid>
       <itunes:duration>${ep.duration}</itunes:duration>
       <itunes:episode>${ep.episodeNumber}</itunes:episode>
