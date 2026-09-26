@@ -18,10 +18,10 @@
       "title": "Episode 1: Welcome to the Podcast!",
       "description": "Norah introduces herself, shares jokes, and tells the story about how we got our youngest dog, Penny.",
       "publishDate": "2026-01-02",
-      "duration": "10:07",
-      "durationSeconds": 607,
-      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E01-v2.mp3",
-      "fileSizeBytes": 14580758,
+      "duration": "09:50",
+      "durationSeconds": 590,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E01.mp3",
+      "fileSizeBytes": 14162244,
       "explicit": false
     },
     {
@@ -42,10 +42,10 @@
       "title": "Episode 3: Science!",
       "description": "Join us as we talk about science; volcanoes, gravity, DNA, and more!",
       "publishDate": "2026-01-17",
-      "duration": "19:44",
-      "durationSeconds": 1184,
-      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E03-v2.mp3",
-      "fileSizeBytes": 28417296,
+      "duration": "19:34",
+      "durationSeconds": 1174,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E03.mp3",
+      "fileSizeBytes": 28179341,
       "explicit": false
     },
     {
