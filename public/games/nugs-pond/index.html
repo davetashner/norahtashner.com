@@ -58,7 +58,9 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webk
 /* home */
 #home{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-block:14px 28px;gap:18px}
 .top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px}
-.brand{display:flex;align-items:center;gap:12px}
+.brand{position:relative;display:flex;align-items:center;gap:12px}
+.home-oscar{flex:none;align-self:center;width:clamp(50px,7vw,68px);margin:0 0 0 -14px;padding:0;border:0;background:none;cursor:pointer;animation:hover 1.4s ease-in-out infinite alternate}
+.home-oscar svg{width:100%;display:block}
 .brand-nug{width:clamp(72px,11vw,104px);flex:none;animation:bob 2.8s ease-in-out infinite alternate}
 .brand h1{font-size:clamp(34px,6vw,56px);letter-spacing:-.01em}
 .brand .tag{color:var(--ink-soft);font-size:15px;max-width:30ch}
@@ -163,7 +165,7 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webk
 /* Pond Race */
 .pick-wrap{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding-block:8px}
 .pick-wrap h3{font-size:clamp(26px,4vw,40px);text-align:center}
-.racer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:1fr;gap:12px;width:min(100%,640px)}
+.racer-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:12px;width:min(100%,480px)}
 .racer-opt{height:100%;min-width:0;background:var(--paper);border:3px solid var(--ink);border-radius:22px;box-shadow:0 4px 0 var(--ink);padding:8px 6px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:box-shadow .12s,background .12s}
 /* every character sits in the same square box, whatever the shape of its drawing */
 .racer-art{display:grid;place-items:center;width:100%;max-width:92px;aspect-ratio:1}
@@ -240,10 +242,17 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webk
 .bfly svg{width:100%;animation:flap .22s ease-in-out infinite alternate}
 .bfly.b1{top:30%;left:10%}
 .bfly.b2{top:18%;left:60%;width:34px;animation-duration:28s;animation-delay:-9s}
+/* Oscar darts between the lotus flowers and hovers over each one */
+.hbird{position:absolute;top:50%;left:8%;width:clamp(50px,6.5vw,76px);animation:zip 18s ease-in-out infinite}
+.hbird svg{width:100%;display:block;animation:hover .6s ease-in-out infinite alternate}
+.oscar-wing{transform-box:fill-box;transform-origin:70% 95%;animation:hum .06s linear infinite alternate}
 @keyframes drift{from{left:-220px}to{left:110%}}
 @keyframes pulse{to{transform:scale(1.06)}}
 @keyframes shimmer{from{opacity:.25;transform:scaleX(.8)}to{opacity:.8;transform:scaleX(1.1)}}
 @keyframes flap{from{transform:scaleX(1)}to{transform:scaleX(.35)}}
+@keyframes hum{to{transform:scaleY(.3)}}
+@keyframes hover{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+@keyframes zip{0%,16%{transform:translate(0,0) scaleX(1)}22%,38%{transform:translate(32vw,10vh) scaleX(1)}44%,58%{transform:translate(62vw,4vh) scaleX(1)}61%{transform:translate(62vw,4vh) scaleX(-1)}68%,82%{transform:translate(30vw,-22vh) scaleX(-1)}92%{transform:translate(0,0) scaleX(-1)}96%,100%{transform:translate(0,0) scaleX(1)}}
 @keyframes flit{0%{transform:translate(0,0)}20%{transform:translate(22vw,-6vh)}40%{transform:translate(40vw,4vh)}60%{transform:translate(18vw,10vh)}80%{transform:translate(-4vw,-4vh)}100%{transform:translate(0,0)}}
 .float-num{position:absolute;z-index:6;pointer-events:none;font-family:var(--display);font-weight:900;line-height:1;color:#3CC05C;-webkit-text-stroke:4px var(--ink);paint-order:stroke fill;animation:floatUp 2s cubic-bezier(.35,.1,.3,1) forwards}
 .float-num.plain{color:#fff}
@@ -402,7 +411,7 @@ button.sticker:active{transform:scale(.92)!important}
 @keyframes swimAway{to{transform:translateX(-140%) scale(.8);opacity:0}}
 @keyframes swimIn{from{transform:translateX(140%);opacity:0}to{transform:translateX(0);opacity:1}}
 @media (prefers-reduced-motion:reduce){
-  .cloud,.bfly,.bfly svg,.rip,.lotus,.hop-scene .sun{animation:none}
+  .cloud,.bfly,.bfly svg,.rip,.lotus,.hop-scene .sun,.hbird,.hbird svg,.home-oscar,.oscar-wing{animation:none}
   .brand-nug,.fish svg,.res-nug{animation:none}
   .rider,.racer.racer-me{transition-duration:.01s}
 }
@@ -444,6 +453,7 @@ button.sticker:active{transform:scale(.92)!important}
     </g>
   </svg>
   <div class="bfly b1"><svg viewBox="0 0 40 30"><ellipse cx="11" cy="11" rx="10" ry="9" fill="#FF9FC0" stroke="#17363A" stroke-width="2"/><ellipse cx="29" cy="11" rx="10" ry="9" fill="#FF9FC0" stroke="#17363A" stroke-width="2"/><ellipse cx="13" cy="23" rx="7" ry="6" fill="#FFC93C" stroke="#17363A" stroke-width="2"/><ellipse cx="27" cy="23" rx="7" ry="6" fill="#FFC93C" stroke="#17363A" stroke-width="2"/><rect x="18.5" y="6" width="3" height="22" rx="1.5" fill="#17363A"/></svg></div>
+  <div class="hbird" id="hopOscar"></div>
   <div class="bfly b2"><svg viewBox="0 0 40 30"><ellipse cx="11" cy="11" rx="10" ry="9" fill="#8FD3F4" stroke="#17363A" stroke-width="2"/><ellipse cx="29" cy="11" rx="10" ry="9" fill="#8FD3F4" stroke="#17363A" stroke-width="2"/><ellipse cx="13" cy="23" rx="7" ry="6" fill="#C6A4F5" stroke="#17363A" stroke-width="2"/><ellipse cx="27" cy="23" rx="7" ry="6" fill="#C6A4F5" stroke="#17363A" stroke-width="2"/><rect x="18.5" y="6" width="3" height="22" rx="1.5" fill="#17363A"/></svg></div>
 </div>
 <main id="app">
@@ -452,6 +462,7 @@ button.sticker:active{transform:scale(.92)!important}
     <header class="top">
       <div class="brand">
         <div class="brand-nug" id="homeNug"></div>
+        <button type="button" class="home-oscar" id="homeOscar" aria-label="Say hi to Oscar the hummingbird"></button>
         <div>
           <h1>Nug's Pond</h1>
           <p class="tag">Hop, pop, race and match your way through adding and subtracting.</p>
@@ -830,6 +841,7 @@ const sfx = {
   pop(){ tone(700, .09, {slide:2.2, vol:.16}); },
   hop(){ tone(380, .13, {type:'triangle', slide:1.7, vol:.12}); },
   tap(){ tone(560, .05, {vol:.07}); },
+  chirp(){ [0, .09, .18].forEach((at, i) => tone(2400 + i * 300, .06, {at, slide: 1.4, vol: .07})); },
   calm(){ tone(660, .3, {type: 'triangle', vol: .14}); tone(520, .3, {at: .25, type: 'triangle', vol: .14}); tone(392, .6, {at: .5, type: 'triangle', vol: .14}); },
   oops(){ tone(330, .28, {type: 'triangle', slide: .85, vol: .2}); tone(260, .5, {at: .3, type: 'triangle', slide: .7, vol: .2}); },
   tick(){ tone(880, .05, {vol:.07, type:'square'}); },
@@ -928,6 +940,7 @@ const RACERS = [
   {id:'penguin', name:'Waddles', fur:'#3A4B63', belly:'#FFFFFF', inner:'#3A4B63', ears:'none', beak:true},
   {id:'fox',     name:'Maple',   fur:'#FF8A3D', belly:'#FFFFFF', inner:'#FFFFFF', ears:'pointy', snout:true},
   {id:'unicorn', name:'Sparkle', fur:'#FFFFFF', belly:'#F3E9FF', inner:'#C6A4F5', ears:'pointy', horn:true},
+  {id:'oscar',   name:'Oscar'},
 ];
 function critter(r){
   const S = 'stroke="#17363A" stroke-width="3"', J = 'stroke-linejoin="round"';
@@ -958,8 +971,31 @@ function critter(r){
     ${r.beak ? `<path d="M53 60 L67 60 L60 69 Z" fill="#FFA53D" ${S} ${J}/>` : `<ellipse cx="60" cy="60" rx="4" ry="3" fill="#17363A"/><path d="M54 65 Q57 69 60 65 Q63 69 66 65" stroke="#17363A" stroke-width="2.5" fill="none" stroke-linecap="round"/>`}
   </svg>`;
 }
+// Oscar the red-breasted hummingbird: green back, ruby-red breast, white belly and a long beak, facing right
+function oscar(attrs = ''){
+  const S = 'stroke="#17363A" stroke-width="3"', J = 'stroke-linejoin="round"';
+  const wing = (cx, cy, fill) => `<g class="oscar-wing"><ellipse cx="${cx}" cy="${cy}" rx="11" ry="27" transform="rotate(-28 ${cx} ${cy})" fill="${fill}" stroke="#17363A" stroke-width="2.5"/></g>`;
+  return `<svg viewBox="0 -6 120 118" ${attrs} aria-hidden="true">
+    <ellipse cx="58" cy="106" rx="24" ry="4" fill="rgba(23,54,58,.16)"/>
+    <path d="M40 66 L12 86 L20 92 L28 88 L30 96 L48 74 Z" fill="#2E8A5A" ${S} ${J}/>
+    ${wing(46, 34, 'rgba(190,230,250,.75)')}
+    <ellipse cx="56" cy="64" rx="27" ry="19" transform="rotate(-22 56 64)" fill="#3FB27F" ${S}/>
+    <ellipse cx="58" cy="74" rx="15" ry="9" transform="rotate(-22 58 74)" fill="#FFFFFF"/>
+    <ellipse cx="72" cy="57" rx="16" ry="14" fill="#E5484D" ${S}/>
+    <ellipse cx="70" cy="60" rx="6" ry="4" fill="#FF8A8A"/>
+    <circle cx="78" cy="38" r="18" fill="#3FB27F" ${S}/>
+    <path d="M94 36 L119 35 L94 42 Z" fill="#17363A" ${J}/>
+    <circle cx="84" cy="34" r="5.5" fill="#17363A"/><circle cx="85.8" cy="32.3" r="1.8" fill="#fff"/>
+    <circle cx="86" cy="45" r="4" fill="#FF9A8A" opacity=".7"/>
+    ${wing(54, 32, 'rgba(215,242,255,.9)')}
+  </svg>`;
+}
+const OSCAR_SAYS = ["Hi! I'm Oscar!", 'Zoom zoom!', 'Hum hum hum!', 'I love flowers!', 'You can do it!', 'Nug is my best friend!'];
 // Nug's drawing leaves room above his head for hats; crop it when he isn't wearing one so he fills his tile
-function racerArt(id){ const r = RACERS.find(x => x.id === id) || RACERS[0]; return r.id === 'pip' ? nug(P.hat, 'data-tight') : critter(r); }
+function racerArt(id){
+  const r = RACERS.find(x => x.id === id) || RACERS[0];
+  return r.id === 'pip' ? nug(P.hat, 'data-tight') : r.id === 'oscar' ? oscar() : critter(r);
+}
 const FISH_COLORS = [['#FF9E6B','#E86F3A'],['#FFD54A','#E0A800'],['#8FD3F4','#4AA3D0'],['#C6A4F5','#8E6BD8'],['#FF8FB1','#E0457B'],['#9BE08A','#4FAF3A']];
 function fish(n, [c, d]){
   return `<svg viewBox="0 0 110 70" aria-hidden="true">
@@ -1681,6 +1717,12 @@ function openCloset(from, focusSel){
   if (el) requestAnimationFrame(() => { el.scrollIntoView({block: 'center', behavior: reduced ? 'auto' : 'smooth'}); el.classList.add('spot'); });
 }
 $('#openCloset').addEventListener('click', () => openCloset('home'));
+$('#homeOscar').innerHTML = $('#hopOscar').innerHTML = oscar();
+$('#homeOscar').addEventListener('click', e => {
+  const brand = $('.brand'), r = e.currentTarget.getBoundingClientRect(), br = brand.getBoundingClientRect();
+  sfx.chirp();
+  speech(brand, OSCAR_SAYS[Math.floor(Math.random() * OSCAR_SAYS.length)], r.left - br.left + r.width / 2, r.top - br.top + 4);
+});
 $('#closetBack').addEventListener('click', () => { if (closetReturn === 'home') renderHome(); show(closetReturn); });
 
 /* ---------- sticker pages ---------- */
