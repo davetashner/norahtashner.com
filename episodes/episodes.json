@@ -18,9 +18,10 @@
       "title": "Episode 1: Welcome to the Podcast!",
       "description": "Norah introduces herself, shares jokes, and tells the story about how we got our youngest dog, Penny.",
       "publishDate": "2026-01-02",
-      "duration": "09:50",
-      "durationSeconds": 590,
-      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E01.mp3",
+      "duration": "10:07",
+      "durationSeconds": 607,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E01-v2.mp3",
+      "fileSizeBytes": 14580758,
       "explicit": false
     },
     {
@@ -29,9 +30,10 @@
       "title": "Episode 2: All About Norah",
       "description": "Jokes, True or False, and all about Norah!",
       "publishDate": "2026-01-11",
-      "duration": "09:10",
-      "durationSeconds": 550,
-      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E02.mp3",
+      "duration": "09:43",
+      "durationSeconds": 583,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E02-v2.mp3",
+      "fileSizeBytes": 13993316,
       "explicit": false
     },
     {
@@ -40,9 +42,10 @@
       "title": "Episode 3: Science!",
       "description": "Join us as we talk about science; volcanoes, gravity, DNA, and more!",
       "publishDate": "2026-01-17",
-      "duration": "19:34",
-      "durationSeconds": 1174,
-      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E03.mp3",
+      "duration": "19:44",
+      "durationSeconds": 1184,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E03-v2.mp3",
+      "fileSizeBytes": 28417296,
       "explicit": false
     },
     {
@@ -51,9 +54,10 @@
       "title": "Episode 4: Snow Day!",
       "description": "Norah reminisces about her recent trip to Italy and tells lots of snow facts!",
       "publishDate": "2026-01-25",
-      "duration": "14:26",
-      "durationSeconds": 866,
-      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E04.mp3",
+      "duration": "14:22",
+      "durationSeconds": 862,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E04-v2.mp3",
+      "fileSizeBytes": 20692157,
       "explicit": false
     },
     {
@@ -62,9 +66,22 @@
       "title": "Episode 5: Sea Turtles!",
       "description": "Join Norah as she spends her 7th day trapped under the ice! We talk all about sea turtles!",
       "publishDate": "2026-01-31",
-      "duration": "13:05",
-      "durationSeconds": 785,
-      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E05.mp3",
+      "duration": "13:23",
+      "durationSeconds": 803,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E05-v2.mp3",
+      "fileSizeBytes": 19263363,
+      "explicit": false
+    },
+    {
+      "episodeNumber": 6,
+      "season": 1,
+      "title": "Episode 6: London and Paris!",
+      "description": "Jokes, Penny the toy-stealing dog, and Norah's big trip to England and France! She rides the London Eye, takes a train under the sea through the Chunnel, has a picnic by the Eiffel Tower, and gets her ears pierced!",
+      "publishDate": "2026-09-26",
+      "duration": "17:33",
+      "durationSeconds": 1053,
+      "audioUrl": "https://norahtashner.com/podcast/episodes/S01E06.mp3",
+      "fileSizeBytes": 25281349,
       "explicit": false
     }
   ]
