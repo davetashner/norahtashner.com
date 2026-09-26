@@ -24,7 +24,8 @@ function NugsPondPage() {
         <p>
           Pick how big the numbers are, then choose a game: guess where <b>Nug</b> lands
           in Lily Hop, pop the right bubble in Bubble Pop, race Duck in Pond Race, or
-          finish the math sentence in Fish Friends. Stars unlock 14 hats, 48 stickers
+          finish the math sentence in Fish Friends. Say hi to <b>Oscar</b> the hummingbird
+          while you play. Stars unlock 14 hats, 48 stickers
           that make animal sounds and new sticker-page backgrounds, and at 100 stars Nug
           can start wearing outfits. Made for iPad. 🦆🫧🐟
         </p>
