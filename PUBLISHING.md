@@ -30,8 +30,9 @@ If the pre-commit hook isn't working, here's the manual process:
 ### 0. Intro/Outro Template
 
 Every episode uses the same layout: intro music alone from 0:00 to 0:30, Norah
-starts talking at **0:30** as the intro music starts fading out, and the music
-is completely gone by **0:40** (10 s fade). Keep the intro music about **3 dB
+starts talking at **0:30**. The intro music ducks about 10 dB under her voice
+between 0:29.5 and 0:30.5, so her first words are clear, then fades out
+completely by **0:40**. Keep the intro music about **3 dB
 louder than Norah's voice**; much louder and the fade sounds like it starts late. The outro music fades in over 3 s, starting 1 s before it begins.
 
 ### 1. Normalize the Audio
