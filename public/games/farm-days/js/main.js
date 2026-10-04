@@ -4,7 +4,7 @@ import { sfx, music, setMuted, isMuted, engine } from './audio.js'
 import { fx, updateFx, drawFx, burst, hearts, confetti, floatText } from './fx.js'
 import { makeWorld, SPECIES, ZONES, GROUND, WORLD_W, VIEW_W, VIEW_H, POND, DOCK } from './world.js'
 import { makePlayer, updatePlayer, drawPlayer, setPose } from './player.js'
-import { startFishing, updateFishing, drawFishing, roundRect } from './fishing.js'
+import { startFishing, updateFishing, drawFishing, roundRect, LEAVE_RECT } from './fishing.js'
 import { drawHud } from './hud.js'
 import { clamp, lerp, rand, ease } from './util.js'
 import { createHarvest } from './harvest.js'
@@ -138,6 +138,7 @@ function collect(it) {
   }
 }
 
+function cancelFishing() { game.fishing = null; player.freeze = false; player.pose = null; floatText(player.x, player.y - 200, 'Maybe next time!', '#ffe9a0') }
 let lastDone = 0
 function checkChores() {
   const n = CHORES.filter((c) => c.done(game.counts)).length
@@ -153,7 +154,7 @@ function updatePlay(dt) {
   if (game.fishing) {
     music.play('fishing')
     const r = updateFishing(game.fishing, dt, input)
-    if (input.hit('Escape')) { game.fishing = null; player.freeze = false; player.pose = null }
+    if (input.hit('Escape') || game.leaveFishing) { game.leaveFishing = false; cancelFishing() }
     if (r === 'caught') {
       game.counts.fish++; burst(player.x + 120, player.y - 40, 16, { color: '#bfe8ff', speed: 260, up: 220, grav: 600 }); say(player.x + 40, player.y - 200, `You caught a ${game.fishing.caught}!`, '#fff')
       world.items.push({ kind: 'star', x: player.x + 80, y: GROUND - 90, got: false, bob: 0 }); setPose(player, 'cheer', 1.1)
@@ -334,6 +335,11 @@ function toLogical(e) {
 }
 canvas.addEventListener('pointerdown', (e) => {
   sfx.unlock(); tapped = true; setTimeout(() => (tapped = false), 120)
+  if (game.mode === 'play' && game.fishing) {          // tap the Leave button to quit fishing
+    const p = toLogical(e), r = LEAVE_RECT(VIEW_W, VIEW_H)
+    if (p.x >= r.x - 8 && p.x <= r.x + r.w + 8 && p.y >= r.y - 8 && p.y <= r.y + r.h + 8) game.leaveFishing = true
+    return
+  }
   if (game.mode !== 'title') return
   pointer = toLogical(e)
   CARDS.forEach((c, i) => { if (Math.abs(pointer.x - c.x) < 150 && pointer.y > 330 && pointer.y < 690) { titleSel = i; startFromTitle() } })
