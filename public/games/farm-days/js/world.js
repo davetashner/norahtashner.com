@@ -92,7 +92,7 @@ export function makeWorld() {
   // chickens by the coop
   for (const x of [470, 560, 700, 790]) A('chicken', x, { range: 160, layT: rand(3, 8) })
   // goats
-  A('goat_black', 1750, { range: 260, name: 'Cocoa' }); A('goat_bw', 2010, { range: 220, name: 'Domino' }); A('goat_bw', 2580, { range: 200, name: 'Pepper' })
+  A('goat_black', 1750, { range: 260, name: 'Cocoa' }); A('goat_bw', 2010, { range: 220, name: 'Rock' }); A('goat_bw', 2580, { range: 200, name: 'Xylophone' })
   // geese: near pond start and barn
   A('goose', 3250, { range: 150, rideable: true }); A('goose', 5000, { range: 150, rideable: true })
   // cows, sheep, pig near barn / orchard
