@@ -46,8 +46,13 @@ let eng = null
 export function engine(frac) {
   const c = ensure(); if (!c) return
   if (frac === null) { if (eng) { eng.g.gain.setTargetAtTime(0, c.currentTime, 0.1); const e = eng; setTimeout(() => e.o.stop(), 400); eng = null } return }
-  if (!eng) { const o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; g.gain.value = 0; o.connect(g); g.connect(master); o.start(); eng = { o, g } }
-  eng.o.frequency.setTargetAtTime(48 + frac * 46, c.currentTime, 0.1); eng.g.gain.setTargetAtTime(0.035 + frac * 0.03, c.currentTime, 0.1)
+  if (!eng) {
+    const o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain()
+    o.type = 'triangle'; f.type = 'lowpass'; f.frequency.value = 160; g.gain.value = 0
+    o.connect(f); f.connect(g); g.connect(master); o.start(); eng = { o, g }
+  }
+  // soft low rumble: triangle through a low-pass, a fraction of the old level
+  eng.o.frequency.setTargetAtTime(42 + frac * 22, c.currentTime, 0.15); eng.g.gain.setTargetAtTime(0.008 + frac * 0.012, c.currentTime, 0.15)
 }
 
 // gentle pentatonic loop
