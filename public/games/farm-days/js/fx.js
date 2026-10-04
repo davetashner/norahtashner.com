@@ -20,6 +20,7 @@ export function confetti(x, y, n = 80) {
   const cols = ['#ef5b5b', '#f7c548', '#5bbf6a', '#58a6e8', '#c77ddb', '#ff9a4d']
   for (let i = 0; i < n; i++) fx.parts.push({ x: x + rand(-300, 300), y: y + rand(-60, 0), vx: rand(-90, 90), vy: rand(-80, 120), life: rand(2, 3.6), max: 3.6, size: rand(7, 13), color: cols[i % cols.length], grav: 120, kind: 'conf', rot: rand(0, 6), vr: rand(-6, 6) })
 }
+export function clearFx() { fx.parts.length = 0; fx.texts.length = 0 }
 export function floatText(x, y, text, color = '#fff') { fx.texts.push({ x, y, text, color, life: 1.4, max: 1.4 }) }
 
 export function updateFx(dt) {
@@ -32,10 +33,10 @@ export function updateFx(dt) {
   fx.texts = fx.texts.filter((t) => t.life > 0)
 }
 
-export function drawFx(ctx, camX) {
+export function drawFx(ctx, camX, camY = 0) {
   for (const p of fx.parts) {
     const a = Math.max(0, p.life / p.max)
-    ctx.save(); ctx.globalAlpha = Math.min(1, a * 1.6); ctx.translate(p.x - camX, p.y)
+    ctx.save(); ctx.globalAlpha = Math.min(1, a * 1.6); ctx.translate(p.x - camX, p.y - camY)
     if (p.kind === 'icon') { const im = img('ui', p.icon); if (im) ctx.drawImage(im, -p.size / 2, -p.size / 2, p.size, p.size) }
     else if (p.kind === 'conf') { ctx.rotate(p.rot); ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2) }
     else if (p.kind === 'puff') { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, p.size * (1.4 - a * 0.6), 0, 7); ctx.fill() }
@@ -45,8 +46,8 @@ export function drawFx(ctx, camX) {
   ctx.textAlign = 'center'; ctx.font = '700 26px "Trebuchet MS", system-ui, sans-serif'
   for (const t of fx.texts) {
     ctx.globalAlpha = Math.min(1, t.life / t.max * 2)
-    ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(60,40,20,.85)'; ctx.strokeText(t.text, t.x - camX, t.y)
-    ctx.fillStyle = t.color; ctx.fillText(t.text, t.x - camX, t.y)
+    ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(60,40,20,.85)'; ctx.strokeText(t.text, t.x - camX, t.y - camY)
+    ctx.fillStyle = t.color; ctx.fillText(t.text, t.x - camX, t.y - camY)
   }
   ctx.globalAlpha = 1
 }

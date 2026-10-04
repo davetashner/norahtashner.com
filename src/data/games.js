@@ -45,12 +45,12 @@ export const GAMES = [
     to: '/farm-days',
     title: 'Farm Days',
     menuLabel: 'Farm Days',
-    tagline: 'A farm side-scroller with Mr. Jersh & Mrs. Carish',
+    tagline: '3 levels · farm chores, corn harvest & pool party',
     description:
-      'Run, jump and swim around the farm, pet the goats, catch a fish and ride a giant goose up to the Golden Egg.',
+      'Do the farm chores, drive the combine through the corn from above, then dive in and play sharks and minnows.',
     tags: ['Adventure', 'Keyboard & touch'],
     image: '/games/previews/farm-days.jpg',
-    imageAlt: 'Farm Days: a farmer beside the goat ramp with pygmy goats, a picnic table and picket fence',
-    imagePosition: 'center 40%',
+    imageAlt: 'Farm Days: a farmer by the goat ramp, a combine harvesting corn from above, and sharks and minnows in the pool',
+    imagePosition: 'center',
   },
 ]

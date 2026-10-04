@@ -1,12 +1,14 @@
 import { loadAll, img, drawFrame, drawProp } from './assets.js'
 import { input } from './input.js'
-import { sfx, music, setMuted, isMuted } from './audio.js'
+import { sfx, music, setMuted, isMuted, engine } from './audio.js'
 import { fx, updateFx, drawFx, burst, hearts, confetti, floatText } from './fx.js'
 import { makeWorld, SPECIES, ZONES, GROUND, WORLD_W, VIEW_W, VIEW_H, POND, DOCK } from './world.js'
 import { makePlayer, updatePlayer, drawPlayer, setPose } from './player.js'
 import { startFishing, updateFishing, drawFishing, roundRect } from './fishing.js'
 import { drawHud } from './hud.js'
 import { clamp, lerp, rand, ease } from './util.js'
+import { createHarvest } from './harvest.js'
+import { createPool } from './pool.js'
 
 const canvas = document.getElementById('game')
 const ctx = canvas.getContext('2d')
@@ -26,7 +28,12 @@ try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')) } 
 const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)) } catch { /* ignore */ } }
 
 // ---------- game state ----------
-const game = { mode: 'loading', loaded: 0, who: save.who, time: 0 }
+const game = { mode: 'loading', loaded: 0, who: save.who, time: 0, stars: { l2: 0, l3: 0 } }
+const host = { who: () => game.who, name: () => (game.who === 'jersh' ? 'Mr. Jersh' : 'Mrs. Carish') }
+const harvest = createHarvest(host)
+const pool = createPool(host)
+function setMode(m) { game.mode = m; document.body.dataset.scene = m === 'harvest' ? 'harvest' : m === 'pool' ? 'pool' : 'side' }
+const confirmHit = () => input.hit('KeyE') || input.hit('Space') || tapped
 let world, player
 
 const CHORES = [
@@ -43,6 +50,7 @@ function newGame(who) {
   Object.assign(game, { mode: 'play', who, counts: { star: 0, egg: 0, corn: 0, apple: 0, fish: 0, sunflower: 0, pet: 0, fed: 0, golden: 0 },
     chores: CHORES, prompt: null, zoneBanner: 0, zoneName: '', zone: -1, fishing: null, camX: 0, shake: 0, petted: new Set(), winT: 0, time: 0, introT: 0 })
   game.camX = 0
+  setMode('play')
   music.start()
 }
 
@@ -178,7 +186,7 @@ function updateWin(dt) {
   game.winT += dt; game.prompt = null; updateAnimals(dt); updateFx(dt)
   if (Math.random() < dt * 6) confetti(game.camX + rand(200, 1000), -20, 6)
   updatePlayer(player, dt, { hit: () => false, held: () => false, axis: () => 0 }, world)
-  if (game.winT > 1.5 && (input.hit('KeyE') || input.hit('Space') || tapped)) newGame(game.who)
+  if (game.winT > 1.5 && confirmHit()) startCutscene()
 }
 
 // ---------- draw ----------
@@ -296,7 +304,7 @@ function drawWin() {
   ctx.fillStyle = 'rgba(40,28,16,.55)'; ctx.fillRect(0, 0, VIEW_W, VIEW_H)
   ctx.fillStyle = 'rgba(255,247,222,.97)'; ctx.strokeStyle = '#7a5230'; ctx.lineWidth = 6
   roundRect(ctx, VIEW_W / 2 - 330, 150, 660, 360, 28); ctx.fill(); ctx.stroke()
-  ctx.textAlign = 'center'; ctx.fillStyle = '#c0452f'; ctx.font = `800 56px ${FONT}`; ctx.fillText('Farm Day Complete!', VIEW_W / 2, 235)
+  ctx.textAlign = 'center'; ctx.fillStyle = '#c0452f'; ctx.font = `800 56px ${FONT}`; ctx.fillText('Level 1 Complete!', VIEW_W / 2, 235)
   ctx.fillStyle = '#4a3320'; ctx.font = `700 26px ${FONT}`
   ctx.fillText(`${game.who === 'jersh' ? 'Mr. Jersh' : 'Mrs. Carish'} found the Golden Egg!`, VIEW_W / 2, 285)
   const c = game.counts
@@ -306,8 +314,8 @@ function drawWin() {
     if (im) { const h = 56, w = im.width * h / im.height; ctx.drawImage(im, x - w / 2, 320, Math.min(w, 80), h) }
     ctx.fillStyle = '#4a3320'; ctx.font = `800 30px ${FONT}`; ctx.fillText(String(n), x, 410)
   })
-  ctx.font = `700 22px ${FONT}`; ctx.fillStyle = '#8a6a44'; ctx.fillText(`Best: ${save.best} stars · Days finished: ${save.wins}`, VIEW_W / 2, 450)
-  if (game.winT > 1.5 && Math.floor(game.winT * 2) % 2 === 0) { ctx.fillStyle = '#3f8f4a'; ctx.font = `800 26px ${FONT}`; ctx.fillText('Press E, Space or tap to play again', VIEW_W / 2, 490) }
+  ctx.font = `700 22px ${FONT}`; ctx.fillStyle = '#8a6a44'; ctx.fillText(`Level 1 complete · Best: ${save.best} stars`, VIEW_W / 2, 450)
+  if (game.winT > 1.5 && Math.floor(game.winT * 2) % 2 === 0) { ctx.fillStyle = '#3f8f4a'; ctx.font = `800 26px ${FONT}`; ctx.fillText('Press E or tap: climb into the combine!', VIEW_W / 2, 490) }
   ctx.restore()
 }
 
@@ -362,6 +370,103 @@ function drawTitle() {
   ctx.strokeText(msg, VIEW_W / 2, 706); ctx.fillStyle = '#fff'; ctx.fillText(msg, VIEW_W / 2, 706)
 }
 
+// ---------- level 1 -> 2 cutscene: climb into the combine ----------
+const cut = { t: 0 }
+function startCutscene() {
+  setMode('cut'); cut.t = 0; music.stop()
+  player.ride = null; player.y = GROUND; player.seg = world.platforms.find((s) => s.tag === 'ground' && player.x >= s.x0 && player.x <= s.x1) || null
+  player.freeze = true; player.pose = null; player.vx = 0; player.dir = 1
+  if (!player.seg) { player.x = 7480; player.seg = null }
+  cut.px0 = player.x
+  cut.camX = game.camX
+  game.camX = clamp(player.x - 380, 0, WORLD_W - VIEW_W); cut.camX = game.camX
+  fx.parts.length = 0; fx.texts.length = 0
+  cut.said = false
+}
+function combineGeom() {
+  const h = 330, im = img('props', 'combine'), w = im ? im.width * h / im.height : 680
+  return { h, w }
+}
+function updateCutscene(dt) {
+  cut.t += dt
+  const { w } = combineGeom()
+  const ladderX = (comb) => comb - w * 0.5 + w * 0.1
+  const stopX = cut.px0 + w * 0.5 + 120                // where the combine parks (world x of its center)
+  let cx
+  if (cut.t < 1.8) cx = lerp(game.camX + VIEW_W + w, stopX, ease(cut.t / 1.8))
+  else if (cut.t < 4.3) cx = stopX
+  else cx = stopX + ease(clamp((cut.t - 4.3) / 1.7, 0, 1)) * (VIEW_W + w)
+  cut.cx = cx
+  // farmer walks to the ladder, then climbs
+  if (cut.t > 1.8 && cut.t < 2.9) { player.vx = 160; player.x = lerp(cut.px0, ladderX(stopX) + 8, ease((cut.t - 1.8) / 1.1)); player.anim += dt * 7 }
+  else { player.vx = 0 }
+  cut.climb = clamp((cut.t - 2.9) / 1.0, 0, 1)
+  if (cut.t > 3.9 && !cut.said) { cut.said = true; sfx.chore() }
+  if (cut.t > 1.8 && cut.t < 1.9) sfx.honk()
+  if (cut.t > 4.3) engine(clamp((cut.t - 4.3) / 1.0, 0, 1))
+  updateFx(dt)
+  if (cut.t > 5.8 || (cut.t > 0.8 && confirmHit())) startHarvest()
+}
+function drawCutscene() {
+  const camX = game.camX
+  drawBackdrop(camX, game.time); drawGround(camX); drawPond(camX); drawProps(camX, -1); drawProps(camX, 0); drawAnimals(camX)
+  const { h, w } = combineGeom(), im = img('props', 'combine'), cx = cut.cx - camX, base = GROUND + 14
+  const ladderX = cx - w * 0.5 + w * 0.1
+  if (cut.climb < 1 || cut.t < 3.95) {
+    // farmer: walking, then climbing the ladder to the cab
+    const p = player
+    if (cut.climb > 0) {
+      const t = ease(cut.climb), cabX = cx - w * 0.5 + w * 0.34, cabY = base - h * 0.68
+      const x = lerp(ladderX + 12, cabX, t), y = lerp(base - 20, cabY, t)
+      drawFrame(ctx, p.who, [1, 4], x, y, PLAYER_SZ * lerp(1, 0.45, t), { alpha: 1 - clamp((t - 0.7) / 0.3, 0, 1) })
+    } else {
+      drawPlayer(ctx, p, camX)
+    }
+  }
+  if (im) ctx.drawImage(im, cx - w / 2, base - h, w, h)
+  if (cut.t >= 3.9) {
+    // driver badge in the cab window
+    const pim = img('sprites', game.who + '_portrait'), bx = cx - w * 0.5 + w * 0.36, by = base - h * 0.69
+    if (pim) {
+      ctx.save(); ctx.beginPath(); ctx.arc(bx, by, 30, 0, 7); ctx.clip()
+      const s = 70 / pim.width; ctx.drawImage(pim, bx - 35, by - 30, pim.width * s, pim.height * s); ctx.restore()
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(bx, by, 30, 0, 7); ctx.stroke()
+    }
+    if (cut.t < 5.4) {
+      ctx.save(); ctx.textAlign = 'center'; ctx.font = '800 34px "Trebuchet MS", system-ui, sans-serif'; ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(60,40,20,.85)'
+      const msg = 'Time to harvest the corn!'; ctx.strokeText(msg, VIEW_W / 2, 150); ctx.fillStyle = '#fff'; ctx.fillText(msg, VIEW_W / 2, 150); ctx.restore()
+    }
+  }
+  drawFx(ctx, camX)
+  const fade = cut.t > 5.2 ? clamp((cut.t - 5.2) / 0.6, 0, 1) : 0
+  if (fade) { ctx.fillStyle = `rgba(255,248,225,${fade})`; ctx.fillRect(0, 0, VIEW_W, VIEW_H) }
+}
+const PLAYER_SZ = 330
+
+function startHarvest() { engine(null); music.stop(); setMode('harvest'); harvest.start(); game.wasHarvestDone = false }
+function startPool() { harvest.stop(); setMode('pool'); pool.start(); music.start() }
+function startFinal() { pool.stop(); setMode('final'); game.finalT = 0; confetti(game.camX + 640, 0, 100); music.start()
+  save.wins++; persist() }
+
+function drawFinal() {
+  const bg = img('layers', 'title_bg')
+  if (bg) { const s = Math.max(VIEW_W / bg.width, VIEW_H / bg.height); ctx.drawImage(bg, (VIEW_W - bg.width * s) / 2, (VIEW_H - bg.height * s) / 2, bg.width * s, bg.height * s) }
+  ctx.fillStyle = 'rgba(40,28,16,.4)'; ctx.fillRect(0, 0, VIEW_W, VIEW_H)
+  ctx.fillStyle = 'rgba(255,247,222,.97)'; ctx.strokeStyle = '#7a5230'; ctx.lineWidth = 6; roundRect(ctx, VIEW_W / 2 - 340, 120, 680, 440, 30); ctx.fill(); ctx.stroke()
+  ctx.textAlign = 'center'; ctx.fillStyle = '#c0452f'; ctx.font = `800 54px ${FONT}`; ctx.fillText('What a Farm Day!', VIEW_W / 2, 200)
+  ctx.fillStyle = '#4a3320'; ctx.font = `700 24px ${FONT}`; ctx.fillText(`${host.name()} did the chores, harvested the corn and ruled the pool.`, VIEW_W / 2, 245)
+  const star = img('ui', 'star'), rows = [['Level 1: Farm chores', null], ['Level 2: Corn harvest', game.stars.l2], ['Level 3: Sharks & Minnows', game.stars.l3]]
+  rows.forEach(([name, n], i) => {
+    const y = 300 + i * 70
+    ctx.textAlign = 'left'; ctx.fillStyle = '#4a3320'; ctx.font = `800 26px ${FONT}`; ctx.fillText(name, VIEW_W / 2 - 290, y + 36)
+    for (let k = 0; k < 3 && star; k++) { ctx.globalAlpha = n === null ? 1 : k < n ? 1 : 0.2; ctx.drawImage(star, VIEW_W / 2 + 90 + k * 62, y, 56, 52) }
+    ctx.globalAlpha = 1
+  })
+  ctx.textAlign = 'center'; ctx.fillStyle = '#8a6a44'; ctx.font = `700 20px ${FONT}`; ctx.fillText(`Days finished: ${save.wins}`, VIEW_W / 2, 520)
+  if (game.finalT > 1 && Math.floor(game.finalT * 2) % 2 === 0) { ctx.fillStyle = '#3f8f4a'; ctx.font = `800 26px ${FONT}`; ctx.fillText('Press E or tap to play again', VIEW_W / 2, 548) }
+  drawFx(ctx, 0, 0)
+}
+
 // ---------- main loop ----------
 function drawLoading() {
   ctx.fillStyle = '#2d4a2a'; ctx.fillRect(0, 0, VIEW_W, VIEW_H)
@@ -378,6 +483,18 @@ function frameLoop(now) {
     if (game.mode === 'title') updateTitle(dt)
     else if (game.mode === 'play') updatePlay(dt)
     else if (game.mode === 'win') updateWin(dt)
+    else if (game.mode === 'cut') updateCutscene(dt)
+    else if (game.mode === 'harvest') {
+      harvest.update(dt, input)
+      if (harvest.done && harvest.endT > 1.2 && confirmHit()) { game.stars.l2 = harvest.result.stars; startPool() }
+    } else if (game.mode === 'pool') {
+      pool.update(dt, input)
+      if (pool.done && pool.endT > 1.2 && confirmHit()) { game.stars.l3 = pool.result.stars; startFinal() }
+    } else if (game.mode === 'final') {
+      game.finalT += dt; updateFx(dt)
+      if (Math.random() < dt * 5) confetti(rand(200, 1000), -20, 5)
+      if (game.finalT > 1 && confirmHit()) { lastDone = 0; game.stars = { l2: 0, l3: 0 }; newGame(game.who) }
+    }
     input.endFrame(); acc -= dt
   }
   const k = canvas.width / VIEW_W
@@ -385,17 +502,24 @@ function frameLoop(now) {
   ctx.clearRect(0, 0, VIEW_W, VIEW_H)
   if (game.mode === 'loading') drawLoading()
   else if (game.mode === 'title') drawTitle()
+  else if (game.mode === 'cut') drawCutscene()
+  else if (game.mode === 'harvest') harvest.draw(ctx)
+  else if (game.mode === 'pool') pool.draw(ctx)
+  else if (game.mode === 'final') drawFinal()
   else drawPlay()
   requestAnimationFrame(frameLoop)
 }
 
-window.__farm = { game, get player() { return player }, get world() { return world }, newGame, save }   // debug hook for tests
+window.__farm = { game, get player() { return player }, get world() { return world }, newGame, save, harvest, pool, startHarvest, startPool }   // debug hook for tests
 requestAnimationFrame(frameLoop)
 // debug/test hook: index.html#play=jersh&x=3200&stars=3 jumps straight into the game
 function debugStart() {
   const q = new URLSearchParams(location.hash.slice(1))
   if (!q.has('play')) return false
   startFromTitleAs(q.get('play')); if (q.has('x')) { player.x = +q.get('x'); player.safeX = player.x; game.camX = clamp(player.x - 540, 0, WORLD_W - VIEW_W) }
+  if (q.get('level') === '2') { startFromTitleAs(q.get('play')); startHarvest(); return true }
+  if (q.get('level') === '3') { startFromTitleAs(q.get('play')); startPool(); return true }
+  if (q.get('level') === 'cut') { startFromTitleAs(q.get('play')); player.x = +(q.get('x') || 7000); startCutscene(); return true }
   if (q.get('ride')) { const g = world.animals.find((a) => a.rideable); g.ridden = true; player.ride = g }
   if (q.get('y')) { player.y = +q.get('y'); player.seg = null }
   return true

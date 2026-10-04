@@ -6,12 +6,12 @@ const load = (src) => new Promise((res, rej) => {
 })
 const json = (src) => fetch(src).then((r) => r.json())
 
-export const A = { img: {}, atlas: {} }
+export const A = { img: {}, atlas: {}, pool: { x0: 178, x1: 1093, y0: 254, y1: 610 } }
 
-const SPRITES = ['jersh', 'carish', 'chicken', 'cow', 'goat_black', 'goat_bw', 'sheep', 'pig', 'goose']
+const SPRITES = ['jersh', 'carish', 'chicken', 'cow', 'goat_black', 'goat_bw', 'sheep', 'pig', 'goose', 'kids', 'sharks']
 const PROPS = ['coop', 'picket_fence', 'gate', 'goat_ramp', 'picnic_table', 'spool_table', 'pallets', 'board_fence',
-  'barn', 'silo', 'tractor', 'tree', 'hay_bale', 'trough', 'pond']
-const LAYERS = ['sky', 'far', 'mid', 'ground', 'title_bg']
+  'barn', 'silo', 'tractor', 'tree', 'hay_bale', 'trough', 'pond', 'combine', 'combine_top', 'cart_top', 'corn1', 'corn2', 'corn3', 'corn_ripe', 'stub1', 'stub2', 'rock', 'bale_top', 'tree_top', 'fence_top', 'fallen', 'ear']
+const LAYERS = ['sky', 'far', 'mid', 'ground', 'title_bg', 'pool']
 const UI = ['egg', 'corn', 'sunflower', 'apple', 'fish', 'milk', 'star', 'heart', 'coin', 'basket', 'rod', 'golden_egg', 'logo']
 
 async function tryLoad(path) { try { return await load(new URL(path, base).href) } catch { return null } }
@@ -27,6 +27,7 @@ export async function loadAll(onProgress = () => {}) {
   for (const n of PROPS) add('props', n, `props/${n}.webp`)
   for (const n of LAYERS) add('layers', n, `layers/${n}.webp`)
   for (const n of UI) add('ui', n, `ui/${n}.webp`)
+  jobs.push(json(new URL('pool.json', base).href).then((m) => { A.pool = m }).catch(() => {}))
   await Promise.all(jobs)
 }
 

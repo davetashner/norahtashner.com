@@ -22,5 +22,7 @@ describe('FarmDaysPage', () => {
   it('explains the controls and chores', () => {
     render(<FarmDaysPage />)
     expect(screen.getByText(/six farm chores/i)).toBeInTheDocument()
+    expect(screen.getByText(/Corn harvest/i, { selector: 'b' })).toBeInTheDocument()
+    expect(screen.getByText(/Sharks & Minnows/i, { selector: 'b' })).toBeInTheDocument()
   })
 })

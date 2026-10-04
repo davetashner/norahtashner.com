@@ -4,7 +4,7 @@ function FarmDaysPage() {
   return (
     <section className="farm-page">
       <h1 className="farm-title">Farm Days</h1>
-      <p className="farm-subtitle">A quick farm adventure with Mr. Jersh &amp; Mrs. Carish 🐐🐔🪿</p>
+      <p className="farm-subtitle">Three levels with Mr. Jersh &amp; Mrs. Carish: farm chores, corn harvest and a pool party 🐐🌽🦈</p>
       <div className="farm-container">
         <iframe
           src="/games/farm-days/index.html"
@@ -26,9 +26,16 @@ function FarmDaysPage() {
           <span><kbd>E</kbd> Pet, feed, ride, fish</span>
         </div>
         <p>
-          Pick your farmer, then finish the six farm chores: collect eggs, pet the goats,
-          pick sunflowers, catch a fish, feed a cow and ride the goose up to the Golden Egg.
-          Hop on the goat ramp, swim the pond and grab every star on the way!
+          <b>Level 1 – Farm chores:</b> pick your farmer, then finish the six farm chores: collect eggs,
+          pet the goats, pick sunflowers, catch a fish, feed a cow and ride the goose up to the Golden Egg.
+        </p>
+        <p>
+          <b>Level 2 – Corn harvest:</b> climb into the combine and drive through the cornfield from above.
+          Fill the grain tank, then hold <kbd>E</kbd> beside the grain cart to unload.
+        </p>
+        <p>
+          <b>Level 3 – Sharks &amp; Minnows:</b> dive into the pool and be the shark! Swim with the arrow keys,
+          lunge with <kbd>Space</kbd>, and tag the kids as they cross. Tagged minnows become baby sharks.
           On a phone or tablet, use the on-screen buttons.
         </p>
       </div>

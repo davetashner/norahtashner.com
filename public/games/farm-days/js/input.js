@@ -10,9 +10,11 @@ addEventListener('keydown', (e) => {
   const code = ALIAS[e.code] || e.code
   if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault()
   if (!e.repeat) press(code)
+  if (e.code === 'ArrowUp' || e.code === 'KeyW') press('MoveUp')
+  if (e.code === 'ArrowDown' || e.code === 'KeyS') press('MoveDown')
   if (e.code.startsWith('Shift')) down.add('Shift')
 })
-addEventListener('keyup', (e) => { release(ALIAS[e.code] || e.code); if (e.code.startsWith('Shift')) down.delete('Shift') })
+addEventListener('keyup', (e) => { release(ALIAS[e.code] || e.code); if (e.code === 'ArrowUp' || e.code === 'KeyW') release('MoveUp'); if (e.code === 'ArrowDown' || e.code === 'KeyS') release('MoveDown'); if (e.code.startsWith('Shift')) down.delete('Shift') })
 addEventListener('blur', () => down.clear())
 
 for (const el of document.querySelectorAll('#touch button')) {
@@ -25,6 +27,7 @@ for (const el of document.querySelectorAll('#touch button')) {
 export const input = {
   held: (c) => down.has(c),
   hit: (c) => pressed.has(c),
+  axisY: () => (down.has('MoveDown') ? 1 : 0) - (down.has('MoveUp') ? 1 : 0),
   axis: () => (down.has('ArrowRight') ? 1 : 0) - (down.has('ArrowLeft') ? 1 : 0),
   endFrame: () => pressed.clear(),
 }

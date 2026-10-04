@@ -8,3 +8,6 @@ canvas { width: 100%; height: 100%; object-fit: contain; display: block; image-r
 #touch button.act { background: rgba(220,120,40,.6); }
 #touch button.jump { background: rgba(60,130,210,.6); }
 @media (pointer: coarse) { #touch { display: flex; } }
+#touch button.vert { display: none; }
+body[data-scene="pool"] #touch button.vert { display: block; }
+body[data-scene="pool"] #touch button[data-key="KeyE"], body[data-scene="harvest"] #touch button.vert { }

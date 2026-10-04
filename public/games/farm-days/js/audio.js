@@ -35,7 +35,19 @@ export const sfx = {
   splash() { tone(260, 0.25, { type: 'sine', slide: -180, vol: 0.14 }) },
   chore() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, { type: 'triangle', delay: i * 0.09, vol: 0.18 })) },
   win() { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, 0.22, { type: 'triangle', delay: i * 0.12, vol: 0.2 })) },
+  tag() { tone(520, 0.08, { type: 'square', vol: 0.1 }); tone(300, 0.2, { type: 'sawtooth', slide: -150, vol: 0.1, delay: 0.05 }) },
+  dive() { tone(500, 0.35, { type: 'sine', slide: -380, vol: 0.18 }) },
+  bump() { tone(90, 0.12, { type: 'square', vol: 0.12 }) },
   nope() { tone(200, 0.15, { type: 'square', slide: -60, vol: 0.08 }) },
+}
+
+// combine engine hum: call engine(frac) each frame while driving, engine(null) to stop
+let eng = null
+export function engine(frac) {
+  const c = ensure(); if (!c) return
+  if (frac === null) { if (eng) { eng.g.gain.setTargetAtTime(0, c.currentTime, 0.1); const e = eng; setTimeout(() => e.o.stop(), 400); eng = null } return }
+  if (!eng) { const o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; g.gain.value = 0; o.connect(g); g.connect(master); o.start(); eng = { o, g } }
+  eng.o.frequency.setTargetAtTime(48 + frac * 46, c.currentTime, 0.1); eng.g.gain.setTargetAtTime(0.035 + frac * 0.03, c.currentTime, 0.1)
 }
 
 // gentle pentatonic loop
