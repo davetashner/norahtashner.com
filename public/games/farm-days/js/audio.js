@@ -80,7 +80,7 @@ const synth = {
 // ---------- recorded music: crossfading loops (HTMLAudio streams, so no big decode step) ----------
 const MUSIC_VOL = 0.55
 const XFADE = 2.5            // seconds of overlap when a loop wraps around
-const MUSIC_BASE = new URL('../assets/audio/', import.meta.url)
+const MUSIC_BASE = new URL('../assets/music/', import.meta.url)
 const missing = new Set()
 let voices = [], wanted = null, blocked = false, ticker = null
 
