@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Farm Days</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" width="1280" height="720" aria-label="Farm Days game"></canvas>
+  <div id="touch" aria-hidden="true">
+    <div class="pad left">
+      <button data-key="ArrowLeft">◀</button>
+      <button data-key="ArrowRight">▶</button>
+    </div>
+    <div class="pad right">
+      <button data-key="KeyE" class="act">E</button>
+      <button data-key="Space" class="jump">⬆</button>
+    </div>
+  </div>
+  <button id="mute" title="Mute (M)" aria-label="Toggle sound">🔊</button>
+</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

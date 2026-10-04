@@ -1,0 +1,10 @@
+html, body { margin: 0; height: 100%; background: #1d2b1a; overflow: hidden; overscroll-behavior: none; touch-action: none; }
+#stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+canvas { width: 100%; height: 100%; object-fit: contain; display: block; image-rendering: auto; background: #bfe3f5; }
+#mute { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.75); font-size: 20px; cursor: pointer; }
+#touch { display: none; position: absolute; left: 0; right: 0; bottom: 0; padding: 0 18px 18px; justify-content: space-between; pointer-events: none; }
+.pad { display: flex; gap: 14px; pointer-events: auto; }
+#touch button { width: 78px; height: 78px; border-radius: 50%; border: 3px solid rgba(255,255,255,.9); background: rgba(40,70,30,.45); color: #fff; font-size: 30px; font-weight: 700; -webkit-user-select: none; user-select: none; touch-action: none; }
+#touch button.act { background: rgba(220,120,40,.6); }
+#touch button.jump { background: rgba(60,130,210,.6); }
+@media (pointer: coarse) { #touch { display: flex; } }

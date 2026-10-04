@@ -40,4 +40,17 @@ export const GAMES = [
     imageAlt: "Nug's Pond home screen with Nug the frog and the Lily Hop, Bubble Pop, Pond Race and Fish Friends games",
     imagePosition: 'center top',
   },
+  {
+    id: 'farm-days',
+    to: '/farm-days',
+    title: 'Farm Days',
+    menuLabel: 'Farm Days',
+    tagline: 'A farm side-scroller with Mr. Jersh & Mrs. Carish',
+    description:
+      'Run, jump and swim around the farm, pet the goats, catch a fish and ride a giant goose up to the Golden Egg.',
+    tags: ['Adventure', 'Keyboard & touch'],
+    image: '/games/previews/farm-days.jpg',
+    imageAlt: 'Farm Days: a farmer beside the goat ramp with pygmy goats, a picnic table and picket fence',
+    imagePosition: 'center 40%',
+  },
 ]
