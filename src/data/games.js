@@ -40,4 +40,17 @@ export const GAMES = [
     imageAlt: "Nug's Pond home screen with Nug the frog and the Lily Hop, Bubble Pop, Pond Race and Fish Friends games",
     imagePosition: 'center top',
   },
+  {
+    id: 'farm-days',
+    to: '/farm-days',
+    title: 'Farm Days',
+    menuLabel: 'Farm Days',
+    tagline: '3 levels · farm chores, corn harvest & pool party',
+    description:
+      'Do the farm chores, drive the combine through the corn from above, then dive in and play sharks and minnows.',
+    tags: ['Adventure', 'Keyboard & touch'],
+    image: '/games/previews/farm-days.jpg',
+    imageAlt: 'Farm Days: a farmer by the goat ramp, a combine harvesting corn from above, and sharks and minnows in the pool',
+    imagePosition: 'center',
+  },
 ]
