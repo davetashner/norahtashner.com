@@ -51,7 +51,7 @@ function newGame(who) {
     chores: CHORES, prompt: null, zoneBanner: 0, zoneName: '', zone: -1, fishing: null, camX: 0, shake: 0, petted: new Set(), winT: 0, time: 0, introT: 0 })
   game.camX = 0
   setMode('play')
-  music.start()
+  music.play('farm_day'); game.dusk = false
 }
 
 // ---------- helpers ----------
@@ -151,6 +151,7 @@ function checkChores() {
 function updatePlay(dt) {
   game.time += dt
   if (game.fishing) {
+    music.play('fishing')
     const r = updateFishing(game.fishing, dt, input)
     if (input.hit('Escape')) { game.fishing = null; player.freeze = false; player.pose = null }
     if (r === 'caught') {
@@ -160,6 +161,9 @@ function updatePlay(dt) {
     }
     game.prompt = null; updateFx(dt); return
   }
+  const prog = player.x / WORLD_W
+  if (prog > 0.55) game.dusk = true; else if (prog < 0.45) game.dusk = false
+  music.play(game.dusk ? 'farm_dusk' : 'farm_day')
   const t = nearestTarget(); game.prompt = t
   if (input.hit('KeyE')) interact(t)
   updatePlayer(player, dt, input, world)
@@ -373,7 +377,7 @@ function drawTitle() {
 // ---------- level 1 -> 2 cutscene: climb into the combine ----------
 const cut = { t: 0 }
 function startCutscene() {
-  setMode('cut'); cut.t = 0; music.stop()
+  setMode('cut'); cut.t = 0; music.stop(0.6)
   player.ride = null; player.y = GROUND; player.seg = world.platforms.find((s) => s.tag === 'ground' && player.x >= s.x0 && player.x <= s.x1) || null
   player.freeze = true; player.pose = null; player.vx = 0; player.dir = 1
   if (!player.seg) { player.x = 7480; player.seg = null }
@@ -443,9 +447,9 @@ function drawCutscene() {
 }
 const PLAYER_SZ = 330
 
-function startHarvest() { engine(null); music.stop(); setMode('harvest'); harvest.start(); game.wasHarvestDone = false }
-function startPool() { harvest.stop(); setMode('pool'); pool.start(); music.start() }
-function startFinal() { pool.stop(); setMode('final'); game.finalT = 0; confetti(game.camX + 640, 0, 100); music.start()
+function startHarvest() { engine(null); setMode('harvest'); harvest.start(); music.play('harvest') }
+function startPool() { harvest.stop(); setMode('pool'); pool.start(); music.play('pool') }
+function startFinal() { pool.stop(); setMode('final'); game.finalT = 0; confetti(game.camX + 640, 0, 100); music.play('title')
   save.wins++; persist() }
 
 function drawFinal() {
@@ -510,7 +514,7 @@ function frameLoop(now) {
   requestAnimationFrame(frameLoop)
 }
 
-window.__farm = { game, get player() { return player }, get world() { return world }, newGame, save, harvest, pool, startHarvest, startPool }   // debug hook for tests
+window.__farm = { music, game, get player() { return player }, get world() { return world }, newGame, save, harvest, pool, startHarvest, startPool }   // debug hook for tests
 requestAnimationFrame(frameLoop)
 // debug/test hook: index.html#play=jersh&x=3200&stars=3 jumps straight into the game
 function debugStart() {
@@ -525,4 +529,4 @@ function debugStart() {
   return true
 }
 function startFromTitleAs(who) { titleSel = who === 'carish' ? 1 : 0; startFromTitle() }
-loadAll(() => { game.loaded++ }).then(() => { game.mode = 'title'; debugStart() }).catch((e) => { console.error(e) })
+loadAll(() => { game.loaded++ }).then(() => { game.mode = 'title'; music.play('title'); debugStart() }).catch((e) => { console.error(e) })
