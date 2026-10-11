@@ -103,6 +103,7 @@ export const STORIES = [
     pages: [
       {
         heading: 'Hello, World!',
+        headingSilent: true,
         text: "Hi, I'm Camille! If you peeked into my bedroom in Richmond, Virginia, you might have noticed my bed was empty. Don't worry. I wasn't lost, and I wasn't missing. I was on the biggest adventure of my whole life!\n\nIt all began with one very boring Tuesday. Then I found a shiny golden ticket tucked inside my suitcase. It said: ONE TRIP AROUND THE WORLD. NO BORING DAYS ALLOWED. I grabbed my suitcase, tucked my stuffed corgi under my arm, and whispered, \"Let's go!\"",
         notes: [
           {
@@ -312,6 +313,21 @@ export const STORIES = [
         imageAlt: 'Camille in a green helmet riding a pink bike down her driveway in front of her house',
       },
     ],
+    // One clip per part of the story, in reading order. A clip can cover several spreads (page index or 'end').
+    narration: [
+      { src: '/stories/camilles-great-vacation/audio/part-01.mp3', pages: [0], readsNotes: true },
+      { src: '/stories/camilles-great-vacation/audio/part-02.mp3', pages: [1] },
+      { src: '/stories/camilles-great-vacation/audio/part-03.mp3', pages: [2] },
+      { src: '/stories/camilles-great-vacation/audio/part-04.mp3', pages: [3] },
+      { src: '/stories/camilles-great-vacation/audio/part-05.mp3', pages: [4] },
+      { src: '/stories/camilles-great-vacation/audio/part-06.mp3', pages: [5] },
+      { src: '/stories/camilles-great-vacation/audio/part-07.mp3', pages: [6] },
+      { src: '/stories/camilles-great-vacation/audio/part-08.mp3', pages: [7] },
+      { src: '/stories/camilles-great-vacation/audio/part-09.mp3', pages: [8] },
+      { src: '/stories/camilles-great-vacation/audio/part-10.mp3', pages: [9] },
+      { src: '/stories/camilles-great-vacation/audio/part-11.mp3', pages: [10] },
+      { src: '/stories/camilles-great-vacation/audio/part-12.mp3', pages: [11, 'end'] },
+    ],
     logTitle: "Camille's Travel Log",
     log: [
       {
@@ -357,6 +373,7 @@ export const STORIES = [
     ],
     ending: {
       heading: 'The End...Or Is It?',
+      headingSilent: true,
       text: "Here is what I learned: the whole world is full of friendly people, yummy food, and music that makes your feet want to move. And the best part is that the same is true right outside my front door!\n\nRiding my bike down my own street, with the wind in my hair, felt just like an adventure too. Maybe an adventure is not about how far you go. Maybe it's about saying yes, saying hello, and keeping your eyes wide open.\n\nSo where should I go next? Turn the page and tell me!\n\nLove, Camille",
     },
   },
