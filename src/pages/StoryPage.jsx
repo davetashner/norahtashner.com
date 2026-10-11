@@ -2,6 +2,34 @@ import { Link, useParams } from 'react-router-dom'
 import { STORIES } from '../data/stories'
 import './StoryPage.css'
 
+function Paragraphs({ text }) {
+  return text.split('\n\n').map((para) => (
+    <p key={para} className="story-text">
+      {para}
+    </p>
+  ))
+}
+
+function Spread({ page }) {
+  return (
+    <article className="story-spread">
+      <h2 className="story-chip">{page.heading}</h2>
+      {page.image && <img className="story-picture" src={page.image} alt={page.imageAlt} loading="lazy" />}
+      <Paragraphs text={page.text} />
+      {page.notes && (
+        <dl className="story-notes">
+          {page.notes.map((note) => (
+            <div key={note.label}>
+              <dt>{note.label}</dt>
+              <dd>{note.text}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </article>
+  )
+}
+
 function StoryPage() {
   const { slug } = useParams()
   const story = STORIES.find((s) => s.id === slug)
@@ -27,30 +55,24 @@ function StoryPage() {
       </figure>
 
       {story.pages.map((page) => (
-        <article key={page.heading} className="story-spread">
-          <h2 className="story-chip">{page.heading}</h2>
-          <img className="story-picture" src={page.image} alt={page.imageAlt} loading="lazy" />
-          <p className="story-text">{page.text}</p>
-        </article>
+        <Spread key={page.heading} page={page} />
       ))}
 
       <article className="story-spread story-log">
-        <h2 className="story-chip">Potato&apos;s Travel Log</h2>
+        <h2 className="story-chip">{story.logTitle}</h2>
         <ol className="story-log-list">
           {story.log.map((stop, i) => (
             <li key={`${stop.place}-${i}`}>
               <span className="story-log-place">{stop.place}</span>
-              <span className="story-log-hello">I said &ldquo;{stop.hello}&rdquo;</span>
+              <span className="story-log-hello">
+                {stop.hello ? <>I said &ldquo;{stop.hello}&rdquo;</> : stop.note}
+              </span>
             </li>
           ))}
         </ol>
       </article>
 
-      <article className="story-spread">
-        <h2 className="story-chip">{story.ending.heading}</h2>
-        <img className="story-picture" src={story.ending.image} alt={story.ending.imageAlt} loading="lazy" />
-        <p className="story-text">{story.ending.text}</p>
-      </article>
+      <Spread page={story.ending} />
 
       <aside className="story-print">
         <h2>Print your own book</h2>

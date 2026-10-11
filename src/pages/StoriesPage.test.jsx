@@ -30,16 +30,23 @@ describe('StoryPage', () => {
     )
   }
 
-  it('shows every page of the story and the printable booklet link', () => {
-    const story = STORIES[0]
-    renderStory(story.to)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(story.title)
-    for (const page of story.pages) {
-      expect(screen.getByRole('heading', { name: page.heading })).toBeInTheDocument()
-      expect(screen.getByAltText(page.imageAlt)).toHaveAttribute('src', page.image)
+  it.each(STORIES.map((story) => [story.title, story]))(
+    'shows every page of %s and the printable booklet link',
+    (_title, story) => {
+      renderStory(story.to)
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(story.title)
+      for (const page of story.pages) {
+        expect(screen.getByRole('heading', { name: page.heading })).toBeInTheDocument()
+        if (page.image) {
+          // Some stories reuse one picture on several pages, so there can be more than one match.
+          const pics = screen.getAllByAltText(page.imageAlt)
+          expect(pics[0]).toHaveAttribute('src', page.image)
+        }
+      }
+      expect(screen.getByRole('heading', { name: story.logTitle })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /printable booklet/i })).toHaveAttribute('href', story.printPdf)
     }
-    expect(screen.getByRole('link', { name: /printable booklet/i })).toHaveAttribute('href', story.printPdf)
-  })
+  )
 
   it('shows a friendly message for an unknown story', () => {
     renderStory('/stories/nope')
