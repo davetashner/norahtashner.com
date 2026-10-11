@@ -1,10 +1,14 @@
+import PropTypes from 'prop-types';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import { GAMES } from '../data/games';
+import { STORIES } from '../data/stories';
 import './Header.css';
 
-function Header() {
+// A header menu button with an "All ..." link followed by one link per item. Closes on navigation,
+// outside click or Escape.
+function NavDropdown({ label, allTo, allLabel, items }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const location = useLocation();
@@ -35,6 +39,48 @@ function Header() {
     };
   }, [menuOpen]);
 
+  return (
+    <div className="nav-dropdown" ref={menuRef}>
+      <button
+        type="button"
+        className="nav-link nav-dropdown-toggle"
+        aria-haspopup="true"
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((open) => !open)}
+      >
+        {label}
+        <span className="nav-dropdown-caret" aria-hidden="true">▾</span>
+      </button>
+      {menuOpen && (
+        <ul className="nav-dropdown-menu" role="menu">
+          <li role="none">
+            <Link to={allTo} className="nav-dropdown-item nav-dropdown-all" role="menuitem">
+              {allLabel}
+            </Link>
+          </li>
+          {items.map((item) => (
+            <li key={item.to} role="none">
+              <Link to={item.to} className="nav-dropdown-item" role="menuitem">
+                {item.menuLabel}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+NavDropdown.propTypes = {
+  label: PropTypes.string.isRequired,
+  allTo: PropTypes.string.isRequired,
+  allLabel: PropTypes.string.isRequired,
+  items: PropTypes.arrayOf(
+    PropTypes.shape({ to: PropTypes.string.isRequired, menuLabel: PropTypes.string.isRequired })
+  ).isRequired,
+};
+
+function Header() {
   return (
     <header className="header">
       <div className="header-content">
@@ -67,34 +113,8 @@ function Header() {
           </span>
         </Link>
         <nav className="header-nav">
-          <div className="nav-dropdown" ref={menuRef}>
-            <button
-              type="button"
-              className="nav-link nav-dropdown-toggle"
-              aria-haspopup="true"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              Games
-              <span className="nav-dropdown-caret" aria-hidden="true">▾</span>
-            </button>
-            {menuOpen && (
-              <ul className="nav-dropdown-menu" role="menu">
-                <li role="none">
-                  <Link to="/games" className="nav-dropdown-item nav-dropdown-all" role="menuitem">
-                    All games
-                  </Link>
-                </li>
-                {GAMES.map((game) => (
-                  <li key={game.to} role="none">
-                    <Link to={game.to} className="nav-dropdown-item" role="menuitem">
-                      {game.menuLabel}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <NavDropdown label="Games" allTo="/games" allLabel="All games" items={GAMES} />
+          <NavDropdown label="Stories" allTo="/stories" allLabel="All stories" items={STORIES} />
           <ThemeToggle />
         </nav>
       </div>

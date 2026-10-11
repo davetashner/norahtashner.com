@@ -10,6 +10,8 @@ import VacationGamePage from './pages/VacationGamePage'
 import FarmDaysPage from './pages/FarmDaysPage'
 import NugsPondPage from './pages/NugsPondPage'
 import GamesPage from './pages/GamesPage'
+import StoriesPage from './pages/StoriesPage'
+import StoryPage from './pages/StoryPage'
 
 function HomePage() {
   return (
@@ -37,6 +39,8 @@ function App() {
               <Route path="/game" element={<GamePage />} />
               <Route path="/vacation" element={<VacationGamePage />} />
               <Route path="/nugs-pond" element={<NugsPondPage />} />
+              <Route path="/stories" element={<StoriesPage />} />
+              <Route path="/stories/:slug" element={<StoryPage />} />
               <Route path="/farm-days" element={<FarmDaysPage />} />
             </Routes>
           </main>
