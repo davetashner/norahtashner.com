@@ -128,3 +128,23 @@ Feed URL: `https://norahtashner.com/feed.xml`
 | `tools/normalize-audio.sh` | Audio normalization script |
 | `tools/generate-rss.js` | RSS feed generator |
 | `tools/hooks/pre-commit` | Git hook for automated publishing |
+
+---
+
+## Story narration audio
+
+Story pages can play narration clips (see `narration` in `src/data/stories.js`). Like podcast episodes, the
+clips are **not committed** (`*.mp3` is gitignored and the pre-commit hook unstages audio). Upload them under
+the `podcast/` prefix, which the deploy workflow leaves alone:
+
+```bash
+aws s3 cp part-01.mp3 s3://norahtashner.com/podcast/stories/<story-id>/part-01.mp3 \
+  --content-type "audio/mpeg" \
+  --cache-control "public, max-age=31536000, immutable"
+```
+
+Then point the story's `narration[].src` at `/podcast/stories/<story-id>/part-01.mp3`. Don't overwrite a clip in
+place (it is cached for a year); upload a re-recorded part under a new name.
+
+Check with `curl -sI <url>`: `content-type` must be `audio/mpeg`. A `200` with `text/html` means the file is
+missing and CloudFront is serving the site's `index.html`.
