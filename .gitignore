@@ -147,6 +147,8 @@ docs/Spotify*
 # ...but game music ships with its game (small, looping tracks the games need offline)
 !public/games/*/assets/music/*.mp3
 !public/games/*/assets/music/*.m4a
+# ...and story narration ships with its story (short clips the story page plays)
+!public/stories/*/audio/*.mp3
 *.wav
 *.flac
 *.aac
