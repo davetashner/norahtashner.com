@@ -84,10 +84,10 @@ export const STORIES = [
     },
   },
   {
-    id: 'camilles-great-big-adventure',
-    to: '/stories/camilles-great-big-adventure',
-    title: "Camille's Great Big Adventure",
-    menuLabel: "Camille's Great Big Adventure",
+    id: 'camilles-great-vacation',
+    to: '/stories/camilles-great-vacation',
+    title: "Camille's Great Vacation",
+    menuLabel: "Camille's Great Vacation",
     author: 'Camille',
     tagline: 'Nine stops. One suitcase. Zero boring days!',
     description: 'Camille took a golden ticket around the world: cherry blossoms in Tokyo, an eagle in Mongolia, a luau in Hawaii, tea in London, a reef in Mexico and deep-dish pizza in Chicago, before a bike ride at home.',
@@ -96,10 +96,10 @@ export const STORIES = [
       'Printable',
       'Longer read',
     ],
-    image: '/stories/camilles-great-big-adventure/01.jpg',
+    image: '/stories/camilles-great-vacation/01.jpg',
     imageAlt: 'Camille the doll in a pink kimono with a pink cherry-blossom suitcase in front of the giant red lantern at Senso-ji in Tokyo',
     imagePosition: 'center 30%',
-    printPdf: '/stories/camilles-great-big-adventure/camilles-great-big-adventure-booklet.pdf',
+    printPdf: '/stories/camilles-great-vacation/camilles-great-vacation-booklet.pdf',
     pages: [
       {
         heading: 'Hello, World!',
@@ -122,7 +122,7 @@ export const STORIES = [
       {
         heading: 'Stop 1: Tokyo, Japan',
         text: "WHOOSH! The ticket glowed, and I landed in Tokyo in a swirl of pink cherry blossoms. Under a giant red lantern, I said my first \"Konnichiwa!\" That means hello.\n\nThe old Asakusa market was crowded with shops and every one of them smelled delicious. A shopkeeper taught me how to bow, and I bowed so many times my hair bounced.\n\nI bought a warm, fish-shaped cake called taiyaki, stuffed with sweet red beans. Just then, a group of drummers started a thunderous taiko beat. I danced right in the middle of the street, and everyone clapped!",
-        image: '/stories/camilles-great-big-adventure/01.jpg',
+        image: '/stories/camilles-great-vacation/01.jpg',
         imageAlt: 'Camille the doll in a pink kimono with a pink cherry-blossom suitcase in front of the giant red lantern at Senso-ji in Tokyo',
         notes: [
           {
@@ -142,7 +142,7 @@ export const STORIES = [
       {
         heading: 'Stop 2: Mongolia',
         text: "Next I zoomed to the windy grasslands of Mongolia, where a golden eagle named Altan landed on my arm. Sain baina uu! (Hello!)\n\nA herder family invited me into their round white tent, called a ger. It was warm inside and smelled like woodsmoke. Grandmother Naran handed me a bowl of salty milk tea and a plate of steamed dumplings called buuz. I ate five!\n\nAfter dinner, the cousins played a fiddle with a carved horse head on top. They taught me a galloping dance, and we stomped until the whole ger shook. Then we lay in the grass and counted more stars than I knew existed.",
-        image: '/stories/camilles-great-big-adventure/02.jpg',
+        image: '/stories/camilles-great-vacation/02.jpg',
         imageAlt: 'Camille in a fur hat and blue coat on a horse, holding a bow, with a golden eagle on her arm on the Mongolian grassland',
         notes: [
           {
@@ -162,7 +162,7 @@ export const STORIES = [
       {
         heading: 'Stop 3: The Maldives',
         text: "A seaplane splashed down in the Maldives, a sparkling chain of more than a thousand tiny islands. My hut stood on stilts right over the water. I could watch fish swim by from my hammock!\n\nI sipped a fruity punch with a pink umbrella, and then I put on a mask and snorkeled. A sea turtle paddled beside me, and a manta ray as wide as a trampoline glided underneath.\n\nThat night, a fisherman named Hassan grilled tuna right on the beach. Drummers began a boduberu, with big drums and clapping that got faster and faster. The waves in the lagoon even glowed blue, like someone had spilled glitter in the sea.",
-        image: '/stories/camilles-great-big-adventure/03.jpg',
+        image: '/stories/camilles-great-vacation/03.jpg',
         imageAlt: 'Camille in a hammock with a fruity drink with a pink umbrella, in front of overwater huts in the Maldives',
         notes: [
           {
@@ -182,7 +182,7 @@ export const STORIES = [
       {
         heading: 'Stop 4: Honolulu, Hawaii',
         text: "Aloha! I touched down on Waikiki Beach just as the sun began to set. Someone placed a necklace of flowers, called a lei, around my neck. A luau was about to begin!\n\nThe hula dancers told whole stories with their hands. I saw rain falling, waves rolling, and birds flying. A dancer named Leilani pulled me up to join them, and I swayed my hips like the ocean.\n\nThe feast was amazing: sweet pineapple, pork cooked slowly in an underground oven, and shave ice in every color. A musician strummed a tiny ukulele. Its name means \"jumping flea\" because the fingers hop so fast. Mahalo means thank you, and I said it about a hundred times.",
-        image: '/stories/camilles-great-big-adventure/04.jpg',
+        image: '/stories/camilles-great-vacation/04.jpg',
         imageAlt: 'Camille in flower leis and a grass skirt dancing hula at sunset on Waikiki Beach with Diamond Head behind her',
         notes: [
           {
@@ -202,7 +202,7 @@ export const STORIES = [
       {
         heading: 'Stop 5: London, England',
         text: "Next I popped up beside the River Thames, right under Big Ben! The clock tower bonged, red buses zoomed past, and two guards in scarlet and gold posed for a photo with me.\n\nDid you know the guards in red are called Beefeaters? One of them, Mr. Hargrove, told me secrets about an old castle full of ravens. Then I rode in the very front seat on top of a double-decker bus and pretended I was driving.\n\nFor afternoon tea, I stirred my cup with my pinky out. I ate fluffy scones with jam and thick cream. (People argue about which goes on first!) A street singer played a Beatles song on the guitar, and the whole crowd sang along.",
-        image: '/stories/camilles-great-big-adventure/05.jpg',
+        image: '/stories/camilles-great-vacation/05.jpg',
         imageAlt: 'Camille with a plaid scarf and a Union Jack flag in front of Big Ben with two red-uniformed Beefeater guards',
         notes: [
           {
@@ -222,7 +222,7 @@ export const STORIES = [
       {
         heading: 'Stop 6: Florida',
         text: "After so much city, I wanted sand! I hopped to a Florida beach and built a sandcastle with four towers. Then I found a giant shell, held it to my ear, and heard the ocean whisper hello.\n\nA girl named Marisol spotted my castle and said it needed a moat. We dug and dug until the moat was as long as a jump rope. When a wave crashed over it, we shrieked and laughed and started all over again.\n\nLater, we shared a slice of key lime pie that was tangy and sweet and cold. At sunset, a band played steel drums that sounded like bubbling water. We danced barefoot in the sand while dolphins jumped in the waves.",
-        image: '/stories/camilles-great-big-adventure/06.jpg',
+        image: '/stories/camilles-great-vacation/06.jpg',
         imageAlt: 'Camille in a flowery swimsuit on a Florida beach next to a sandcastle, holding a big pink shell',
         notes: [
           {
@@ -242,7 +242,7 @@ export const STORIES = [
       {
         heading: 'Stop 7: Alaska',
         text: "Brrr! I swapped sand for snow in the mountains of Alaska. I zipped into a pink snowsuit and signed up for ski school. My first run was wobblier than a bowl of jelly!\n\n\"Make a pizza, not french fries!\" called my instructor, Sam. That means point your skis in a wedge to slow down. I wobbled, I wiggled, and I fell on my bottom six times. But by the afternoon, I was zigzagging down the mountain like a pro.\n\nAt the lodge, I had hot chocolate piled with marshmallows. That night, the sky filled with ribbons of green and purple light. They were the northern lights! Everyone around the fire stopped talking, and the only sound was a fiddle playing softly.",
-        image: '/stories/camilles-great-big-adventure/07.jpg',
+        image: '/stories/camilles-great-vacation/07.jpg',
         imageAlt: 'Camille in a pink snowsuit and helmet skiing downhill with a ski instructor behind her in the Alaskan mountains',
         notes: [
           {
@@ -262,7 +262,7 @@ export const STORIES = [
       {
         heading: 'Stop 8: Cozumel, Mexico',
         text: "From snowflakes to bubbles! In Mexico, I strapped on a tank, flippers, and a mask and dove into the warm sea. \"Hola!\" I tried to say, but only bubbles came out.\n\nThe coral reef was a whole city under the water. Yellow and blue fish zipped past, a sea turtle glided by, and a moray eel peeked out of a cave. Then a shark swam right over my head! My heart did a flip, but my guide, Lucía, gave me the OK signal. Sharks are mostly curious, not hungry.\n\nBack on the dock, I tried tacos with pineapple and the creamiest guacamole ever. A mariachi band marched up with trumpets and violins, and I danced until my flippers fell off.",
-        image: '/stories/camilles-great-big-adventure/08.jpg',
+        image: '/stories/camilles-great-vacation/08.jpg',
         imageAlt: 'Camille scuba diving in pink flippers and goggles over a coral reef with colorful fish, a sea turtle and a shark',
         notes: [
           {
@@ -282,7 +282,7 @@ export const STORIES = [
       {
         heading: 'Stop 9: Chicago, Illinois',
         text: "My last stop was the Windy City! My hotel room had a window full of twinkling skyscrapers and a river that sparkled like jewelry. I was tired in the very best way.\n\nBefore bed, I took a boat ride down the Chicago River. The buildings were so tall I had to lean all the way back to see the tops. Our guide pointed out the Willis Tower, which scrapes the clouds.\n\nFor dinner, I ate deep-dish pizza so thick it needed a fork. The cheese stretched out as long as my arm! In a park nearby, a blues band wailed on a saxophone and a harmonica. A doorman named Frank handed me a warm cookie and wished me goodnight.",
-        image: '/stories/camilles-great-big-adventure/09.jpg',
+        image: '/stories/camilles-great-vacation/09.jpg',
         imageAlt: 'Camille asleep in a hotel bed hugging a stuffed corgi, with the Chicago skyline glowing in the window',
         notes: [
           {
@@ -302,13 +302,13 @@ export const STORIES = [
       {
         heading: 'Home Sweet Home',
         text: "The last whoosh landed me in my own bed in Richmond, Virginia. My own pillow. My own butterfly night-light. I fell asleep before I finished my yawn.\n\nDo you know the best part of a big adventure? Coming home to the people and things you love.\n\nI slept for a very long time, and I dreamed of everywhere at once. I dreamed of drums in Japan, a golden eagle in Mongolia, and a shark that wanted to be friends. In my dream, they were all dancing together in a big circle, and I was dancing right in the middle.\n\nMy suitcase was full of seashells, flags, and stories, and I couldn't wait to share every single one.",
-        image: '/stories/camilles-great-big-adventure/10.jpg',
+        image: '/stories/camilles-great-vacation/10.jpg',
         imageAlt: 'Camille asleep in her purple bedroom with a stuffed corgi, a glowing butterfly night-light and a basket of toys',
       },
       {
         heading: 'The Next Morning',
         text: "I woke up with sand in my shoes and, I'm pretty sure, a tiny bit of Hawaiian sunshine in my hair. I put on my green helmet, hopped on my pink bike, and zoomed out of the driveway!",
-        image: '/stories/camilles-great-big-adventure/00.jpg',
+        image: '/stories/camilles-great-vacation/00.jpg',
         imageAlt: 'Camille in a green helmet riding a pink bike down her driveway in front of her house',
       },
     ],
