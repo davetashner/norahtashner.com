@@ -48,6 +48,16 @@ describe('Header', () => {
     expect(screen.getByRole('menuitem', { name: /nug's pond/i })).toHaveAttribute('href', '/nugs-pond')
   })
 
+  it('links to the stories from the Stories menu', () => {
+    renderWithTheme(<Header />)
+    fireEvent.click(screen.getByRole('button', { name: /stories/i }))
+    expect(screen.getByRole('menuitem', { name: /all stories/i })).toHaveAttribute('href', '/stories')
+    expect(screen.getByRole('menuitem', { name: /potato's big adventure/i })).toHaveAttribute(
+      'href',
+      '/stories/potatos-big-adventure'
+    )
+  })
+
   it('has navigation element', () => {
     renderWithTheme(<Header />)
     expect(screen.getByRole('navigation')).toBeInTheDocument()
