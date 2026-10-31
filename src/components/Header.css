@@ -237,4 +237,21 @@ li:has(> .nav-dropdown-all) {
     width: 32px;
     height: 32px;
   }
+
+  /* Logo plus Games, Stories, Songs and the theme toggle don't fit on one phone-width row,
+     so the nav wraps onto its own row. */
+  .header-content {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+
+  .header-nav {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.25rem;
+  }
+
+  .nav-link {
+    padding: 0.4rem 0.6rem;
+  }
 }
