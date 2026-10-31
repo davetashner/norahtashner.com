@@ -115,6 +115,9 @@ function Header() {
         <nav className="header-nav">
           <NavDropdown label="Games" allTo="/games" allLabel="All games" items={GAMES} />
           <NavDropdown label="Stories" allTo="/stories" allLabel="All stories" items={STORIES} />
+          <Link to="/songs" className="nav-link">
+            Songs
+          </Link>
           <ThemeToggle />
         </nav>
       </div>

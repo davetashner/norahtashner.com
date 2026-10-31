@@ -12,6 +12,7 @@ import NugsPondPage from './pages/NugsPondPage'
 import GamesPage from './pages/GamesPage'
 import StoriesPage from './pages/StoriesPage'
 import StoryPage from './pages/StoryPage'
+import SongsPage from './pages/SongsPage'
 
 function HomePage() {
   return (
@@ -42,6 +43,7 @@ function App() {
               <Route path="/stories" element={<StoriesPage />} />
               <Route path="/stories/:slug" element={<StoryPage />} />
               <Route path="/farm-days" element={<FarmDaysPage />} />
+              <Route path="/songs" element={<SongsPage />} />
             </Routes>
           </main>
           <Footer />

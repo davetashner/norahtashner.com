@@ -148,3 +148,21 @@ place (it is cached for a year); upload a re-recorded part under a new name.
 
 Check with `curl -sI <url>`: `content-type` must be `audio/mpeg`. A `200` with `text/html` means the file is
 missing and CloudFront is serving the site's `index.html`.
+
+## Songs
+
+The `/songs` page lists Norah's songs from `src/data/songs.js`. Like narration, the MP3s are not committed;
+they live under `podcast/songs/`. Suno downloads are Opus-in-M4A, which Safari can't always play, so convert
+to a loudness-matched MP3 first:
+
+```bash
+ffmpeg -i "Song Name.m4a" -map 0:a -af loudnorm=I=-14:TP=-1.5:LRA=11 -ar 44100 \
+  -c:a libmp3lame -b:a 192k -map_metadata -1 -metadata title="Song Name" song-name.mp3
+aws s3 cp song-name.mp3 s3://norahtashner.com/podcast/songs/song-name.mp3 \
+  --content-type "audio/mpeg" \
+  --cache-control "public, max-age=31536000, immutable"
+```
+
+Then add an entry to `SONGS` with `id: 'song-name'`, `src: '/podcast/songs/song-name.mp3'`, the length in
+`durationSeconds`, and the lyrics. Suno puts them in the file's `lyrics` tag:
+`ffprobe -v error -show_entries format_tags=lyrics -of default=nw=1:nk=1 "Song Name.m4a"`.
