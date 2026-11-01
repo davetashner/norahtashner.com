@@ -460,56 +460,56 @@ export const STORIES = [
     ],
     narration: [
       {
-        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-01.mp3",
+        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-01-v2.mp3",
         pages: [
           0
         ]
       },
       {
-        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-02.mp3",
+        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-02-v2.mp3",
         pages: [
           1
         ]
       },
       {
-        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-03.mp3",
+        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-03-v2.mp3",
         pages: [
           2
         ]
       },
       {
-        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-04.mp3",
+        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-04-v2.mp3",
         pages: [
           3
         ]
       },
       {
-        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-05.mp3",
+        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-05-v2.mp3",
         pages: [
           4
         ]
       },
       {
-        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-06.mp3",
+        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-06-v2.mp3",
         pages: [
           5,
           6
         ]
       },
       {
-        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-07.mp3",
+        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-07-v2.mp3",
         pages: [
           7
         ]
       },
       {
-        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-08.mp3",
+        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-08-v2.mp3",
         pages: [
           8
         ]
       },
       {
-        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-09.mp3",
+        src: "/podcast/stories/camiles-great-big-wonderful-adventure/chapter-09-v2.mp3",
         pages: [
           9,
           "end"
