@@ -487,6 +487,44 @@ export const SONGS = [
     ]
   },
   {
+    "id": "fishes-in-the-house-remix",
+    "title": "Fishes in the House Remix",
+    "description": "Fishy Fishes, remixed. The fishes are back in the house. Raise the roof!",
+    "tag": "Remix",
+    "src": "/podcast/songs/fishes-in-the-house-remix.mp3",
+    "durationSeconds": 56,
+    "lyrics": [
+      {
+        "label": "Verse 1",
+        "lines": [
+          "Fishes are in the house",
+          "Oh, fishes in the house",
+          "Raise our roof, raise our roof",
+          "Do the scuba",
+          "Fishy, fishy fishes",
+          "Fishy, fishy fishes",
+          "Fishy, fishy, swimming all around, zig-zag",
+          "Fishy, fishy, swimming in their tank"
+        ]
+      },
+      {
+        "label": "Chorus",
+        "lines": [
+          "Fishes in the house",
+          "Yeah",
+          "Swimming in their tank, tank, tank",
+          "Do the scuba"
+        ]
+      },
+      {
+        "label": "Verse 2",
+        "lines": [
+          "Fishes in the house"
+        ]
+      }
+    ]
+  },
+  {
     "id": "penny-wenny-wiener-pie",
     "title": "Penny Wenny Wiener Pie",
     "description": "A tiny song for a tiny wiener dog. Penny woo, woo, woo!",
@@ -515,6 +553,37 @@ export const SONGS = [
           "Penny wenny wenny wenny pop, pie",
           "Penny wenny wenny wenny wenny woo",
           "Woo!"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "me-and-emerson",
+    "title": "Me and Emerson",
+    "description": "A song about Emerson, who likes to play a bunch (and likes home better). Bring the maracas!",
+    "tag": "Friendship",
+    "src": "/podcast/songs/me-and-emerson.mp3",
+    "durationSeconds": 57,
+    "lyrics": [
+      {
+        "label": "Verse 1",
+        "lines": [
+          "This is me and Emerson",
+          "This is me and Emerson",
+          "Emerson is coming, sister",
+          "She likes to play a bunch",
+          "She's been to Mexico",
+          "There's gonna be maracas in this show",
+          "Me and Camille and Emerson"
+        ]
+      },
+      {
+        "label": "Chorus",
+        "lines": [
+          "Me and Emerson, me and Emerson",
+          "Emerson mostly stays home",
+          "She doesn't really care, 'cause she likes home better",
+          "Yes, I do"
         ]
       }
     ]
