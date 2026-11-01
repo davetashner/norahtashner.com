@@ -614,5 +614,32 @@ export const SONGS = [
         ]
       }
     ]
+  },
+  {
+    "id": "me-and-camile-v2",
+    "title": "Me and Camile (v2)",
+    "description": "Take two of Norah's song for Camile, her best doll ever. Same airplanes, same fun, a little shorter!",
+    "tag": "Friendship",
+    "src": "/podcast/songs/me-and-camile-v2.mp3",
+    "durationSeconds": 53,
+    "lyrics": [
+      {
+        "label": "Verse 1",
+        "lines": [
+          "Me and Camile",
+          "Have fun together",
+          "We like to play",
+          "We like to play",
+          "Me and Camile",
+          "Me, me and Camile",
+          "We like to play, play, play",
+          "Our sister Emerson comes along with her day",
+          "Me and her sister and Camile",
+          "Our best friends, we're gonna be best friends forever",
+          "Got Camile for Easter, she's my best doll ever",
+          "She takes on the world with airplanes and all her fun stuff"
+        ]
+      }
+    ]
   }
 ]
