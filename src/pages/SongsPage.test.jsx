@@ -11,10 +11,10 @@ describe('SongsPage', () => {
     vi.spyOn(window.HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
   })
 
-  it('lists all five songs with a play button each', () => {
+  it('lists all seven songs with a play button each', () => {
     render(<SongsPage />)
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent("Norah's Songs")
-    expect(SONGS).toHaveLength(5)
+    expect(SONGS).toHaveLength(7)
     for (const song of SONGS) {
       expect(screen.getByRole('heading', { name: song.title })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: `Play ${song.title}` })).toBeInTheDocument()
