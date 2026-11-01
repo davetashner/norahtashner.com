@@ -254,4 +254,20 @@ li:has(> .nav-dropdown-all) {
   .nav-link {
     padding: 0.4rem 0.6rem;
   }
+
+  /* Right-aligning a menu to its button pushes the Games menu off the left edge of the screen,
+     so on phones each menu is anchored to the full-width nav row instead. */
+  .header-nav {
+    position: relative;
+  }
+
+  .nav-dropdown {
+    position: static;
+  }
+
+  .nav-dropdown-menu {
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
 }
