@@ -53,4 +53,17 @@ export const GAMES = [
     imageAlt: 'Farm Days: a farmer by the goat ramp, a combine harvesting corn from above, and sharks and minnows in the pool',
     imagePosition: 'center',
   },
+  {
+    id: 'songstone-quest',
+    to: '/songstone-quest',
+    title: 'Songstone Quest',
+    menuLabel: 'Songstone Quest',
+    tagline: 'Top-down adventure · 3 dungeons & a tower',
+    description:
+      'Swing your sword, find the Boomerang, Bombs and Bow, beat four bosses and win back the three Songstones so Melody Meadow can sing again.',
+    tags: ['Adventure', 'Keyboard, touch & controller'],
+    image: '/games/previews/songstone-quest.jpg',
+    imageAlt: 'Songstone Quest: Norah with her sword in Melody Meadow, next to Potato the corgi and Nug the frog by Glimmer Lake',
+    imagePosition: 'center',
+  },
 ]
