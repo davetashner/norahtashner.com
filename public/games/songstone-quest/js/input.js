@@ -29,11 +29,11 @@ const dirTouch = new Set()
 function setPad(e) {
   const r = dpad.getBoundingClientRect()
   const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2)
-  const len = Math.hypot(dx, dy), max = r.width / 2 - 20
+  const len = Math.hypot(dx, dy), max = r.width * 0.3
   const k = len > max ? max / len : 1
   knob.style.transform = `translate(${dx * k}px, ${dy * k}px)`
   dirTouch.clear()
-  if (len > 14) {
+  if (len > r.width * 0.09) {
     const a = Math.atan2(dy, dx), oct = Math.round(a / (Math.PI / 4))
     const map = { 0: ['right'], 1: ['right', 'down'], 2: ['down'], 3: ['down', 'left'], 4: ['left'], '-4': ['left'], '-3': ['left', 'up'], '-2': ['up'], '-1': ['up', 'right'] }
     for (const d of map[oct]) dirTouch.add(d)
