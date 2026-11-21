@@ -7,18 +7,51 @@ const cv = document.getElementById('game')
 const ctx = cv.getContext('2d')
 let k = 1, ox = 0, oy = 0
 
+const $ = (id) => document.getElementById(id)
+function place(el, x, y, size) { if (!el) return; Object.assign(el.style, { left: Math.round(x) + 'px', top: Math.round(y) + 'px', width: Math.round(size) + 'px', height: Math.round(size) + 'px', right: 'auto', bottom: 'auto' }) }
+
+// On touch screens the controls get their own space (a band below the game in portrait,
+// columns beside it in landscape) so they never cover the picture.
+function layoutTouch(w, h) {
+  const dpad = $('dpad'), A = $('aBtn'), B = $('bBtn'), M = $('menuBtn'), mute = $('mute')
+  if (h >= w) {
+    const zone = Math.max(140, Math.min(260, Math.round(h * 0.38), h - (w * VH) / VW))
+    const top = h - zone
+    const d = Math.min(zone - 20, w * 0.38)
+    place(dpad, 10, top + (zone - d) / 2, d)
+    const a = Math.min(zone * 0.42, w * 0.21), bb = a * 0.85
+    place(A, w - 10 - a, top + zone * 0.12, a)
+    place(B, w - 14 - a * 0.7 - bb, top + zone - bb - zone * 0.1, bb)
+    const mid = 10 + d + (w - 14 - a * 0.7 - bb - 10 - d) / 2, s = Math.min(40, zone * 0.22)
+    place(M, mid - s / 2, top + 8, s); place(mute, mid - s / 2, top + 16 + s, s)
+    return { x: 0, y: 0, w, h: top }
+  }
+  const side = Math.max(120, Math.min(190, Math.round(w * 0.15)))
+  const d = Math.min(side - 16, h * 0.45)
+  place(dpad, (side - d) / 2, h - d - 12, d)
+  const a = Math.min(side - 24, h * 0.27), bb = a * 0.85
+  place(A, w - a - 8, h - a - bb - 20, a)
+  place(B, Math.max(w - side + 6, w - a - 8 - bb * 0.6), h - bb - 10, bb)
+  const s = Math.min(40, side * 0.35)
+  place(M, 8, 8, s); place(mute, w - s - 8, 8, s)
+  return { x: side, y: 0, w: w - side * 2, h }
+}
+
 function resize() {
   const dpr = window.devicePixelRatio || 1
   const w = innerWidth, h = innerHeight
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr)
   cv.style.width = w + 'px'; cv.style.height = h + 'px'
-  let s = Math.min(cv.width / VW, cv.height / VH)
+  const area = document.body.classList.contains('touch') ? layoutTouch(w, h) : { x: 0, y: 0, w, h }
+  const aw = area.w * dpr, ah = area.h * dpr
+  let s = Math.min(aw / VW, ah / VH)
   if (Math.floor(s) >= s * 0.86) s = Math.floor(s)
-  k = s; ox = Math.round((cv.width - VW * k) / 2); oy = Math.round((cv.height - VH * k) / 2)
-  // portrait touch screens: put the game near the top so the buttons fit underneath
-  if (input.isTouch && h > w * 1.2) oy = Math.min(oy, Math.round(64 * dpr))
+  k = s
+  ox = Math.round(area.x * dpr + (aw - VW * k) / 2)
+  oy = Math.round(area.y * dpr + (ah - VH * k) / 2)
 }
 addEventListener('resize', resize)
+addEventListener('touchstart', () => setTimeout(resize, 0), { once: true, passive: true })
 resize()
 
 const FONT = (s) => `bold ${s}px "Trebuchet MS", Verdana, "DejaVu Sans", sans-serif`

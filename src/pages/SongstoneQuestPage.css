@@ -69,3 +69,11 @@
   color: #222;
   font-size: 0.9rem;
 }
+
+/* Phones and tablets: a taller frame leaves room for the on-screen controls under the game */
+@media (pointer: coarse) and (orientation: portrait) {
+  .sq-container {
+    aspect-ratio: 3 / 4;
+    max-height: 80vh;
+  }
+}
