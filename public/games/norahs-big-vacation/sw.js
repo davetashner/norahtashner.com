@@ -1,7 +1,7 @@
 /* sw.js — service worker for offline play (essential for a flight).
    Precaches the whole game on first load, then serves stale-while-revalidate
    so it works with zero network and still updates when online. */
-var CACHE = 'norahs-vacation-v3';
+var CACHE = 'norahs-vacation-v4';
 var ASSETS = [
   './', 'index.html', 'styles.css', 'assets.js', 'audio.js', 'games.js', 'game.js',
   // backgrounds
@@ -19,9 +19,9 @@ var ASSETS = [
   'assets/images/richmond-airport.png',
   // character sprites
   'assets/images/sprites/char-norah.png',
-  'assets/images/sprites/char-camile.png',
-  'assets/images/sprites/char-camile-walk-a.png',
-  'assets/images/sprites/char-camile-walk-b.png',
+  'assets/images/sprites/char-camille.png',
+  'assets/images/sprites/char-camille-walk-a.png',
+  'assets/images/sprites/char-camille-walk-b.png',
   'assets/images/sprites/char-mommo.png',
   'assets/images/sprites/char-daddo.png',
   'assets/images/sprites/char-penny.png',

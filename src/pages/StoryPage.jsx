@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { STORIES } from '../data/stories'
 import { spreadId, useNarration } from './useNarration'
 import './StoryPage.css'
@@ -134,6 +134,8 @@ function Story({ story }) {
 function StoryPage() {
   const { slug } = useParams()
   const story = STORIES.find((s) => s.id === slug)
+  const renamed = !story && STORIES.find((s) => s.aliases?.includes(slug))
+  if (renamed) return <Navigate to={renamed.to} replace />
 
   if (!story) {
     return (

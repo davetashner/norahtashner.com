@@ -1,6 +1,6 @@
 /* game.js — Norah's Big Vacation
    A 12-chapter, tap-only, fully-offline storybook trip. Each chapter is a
-   painted scene with its own mini-game (games.js), a hidden Camile to find,
+   painted scene with its own mini-game (games.js), a hidden Camille to find,
    1–3 stars and a passport stamp.
 
    Everything that moves is drawn on one <canvas> laid over the painting, in the
@@ -14,55 +14,57 @@
   const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
   const UI_FONT = 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
 
-  // ── The trip. camile = where she hides (centre of her peeking head), in 400×700
+  // ── The trip. camille = where she hides (centre of her peeking head), in 400×700
   //    scene coordinates; cast = who stands in the scene during the intro. ──
   const CHAPTERS = [
-    { id: 'pups', name: 'Goodbye Pups', glyph: '🐾', game: 'pack', camile: { x: 336, y: 388 },
+    { id: 'pups', name: 'Goodbye Pups', glyph: '🐾', game: 'pack', camille: { x: 336, y: 388 },
       cast: [['norah', 110], ['penny', 205], ['obi', 290]],
       intro: 'Time for the big trip! Help Norah <b>pack her suitcase</b>, but watch out: Penny and Obi want to sneak their toys in! 🐾' },
-    { id: 'airport', name: 'To the Airport', glyph: '🚗', game: 'bags', camile: { x: 342, y: 396 },
+    { id: 'airport', name: 'To the Airport', glyph: '🚗', game: 'bags', camille: { x: 342, y: 396 },
       cast: [['mommo', 100], ['norah', 165], ['daddo', 240]],
       intro: 'We made it to the airport! Our bags are riding the <b>baggage belt</b>. Can you spot them? 🧳' },
-    { id: 'nyc', name: 'Fly to New York', glyph: '✈️', game: 'fly', camile: { x: 292, y: 566 },
+    { id: 'nyc', name: 'Fly to New York', glyph: '✈️', game: 'fly', camille: { x: 292, y: 566 },
       intro: 'Up, up and away to New York! ✈️ Fly the plane and catch the stars.' },
-    { id: 'overnight', name: 'Night Flight', glyph: '🌙', game: 'stars', camile: { x: 112, y: 430 },
+    { id: 'overnight', name: 'Night Flight', glyph: '🌙', game: 'stars', camille: { x: 112, y: 430 },
       intro: 'A long, sleepy flight to London. 🌙 Join the stars <b>1, 2, 3…</b> to draw pictures in the sky.' },
-    { id: 'londoneye', name: 'The London Eye', glyph: '🎡', game: 'eye', camile: { x: 248, y: 506 },
+    { id: 'londoneye', name: 'The London Eye', glyph: '🎡', game: 'eye', camille: { x: 248, y: 506 },
       cast: [['mommo', 90], ['norah', 150], ['daddo', 310]],
       intro: 'Our hotel is right by the giant <b>London Eye!</b> 🎡 Ride it and snap photos from the very top.' },
-    { id: 'train', name: 'Daddo\'s Train', glyph: '🚆', game: 'windows', camile: { x: 100, y: 452 },
+    { id: 'train', name: 'Daddo\'s Train', glyph: '🚆', game: 'windows', camille: { x: 100, y: 452 },
       cast: [['daddo', 110], ['norah', 250], ['mommo', 315]],
       intro: 'Daddo has to take the train to work for a few days. 🚆 Wave goodbye and blow him <b>kisses</b>!' },
-    { id: 'london', name: 'London & Mommo', glyph: '🚌', game: 'memory', camile: { x: 300, y: 450 },
+    { id: 'london', name: 'London & Mommo', glyph: '🚌', game: 'memory', camille: { x: 300, y: 450 },
       cast: [['mommo', 150], ['norah', 215]],
       intro: 'Just Norah and Mommo now, exploring London! Let\'s match our <b>London postcards</b>. 💌' },
-    { id: 'castle', name: 'Leeds Castle', glyph: '👑', game: 'castle', camile: { x: 88, y: 588 },
+    { id: 'castle', name: 'Leeds Castle', glyph: '👑', game: 'castle', camille: { x: 88, y: 588 },
       cast: [['norah', 150], ['mommo', 225]],
       intro: 'A sleepover in a real castle on a lake! 👑 First, count the <b>swans</b>. Then light the lanterns when night falls.' },
-    { id: 'chunnel', name: 'The Chunnel', glyph: '🚄', game: 'tunnel', camile: { x: 334, y: 360 },
+    { id: 'chunnel', name: 'The Chunnel', glyph: '🚄', game: 'tunnel', camille: { x: 334, y: 360 },
       cast: [['norah', 200], ['mommo', 270]],
       intro: 'All aboard! This train zooms <b>under the sea</b> all the way to France. 🚄🌊' },
-    { id: 'eiffel', name: 'Eiffel Tower', glyph: '🗼', game: 'sparkle', camile: { x: 330, y: 604 },
+    { id: 'eiffel', name: 'Eiffel Tower', glyph: '🗼', game: 'sparkle', camille: { x: 330, y: 604 },
       cast: [['mommo', 90], ['norah', 150]],
       intro: 'Bonjour, Paris! 🗼 At night the Eiffel Tower <b>sparkles</b>. Let\'s light it up to music!' },
-    { id: 'treats', name: 'Croissants', glyph: '🥐', game: 'catch', camile: { x: 135, y: 566 },
+    { id: 'treats', name: 'Croissants', glyph: '🥐', game: 'catch', camille: { x: 135, y: 566 },
       cast: [['norah', 250], ['mommo', 320]],
       intro: 'A Paris bakery! 🥐 Catch the pastries in Norah\'s box. Then pick her <b>favourite macaron</b>.' },
-    { id: 'home', name: 'Fly Home', glyph: '🏠', game: 'hugs', camile: null,
+    { id: 'home', name: 'Fly Home', glyph: '🏠', game: 'hugs', camille: null,
       intro: 'The long way home: Paris, Boston, then Richmond! 🏠 Penny and Obi are waiting…' },
   ];
-  const HIDING = CHAPTERS.filter((c) => c.camile).length;
+  const HIDING = CHAPTERS.filter((c) => c.camille).length;
 
   // ── Saved progress ──
-  let save = { stamps: {}, camiles: {}, stars: {}, fav: null };
+  let save = { stamps: {}, camilles: {}, stars: {}, fav: null };
   try { const raw = localStorage.getItem('nv_save'); if (raw) save = Object.assign(save, JSON.parse(raw)); } catch (e) { /* fresh start */ }
-  ['stamps', 'camiles', 'stars'].forEach((k) => { if (!save[k] || typeof save[k] !== 'object') save[k] = {}; });
+  // older saves spelled the name 'camiles'; keep the Camilles a player already found
+  if (save.camiles && typeof save.camiles === 'object') { save.camilles = Object.assign({}, save.camiles, save.camilles); delete save.camiles; }
+  ['stamps', 'camilles', 'stars'].forEach((k) => { if (!save[k] || typeof save[k] !== 'object') save[k] = {}; });
   function persist() { try { localStorage.setItem('nv_save', JSON.stringify(save)); } catch (e) { /* storage full or blocked */ } }
   const totalStars = () => CHAPTERS.reduce((n, c) => n + (save.stars[c.id] || 0), 0);
-  const camilesFound = () => CHAPTERS.filter((c) => c.camile && save.camiles[c.id]).length;
+  const camillesFound = () => CHAPTERS.filter((c) => c.camille && save.camilles[c.id]).length;
 
   // ── Character sprites ──
-  const SPR = {}, SPR_H = { norah: 123, camile: 94, mommo: 160, daddo: 180, penny: 84, obi: 74 };
+  const SPR = {}, SPR_H = { norah: 123, camille: 94, mommo: 160, daddo: 180, penny: 84, obi: 74 };
   Object.keys(SPR_H).forEach((n) => { const im = new Image(); im.src = 'assets/images/sprites/char-' + n + '.png'; SPR[n] = im; });
 
   // ── DOM ──
@@ -204,7 +206,7 @@
   function updatePill() {
     let s = 'Ch ' + (cur + 1) + '/' + CHAPTERS.length;
     if (hudText) s += '  ·  ' + hudText;
-    if (ch && ch.camile) s += '  ·  ' + (camFound ? 'Camile ✓' : 'Camile 🔎');
+    if (ch && ch.camille) s += '  ·  ' + (camFound ? 'Camille ✓' : 'Camille 🔎');
     pill.textContent = s;
   }
 
@@ -242,14 +244,14 @@
     ch = CHAPTERS[cur];
     phase = 'intro'; game = null; gameT = 0; hudText = '';
     parts.length = 0; floats.length = 0; dim = dimTarget = 0;
-    camFound = ch.camile ? !!save.camiles[ch.id] : true; camHop = 0;
+    camFound = ch.camille ? !!save.camilles[ch.id] : true; camHop = 0;
     sceneEl.style.transform = 'scale(1)';
     hideTip(); hideChoices(); closeOverlays();
     const A = assets[ch.id] || {};
     audio.setMusic(A.music || null); audio.setVolume(0.35);
     setBg(A.bg, 350, hideLoading);
     say('<span class="chap">Chapter ' + (cur + 1) + ' · ' + ch.glyph + '</span><b class="chapname">' + ch.name + '</b>' + ch.intro
-      + (ch.camile && !camFound ? '<span class="psst">Psst… Camile is hiding somewhere in this picture. 🔎</span>' : ''));
+      + (ch.camille && !camFound ? '<span class="psst">Psst… Camille is hiding somewhere in this picture. 🔎</span>' : ''));
     setAction('Let\'s go!', startGame);
     updatePill();
     preloadNext();
@@ -266,7 +268,7 @@
     hideChoices();
     save.stars[ch.id] = Math.max(save.stars[ch.id] || 0, stars);
     save.stamps[ch.id] = true;
-    if (!ch.camile) save.camiles[ch.id] = true;
+    if (!ch.camille) save.camilles[ch.id] = true;
     persist();
     audio.setVolume(0.35);
     setTimeout(() => {
@@ -277,12 +279,12 @@
     }, 900);
   }
 
-  // ── Hidden Camile: a small peeking head somewhere in each painting ──
+  // ── Hidden Camille: a small peeking head somewhere in each painting ──
   const CAM_H = 46, CAM_CROP = 0.48;
-  function drawCamile() {
-    if (!ch || !ch.camile) return;
-    const c = ch.camile, hop = Math.sin(camHop * Math.PI) * 18;
-    sprite('camile', c.x, c.y + CAM_H * (1 - CAM_CROP) - hop, CAM_H, { crop: CAM_CROP });
+  function drawCamille() {
+    if (!ch || !ch.camille) return;
+    const c = ch.camille, hop = Math.sin(camHop * Math.PI) * 18;
+    sprite('camille', c.x, c.y + CAM_H * (1 - CAM_CROP) - hop, CAM_H, { crop: CAM_CROP });
     if (camFound) {
       ctx.fillStyle = '#34c759'; ctx.beginPath(); ctx.arc(c.x + 13, c.y - 22 - hop, 8, 0, TAU); ctx.fill();
       text('✓', c.x + 13, c.y - 22 - hop, 11, '#fff');
@@ -291,15 +293,15 @@
       emoji('✨', c.x + 14, c.y - 26, 16, 0, 0.9);
     }
   }
-  function tryCamile(p) {
-    if (!ch || !ch.camile || camFound) return false;
-    const c = ch.camile;
+  function tryCamille(p) {
+    if (!ch || !ch.camille || camFound) return false;
+    const c = ch.camille;
     if (Math.abs(p.x - c.x) > 24 || p.y < c.y - 34 || p.y > c.y + 8) return false;
     camFound = true; camHop = 1;
-    save.camiles[ch.id] = true; persist();
+    save.camilles[ch.id] = true; persist();
     audio.play('found');
     burst(c.x, c.y - 14, { emojis: ['✨', '💖', '⭐'], n: 16 });
-    addFloat('You found Camile! ✨', c.x, c.y - 40, '#ffd25a');
+    addFloat('You found Camille! ✨', c.x, c.y - 40, '#ffd25a');
     updatePill();
     return true;
   }
@@ -327,7 +329,7 @@
     ctx.setTransform(dpr * sc, 0, 0, dpr * sc, dpr * ox, dpr * oy);
     if (dim > 0.005) { ctx.fillStyle = 'rgba(8,14,35,' + dim.toFixed(3) + ')'; ctx.fillRect(S.vx0 - 2, S.vy0 - 2, S.vx1 - S.vx0 + 4, S.vy1 - S.vy0 + 4); }
     if (ch) {
-      drawCamile();
+      drawCamille();
       if (phase === 'intro') drawCast();
       if (game && game.draw) game.draw(ctx);
       drawFx();
@@ -340,7 +342,7 @@
     audio.unlock();
     if (paused || zooming) return;
     const p = toScene(e);
-    if (tryCamile(p)) return;
+    if (tryCamille(p)) return;
     if (phase === 'play' && game && game.down) { try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } game.down(p); }
   });
   cv.addEventListener('pointermove', (e) => { if (phase === 'play' && game && game.move && !paused) game.move(toScene(e)); });
@@ -352,7 +354,7 @@
   // ── Passport ──
   function starRow(n) { let s = ''; for (let i = 0; i < 3; i++) s += '<i class="' + (i < n ? 'on' : '') + '">★</i>'; return s; }
   function renderPassport() {
-    $('passportTotals').innerHTML = '⭐ ' + totalStars() + ' / ' + CHAPTERS.length * 3 + '  ·  Camile found ' + camilesFound() + ' / ' + HIDING
+    $('passportTotals').innerHTML = '⭐ ' + totalStars() + ' / ' + CHAPTERS.length * 3 + '  ·  Camille found ' + camillesFound() + ' / ' + HIDING
       + (save.fav ? '<br>Favourite macaron: ' + save.fav : '');
     const grid = $('stampGrid'); grid.innerHTML = '';
     CHAPTERS.forEach((c, i) => {
@@ -362,7 +364,7 @@
       slot.className = 'stamp-slot' + (earned ? ' earned' : '');
       slot.innerHTML = '<div class="glyph">' + c.glyph + '</div><div class="nm">' + c.name + '</div>'
         + (earned ? '<div class="stars">' + starRow(save.stars[c.id] || 0) + '</div>' : '')
-        + (c.camile && save.camiles[c.id] ? '<div class="cam" title="Camile found">👧</div>' : '');
+        + (c.camille && save.camilles[c.id] ? '<div class="cam" title="Camille found">👧</div>' : '');
       slot.setAttribute('aria-label', 'Play chapter ' + (i + 1) + ': ' + c.name);
       slot.onclick = () => { audio.play('tap'); loadChapter(i); };
       grid.appendChild(slot);
@@ -379,11 +381,11 @@
     $('celebrateStars').innerHTML = starRow(stars);
     $('celebrateText').innerHTML = line || '';
     let cam;
-    if (!ch.camile) cam = 'Camile is safe in Norah\'s arms. 💖';
-    else if (camFound) cam = '✨ You found Camile!';
-    else cam = '🔎 Camile was hiding in this picture. Play again to find her!';
-    if (lastCh) cam += '<br><b>Passport complete!</b> ⭐ ' + totalStars() + ' / ' + CHAPTERS.length * 3 + ' stars, Camile found ' + camilesFound() + ' / ' + HIDING + ' times.';
-    $('celebrateCamile').innerHTML = cam;
+    if (!ch.camille) cam = 'Camille is safe in Norah\'s arms. 💖';
+    else if (camFound) cam = '✨ You found Camille!';
+    else cam = '🔎 Camille was hiding in this picture. Play again to find her!';
+    if (lastCh) cam += '<br><b>Passport complete!</b> ⭐ ' + totalStars() + ' / ' + CHAPTERS.length * 3 + ' stars, Camille found ' + camillesFound() + ' / ' + HIDING + ' times.';
+    $('celebrateCamille').innerHTML = cam;
     const next = $('celebrateNext');
     if (lastCh) { next.textContent = 'See my Passport'; next.onclick = () => { audio.play('tap'); $('celebrate').hidden = true; openPassport(); }; }
     else { next.textContent = 'Next: ' + CHAPTERS[cur + 1].name + ' →'; next.onclick = () => { audio.play('tap'); loadChapter(cur + 1); }; }
@@ -410,7 +412,7 @@
     $('resetBtn').onclick = () => {
       audio.play('tap');
       if (window.confirm('Start the whole trip over? This clears all your stamps and stars.')) {
-        save = { stamps: {}, camiles: {}, stars: {}, fav: null }; persist(); loadChapter(0);
+        save = { stamps: {}, camilles: {}, stars: {}, fav: null }; persist(); loadChapter(0);
       }
     };
     $('celebrateAgain').onclick = () => { audio.play('tap'); loadChapter(cur); };

@@ -17,10 +17,10 @@ background and a few bespoke music tracks are still TODO (see `assets.js`).
 ## How it plays
 Everything is a tap (or a drag). Each chapter: read the story card, play that
 place's mini-game, earn **1–3 stars** and a **passport stamp**, then travel on.
-Camile hides in every painting (peeking out from somewhere); finding her is a
+Camille hides in every painting (peeking out from somewhere); finding her is a
 bonus, never required. There is no losing: every game finishes, and stars
 reward how well it went, so it's worth replaying. The passport (📖) shows the
-stamps, stars and Camiles found, and doubles as a chapter picker. Progress
+stamps, stars and Camilles found, and doubles as a chapter picker. Progress
 saves to `localStorage`.
 
 | # | Chapter | Mini-game |
@@ -46,7 +46,7 @@ saves to `localStorage`.
 | `assets.js` | `window.NVassets`: chapter → background image + music file |
 | `audio.js` | `window.NVaudio`: Web Audio SFX **+** looping `<audio>` music; mute controls both |
 | `games.js` | `window.NVgames`: the 12 mini-games |
-| `game.js` | Chapters, the canvas runner and drawing helpers, hidden Camile, stars, passport, save |
+| `game.js` | Chapters, the canvas runner and drawing helpers, hidden Camille, stars, passport, save |
 
 ## Assets
 `assets/images/*.png` are full **painted backgrounds** (portrait 4:7, same ratio as
@@ -63,8 +63,8 @@ screen, so they always line up). A mini-game is a factory in `games.js`:
 `api` gives drawing helpers (`emoji`, `sprite`, `text`, `rr`, `burst`, `float`),
 `sfx`, `tip`, `hud`, `choices`, `after`, `setBg`, `zoom`, the visible play area
 `api.S`, and `finish(stars, line)`. Point a chapter at it with `game:` in
-`CHAPTERS` (`game.js`), along with where Camile hides.
+`CHAPTERS` (`game.js`), along with where Camille hides.
 
 ## Characters
-Norah (brown bob, hot-pink dress) · Camile (blonde, pink tutu, teal boots) ·
+Norah (brown bob, hot-pink dress) · Camille (blonde, pink tutu, teal boots) ·
 Mommo (dark hair, mint top) · Daddo (cap + glasses) · pups Penny & Obi.
