@@ -590,8 +590,8 @@ export const SONGS = [
   },
   {
     "id": "me-and-camile",
-    "title": "Me and Camile",
-    "description": "A song for Camile, Norah's best doll ever, who takes on the world with airplanes. Fasten your seatbelts!",
+    "title": "Me and Camille",
+    "description": "A song for Camille, Norah's best doll ever, who takes on the world with airplanes. Fasten your seatbelts!",
     "tag": "Friendship",
     "src": "/podcast/songs/me-and-camile.mp3",
     "durationSeconds": 69,
@@ -599,17 +599,17 @@ export const SONGS = [
       {
         "label": "Verse 1",
         "lines": [
-          "Me and Camile",
+          "Me and Camille",
           "Have fun together",
           "We like to play",
           "We like to play",
-          "Me and Camile",
-          "Me, me and Camile",
+          "Me and Camille",
+          "Me, me and Camille",
           "We like to play, play, play",
           "Our sister Emerson comes along with her day",
-          "Me and her sister and Camile",
+          "Me and her sister and Camille",
           "Our best friends, we're gonna be best friends forever",
-          "Got Camile for Easter, she's my best doll ever",
+          "Got Camille for Easter, she's my best doll ever",
           "She takes on the world with airplanes and all her fun stuff"
         ]
       }
@@ -617,8 +617,8 @@ export const SONGS = [
   },
   {
     "id": "me-and-camile-v2",
-    "title": "Me and Camile (v2)",
-    "description": "Take two of Norah's song for Camile, her best doll ever. Same airplanes, same fun, a little shorter!",
+    "title": "Me and Camille (v2)",
+    "description": "Take two of Norah's song for Camille, her best doll ever. Same airplanes, same fun, a little shorter!",
     "tag": "Friendship",
     "src": "/podcast/songs/me-and-camile-v2.mp3",
     "durationSeconds": 53,
@@ -626,17 +626,17 @@ export const SONGS = [
       {
         "label": "Verse 1",
         "lines": [
-          "Me and Camile",
+          "Me and Camille",
           "Have fun together",
           "We like to play",
           "We like to play",
-          "Me and Camile",
-          "Me, me and Camile",
+          "Me and Camille",
+          "Me, me and Camille",
           "We like to play, play, play",
           "Our sister Emerson comes along with her day",
-          "Me and her sister and Camile",
+          "Me and her sister and Camille",
           "Our best friends, we're gonna be best friends forever",
-          "Got Camile for Easter, she's my best doll ever",
+          "Got Camille for Easter, she's my best doll ever",
           "She takes on the world with airplanes and all her fun stuff"
         ]
       }

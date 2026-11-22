@@ -166,7 +166,7 @@
       { who: 'Norah', c: 'pink', s: '⭐' },
       { who: 'Mommo', c: 'purple', s: '🌸' },
       { who: 'Daddo', c: 'blue', s: '🧢' },
-      { who: 'Camile', c: 'yellow', s: '🎀', small: true },
+      { who: 'Camille', c: 'yellow', s: '🎀', small: true },
     ];
     let round = 0, mistakes = 0, speed = 64, spawnIn = 0.2, since = 0, finished = false;
     const bags = [], cart = [];
@@ -1043,7 +1043,7 @@
       draw() {
         const f = feet();
         api.sprite('norah', api.S.cx, f, 123);
-        api.sprite('camile', api.S.cx + 30, f - 40, 52);
+        api.sprite('camille', api.S.cx + 30, f - 40, 52);
         pups.forEach((p) => {
           const hy = Math.abs(Math.sin(p.hop * Math.PI * 3)) * 26 * p.hop;
           api.sprite(p.spr, p.x, f + 6 - hy, p.h, { flip: p.spr === 'obi' });

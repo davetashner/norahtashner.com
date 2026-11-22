@@ -20,7 +20,7 @@ function VacationGamePage() {
           pups sneak their toys in, fly to New York, snap a photo from the top of the
           London Eye, zoom under the sea to France, make the Eiffel Tower sparkle to
           music and more. Earn up to 3 stars and a passport stamp at each stop, and
-          look for <b>Camile</b> hiding in every picture! Works offline. 📖✈️
+          look for <b>Camille</b> hiding in every picture! Works offline. 📖✈️
         </p>
       </div>
     </section>
